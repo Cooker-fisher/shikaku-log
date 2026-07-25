@@ -1,0 +1,85 @@
+---
+/**
+ * 全ページの原型。head の中身(title / description / canonical / OGP)は
+ * ここでしか組み立てない。qa.mjs がこの出力を検査する。
+ */
+import '../styles/global.css';
+import { SITE_NAME, SITE_TAGLINE, NAV_LINKS, FOOTER_LINKS } from '../config';
+
+interface Props {
+  title: string;
+  description: string;
+  /** true にすると noindex。下書き・重複ページ用 */
+  noindex?: boolean;
+  /** アフィリエイトリンクを含むページ(PR表記を強制する) */
+  hasAffiliate?: boolean;
+  /** ユーザー投稿データを表示するページ(自己申告の注記を強制する) */
+  hasUserData?: boolean;
+  ogType?: 'website' | 'article';
+}
+
+const {
+  title,
+  description,
+  noindex = false,
+  hasAffiliate = false,
+  hasUserData = false,
+  ogType = 'website',
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
+const fullTitle = Astro.url.pathname === '/' ? title : `${title} | ${SITE_NAME}`;
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="color-scheme" content="light dark" />
+    <slot name="head" />
+  </head>
+  <body data-has-affiliate={hasAffiliate ? 'true' : 'false'} data-has-user-data={hasUserData ? 'true' : 'false'}>
+    <a class="skip-link" href="#main">本文へ移動</a>
+
+    <header class="site-header">
+      <div class="container site-header__inner">
+        <a class="site-header__brand" href="/">{SITE_NAME}</a>
+        <span class="sample-size">{SITE_TAGLINE}</span>
+        <nav class="site-nav" aria-label="メインナビゲーション">
+          {NAV_LINKS.map((link) => <a href={link.href}>{link.label}</a>)}
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <div class="container">
+        <slot />
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <nav aria-label="フッターナビゲーション">
+          <ul>
+            {FOOTER_LINKS.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+          </ul>
+        </nav>
+        <p>
+          掲載している公式統計は各実施団体の公表資料にもとづく。出典URLは各ページに記載する。
+        </p>
+        <p>&copy; {new Date().getFullYear()} {SITE_NAME}</p>
+      </div>
+    </footer>
+  </body>
+</html>

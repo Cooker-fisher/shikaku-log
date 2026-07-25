@@ -1,0 +1,18 @@
+---
+/**
+ * 数値に添える一次ソースへのリンク(掟 3-1)。
+ * 数字を書くページはこれ無しで公開しない。
+ */
+interface Props {
+  href: string;
+  label: string;
+  /** 参照日。公式ページが更新されても検証できるようにする */
+  accessedAt?: string;
+}
+const { href, label, accessedAt } = Astro.props;
+---
+
+<p class="sample-size" data-source-link>
+  出典:<a href={href} rel="noopener" target="_blank">{label}</a>
+  {accessedAt && <span> (参照 {accessedAt})</span>}
+</p>

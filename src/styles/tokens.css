@@ -1,0 +1,139 @@
+/*
+ * デザイントークン。
+ * 色・余白・タイポは必ずこの変数を経由する。ページやコンポーネントに
+ * 生の色コードや px を書かない(1箇所直せば全ページに波及させるため)。
+ *
+ * ここは「土台」であり、最終的なブランド値ではない。
+ * design/ のデザイン3案対決で決まった値をこのファイルに流し込む。
+ */
+
+:root {
+  /* --- 色: プリミティブ ------------------------------------------------ */
+  --c-ink-900: #12161c;
+  --c-ink-700: #333b47;
+  --c-ink-500: #5b6675;
+  --c-ink-300: #97a1b0;
+  --c-ink-100: #d9dee6;
+  --c-ink-050: #eef1f5;
+  --c-paper: #ffffff;
+  --c-paper-alt: #f7f9fb;
+
+  --c-brand-700: #12503f;
+  --c-brand-500: #1a7a5e;
+  --c-brand-300: #57ab8d;
+  --c-brand-050: #e8f4ef;
+
+  --c-accent-500: #c2571f;
+  --c-accent-050: #fdf0e6;
+
+  --c-warn-500: #a8620a;
+  --c-warn-050: #fdf3e3;
+  --c-danger-500: #a52a2a;
+
+  /* --- 色: セマンティック --------------------------------------------- */
+  --color-bg: var(--c-paper);
+  --color-bg-subtle: var(--c-paper-alt);
+  --color-surface: var(--c-paper);
+  --color-border: var(--c-ink-100);
+  --color-border-strong: var(--c-ink-300);
+  --color-text: var(--c-ink-900);
+  --color-text-muted: var(--c-ink-500);
+  --color-text-faint: var(--c-ink-300);
+  --color-link: var(--c-brand-700);
+  --color-link-hover: var(--c-brand-500);
+  --color-primary: var(--c-brand-500);
+  --color-primary-contrast: #ffffff;
+  --color-accent: var(--c-accent-500);
+  --color-notice-bg: var(--c-warn-050);
+  --color-notice-border: var(--c-warn-500);
+  --color-data-bg: var(--c-brand-050);
+
+  /* --- タイポグラフィ --------------------------------------------------- */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic UI', 'Meiryo',
+    system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Noto Sans Mono', monospace;
+  --font-numeric: var(--font-mono);
+
+  /* 1.200 (Minor Third) スケール。基準 16px */
+  --fs-2xs: 0.694rem;
+  --fs-xs: 0.833rem;
+  --fs-sm: 0.926rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.2rem;
+  --fs-xl: 1.44rem;
+  --fs-2xl: 1.728rem;
+  --fs-3xl: 2.074rem;
+
+  --lh-tight: 1.3;
+  --lh-normal: 1.75;
+  --lh-heading: 1.4;
+
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-bold: 700;
+
+  /* --- 余白: 4px グリッド ----------------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* --- 形状 ------------------------------------------------------------- */
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+
+  --border-thin: 1px solid var(--color-border);
+  --shadow-sm: 0 1px 2px rgb(18 22 28 / 6%);
+  --shadow-md: 0 2px 12px rgb(18 22 28 / 8%);
+
+  /* --- レイアウト ------------------------------------------------------- */
+  --width-prose: 42rem;
+  --width-content: 64rem;
+  --width-wide: 76rem;
+  --gutter: var(--space-4);
+
+  /* --- モーション ------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 120ms;
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --gutter: var(--space-6);
+  }
+}
+
+/* ダークモードは OS 設定に従う。色トークンだけを差し替える */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0f1319;
+    --color-bg-subtle: #161b23;
+    --color-surface: #161b23;
+    --color-border: #2a323d;
+    --color-border-strong: #3d4754;
+    --color-text: #e7ebf0;
+    --color-text-muted: #a3aebd;
+    --color-text-faint: #6f7b8a;
+    --color-link: var(--c-brand-300);
+    --color-link-hover: #7fc7ab;
+    --color-primary: var(--c-brand-300);
+    --color-primary-contrast: #0f1319;
+    --color-accent: #e08b52;
+    --color-notice-bg: #2a2117;
+    --color-notice-border: #b8853a;
+    --color-data-bg: #14251f;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+  }
+}

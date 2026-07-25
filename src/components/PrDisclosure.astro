@@ -1,0 +1,18 @@
+---
+/**
+ * ステマ規制対応のPR表記。
+ * アフィリエイトリンクを含むページでは **本文より前** に置く(掟 3-4)。
+ * 文言を変える時はここだけ直す。
+ */
+interface Props {
+  /** 補足したい場合のみ */
+  note?: string;
+}
+const { note } = Astro.props;
+---
+
+<aside class="notice notice--pr" data-pr-disclosure>
+  <span class="notice__label">PR</span>
+  このページには広告(アフィリエイトリンク)を含む。リンク経由の申込みで運営者が報酬を受け取ることがある。
+  {note && <span> {note}</span>}
+</aside>

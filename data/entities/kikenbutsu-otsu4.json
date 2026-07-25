@@ -1,0 +1,84 @@
+{
+  "type": "qualification",
+  "slug": "kikenbutsu-otsu4",
+  "name": "危険物取扱者 乙種第4類",
+  "short_name": "危険物乙4",
+  "category": "技能・技術",
+  "authority": {
+    "name": "一般財団法人 消防試験研究センター",
+    "url": "https://www.shoubo-shiken.or.jp/"
+  },
+  "exam": {
+    "eligibility": "受験資格の制限なし。「乙種・丙種 誰でも受験できます。」と公式に明記されている(甲種のみ化学に関する学歴等の受験資格が必要)。",
+    "fee_yen": 5300,
+    "format": "マーク・カードを使う筆記試験(五肢択一式)。実技試験なし。試験科目は「危険物に関する法令」「基礎的な物理学及び基礎的な化学」「危険物の性質並びにその火災予防及び消火の方法」の3科目で、乙種はどの類(1~6類)でも科目構成・問題数は共通。",
+    "questions": 35,
+    "duration_minutes": 120,
+    "passing_criteria": "甲種、乙種及び丙種とも、試験科目ごとの成績がそれぞれ60%以上の方を合格とする(試験科目の一部免除を受けた受験者はその科目を除く)。",
+    "frequency": "都道府県ごと(消防試験研究センター各支部・中央試験センター)に実施されており、実施回数は都道府県により異なる。公式サイト・FAQでも「都道府県ごとに行われており、年度途中で試験日程等の変更もある」とされるのみで、全国共通の「年◯回」という単一の数値は公表されていない。詳細は試験日程[全国一覧]または受験予定の都道府県支部で個別に確認する必要がある。",
+    "result_announcement": "支部ごとに発表予定日を設定し、当日正午からセンターホームページ上に合格者受験番号を掲示するとともに、各支部窓口・掲示板でも公示、受験者全員に「試験結果通知書」を郵送する。試験日から発表までの標準日数(例:「◯日後」)は公式サイトに一律の記載がなく、試験ごと・支部ごとに発表予定日が個別に定められる。なお公式FAQによれば、ホームページ発表後、地域差はあるが2~3日後には試験結果通知書が受験者の手元に届く。",
+    "source_url": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
+    "retrieved_at": "2026-07-25"
+  },
+  "official_stats": {
+    "unit": "全国集計(乙種第4類, 消防試験研究センター発表)",
+    "series": [
+      {
+        "year": "令和7年度",
+        "applicants": 256468,
+        "examinees": 222545,
+        "passers": 71059,
+        "pass_rate": 31.9,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/7/",
+        "retrieved_at": "2026-07-25"
+      },
+      {
+        "year": "令和6年度",
+        "applicants": 256812,
+        "examinees": 223846,
+        "passers": 71023,
+        "pass_rate": 31.7,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/6/",
+        "retrieved_at": "2026-07-25"
+      },
+      {
+        "year": "令和5年度",
+        "applicants": 255763,
+        "examinees": 223797,
+        "passers": 71670,
+        "pass_rate": 32.0,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/5/",
+        "retrieved_at": "2026-07-25"
+      },
+      {
+        "year": "令和4年度",
+        "applicants": 252899,
+        "examinees": 223009,
+        "passers": 70211,
+        "pass_rate": 31.5,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/r04/",
+        "retrieved_at": "2026-07-25"
+      },
+      {
+        "year": "令和3年度",
+        "applicants": 264402,
+        "examinees": 234481,
+        "passers": 84564,
+        "pass_rate": 36.1,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/r03/",
+        "retrieved_at": "2026-07-25"
+      }
+    ],
+    "source_url": "https://www.shoubo-shiken.or.jp/result/",
+    "retrieved_at": "2026-07-25",
+    "notes": "各年度ページの表は「甲種/乙種(1~6類・乙種計)/丙種/合計」のクロス集計表であり、乙種第4類の列(４類)を個別に抽出して記録した(乙種計との合算検算により整合性を確認済み)。項目名は原文どおり「申請者」(=申込者)「受験者」「合格者」「合格率」。令和7年度(2025年4月~2026年3月)は年度終了後の確定値。令和3~7年度の5年度分すべてを第4類単独の粒度で取得できた。",
+    "unit_labels": {
+      "applicants": "申請者数(申込者数)",
+      "examinees": "受験者数(実際に受験した人数)",
+      "passers": "合格者数",
+      "pass_rate": "合格率(%)"
+    }
+  },
+  "schedule_url": "https://shinsei.shoubo-shiken.or.jp/shoubou_ia/iajs9001.do?menjo_kbn=1",
+  "notes": "確認できなかった項目: (1) 試験の実施頻度について、都道府県ごとの「年間◯回」という具体的な回数は公式サイトに一律の記載がなく確認できず(都道府県ごとに異なるとのみ記載)。(2) 合格発表について、試験日から発表日までの標準日数(◯日後、といった具体的な日数)は公式サイトに記載がなく確認できず(支部ごと・試験ごとに個別の発表予定日が定められる方式のため)。上記2点はnullにせず、公式サイトで確認できた「都道府県ごとに異なる」という定性的な事実をfrequency/result_announcementに記載した。数値データ(申請者数・受験者数・合格者数・合格率)は令和3~7年度の5年度分すべて、消防試験研究センター公式サイトの年度別ページ(/result/配下)から乙種第4類単独の数値を取得し、乙種計との合算検算で整合性を確認した。"
+}

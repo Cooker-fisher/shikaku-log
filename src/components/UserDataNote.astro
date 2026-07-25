@@ -1,0 +1,37 @@
+---
+/**
+ * ユーザー投稿データを表示する箇所に必ず添える注記。
+ * 「自己申告に基づく」「サンプル数」「統計を装わない」を1箇所に集約する(掟 3-2 / 3-3)。
+ */
+interface Props {
+  /** 有効サンプル数。n<20 のときは統計値を出していない旨だけを書く */
+  sampleSize: number;
+  minSampleSize?: number;
+  /** 外れ値として除外した件数 */
+  excludedCount?: number;
+}
+const { sampleSize, minSampleSize = 20, excludedCount = 0 } = Astro.props;
+const isReady = sampleSize >= minSampleSize;
+---
+
+<p class="data-note" data-user-data-note>
+  この数値は利用者の<strong>自己申告</strong>による投稿を集計したもので、公的な統計ではない。
+  {
+    isReady ? (
+      <>
+        有効回答 <span class="num">n={sampleSize}</span>。
+        {excludedCount > 0 && (
+          <>
+            明らかな範囲外の値 <span class="num">{excludedCount}</span> 件を除外している。
+          </>
+        )}
+      </>
+    ) : (
+      <>
+        現在の有効回答は <span class="num">{sampleSize}</span> 件。
+        <span class="num">{minSampleSize}</span> 件に達するまで中央値・分布・順位は公開しない
+        (少数の投稿では数値が大きく振れるため)。
+      </>
+    )
+  }
+</p>
