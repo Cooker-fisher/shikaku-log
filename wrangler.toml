@@ -1,0 +1,22 @@
+#:schema node_modules/wrangler/config-schema.json
+# Cloudflare Pages の設定。秘匿値はここに書かない(ダッシュボードの環境変数 / `wrangler secret` を使う)。
+name = "shikakulog"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "dist"
+
+# D1 バインディング。
+# database_id は Cloudflare ダッシュボードで D1 を作成した後に差し替える。
+# (database_id は秘匿情報ではないが、未作成のうちはプレースホルダのままにする)
+[[d1_databases]]
+binding = "DB"
+database_name = "shikakulog"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+# --- 環境変数(値はコミットしない) -------------------------------------
+# IP_HASH_SALT : 投稿者IPをハッシュ化するためのソルト。未設定なら投稿APIは 500 を返す(fail closed)。
+#                `wrangler pages secret put IP_HASH_SALT` で設定する。
+#                ローカル開発では site/.dev.vars に書く(.gitignore 済み)。
+[vars]
+# 公開してよい値だけをここに置く
+REPORT_MIN_SAMPLE_SIZE = "20"

@@ -1,0 +1,27 @@
+{
+  "name": "shikakulog-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "wrangler pages dev",
+    "qa": "node scripts/qa.mjs",
+    "check": "astro check",
+    "db:migrate:local": "wrangler d1 migrations apply shikakulog --local",
+    "db:migrate": "wrangler d1 migrations apply shikakulog --remote"
+  },
+  "dependencies": {
+    "astro": "^5.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240000.0",
+    "node-html-parser": "^6.1.13",
+    "typescript": "^5.6.0",
+    "wrangler": "^3.90.0"
+  }
+}
