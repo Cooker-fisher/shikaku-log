@@ -118,7 +118,10 @@ const SECRET_PATTERNS = [
   { name: 'Amazonアソシエイトタグ', re: /[?&]tag=[A-Za-z0-9_]+-2\d\b/ },
   { name: 'バリューコマースの sid/pid', re: /\bsid=\d{6,}&pid=\d{6,}/ },
   { name: 'アクセストレードの rk', re: /\brk=\d{10,}/ },
-  { name: 'D1 database_id の実値', re: /database_id\s*=\s*"[0-9a-f]{8}-[0-9a-f]{4}-/ },
+  // D1 の database_id は意図的に検査対象から外している。
+  // 認証情報ではなくリソース識別子であり、単体では何も操作できない(操作には
+  // アカウント認証が必要)。Cloudflare公式もコミットを前提としており、
+  // 隠すとリポジトリからデプロイを再現できなくなる。
 ];
 
 /** 秘匿値を持ちうるのに .gitignore に無いと事故るファイル */

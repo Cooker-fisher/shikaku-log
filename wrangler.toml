@@ -5,12 +5,14 @@ compatibility_date = "2025-01-01"
 pages_build_output_dir = "dist"
 
 # D1 バインディング。
-# database_id は Cloudflare ダッシュボードで D1 を作成した後に差し替える。
-# (database_id は秘匿情報ではないが、未作成のうちはプレースホルダのままにする)
+# database_id は認証情報ではなくリソースの識別子であり、これ単体では何も操作できない
+# (操作にはアカウント認証が必要)。Cloudflareの公式ドキュメントもコミットを前提としている。
+# 隠すとダッシュボードでの手作業が必要になり、リポジトリからデプロイを再現できなくなるため
+# 公開リポジトリでもここに置く。
 [[d1_databases]]
 binding = "DB"
 database_name = "shikakulog"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "6e9e8aa3-a94b-4225-b745-1b464a48eae2"
 migrations_dir = "migrations"
 
 # --- 環境変数(値はコミットしない) -------------------------------------

@@ -71,7 +71,28 @@ const modules = import.meta.glob<Entity>('../../data/entities/*.json', {
   import: 'default',
 });
 
+/**
+ * 投稿APIが受け付ける entity type。
+ * functions/api/report.ts の SCHEMAS と src/lib/validation.ts の
+ * CERTIFICATION_REPORT_SCHEMA に対応する。
+ *
+ * ここを揃え忘れると「ページは表示されるのに投稿だけ 404」という、
+ * 本番で投稿を試すまで気づかない不具合になる(2026-07-25に実際に発生)。
+ * ビルド時に落として気づけるようにする。
+ */
+const KNOWN_ENTITY_TYPES = new Set(['certification']);
+
 export const entities: Entity[] = Object.values(modules);
+
+for (const e of entities) {
+  if (!KNOWN_ENTITY_TYPES.has(e.type)) {
+    throw new Error(
+      `entity "${e.slug}" の type が "${e.type}" になっている。` +
+        `投稿APIが照合できる type は ${[...KNOWN_ENTITY_TYPES].join(' / ')} のみ。` +
+        `data/entities/${e.slug}.json を直すこと。`,
+    );
+  }
+}
 
 export function getEntity(slug: string): Entity | undefined {
   return entities.find((e) => e.slug === slug);
