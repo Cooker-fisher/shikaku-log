@@ -11,6 +11,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SourceLink from '../../components/SourceLink.astro';
 import StatTrendChart from '../../components/StatTrendChart.astro';
+import StructuredData from '../../components/StructuredData.astro';
 import {
   entities,
   statBlocks,
@@ -55,9 +56,13 @@ const description = latest
 /** 出典一覧。項目ごとに異なるURLを持つため重複を除いて並べる */
 const sourceEntries = Object.entries(entity.exam.source_urls ?? {});
 const uniqueSources = [...new Set([...sourceEntries.map(([, url]) => url), ...blocks.map((b) => b.stats.source_url)])];
+
+const origin = (Astro.site ?? new URL(Astro.url.origin)).origin;
+const canonical = new URL(Astro.url.pathname, origin).href;
 ---
 
 <BaseLayout title={title} description={description} ogType="article">
+  <StructuredData slot="head" entity={entity} canonical={canonical} origin={origin} />
   <article class="page">
     <nav class="crumbs" aria-label="パンくず">
       <a href="/">ホーム</a> <span aria-hidden="true">/</span>

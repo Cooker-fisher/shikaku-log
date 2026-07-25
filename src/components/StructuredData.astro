@@ -1,0 +1,76 @@
+---
+/**
+ * 資格ページの構造化データ(JSON-LD)。
+ *
+ * 3種類を出す:
+ *  - BreadcrumbList … 検索結果でのパンくず表示
+ *  - Dataset        … 公式統計は本物のデータセット。Google Dataset Search の対象にもなる
+ *  - FAQPage        … 「試験のしくみ」のQ&A
+ *
+ * 注意: JSON-LD の中身は必ずページ本文と一致させる。本文に無いことを構造化データにだけ
+ * 書くのはスパム扱いの対象になる。ここでは同じデータソースから両方を生成している。
+ */
+import type { Entity } from '../lib/entities';
+import { statBlocks, seriesLabel } from '../lib/entities';
+
+interface Props {
+  entity: Entity;
+  canonical: string;
+  origin: string;
+}
+const { entity, canonical, origin } = Astro.props;
+
+const blocks = statBlocks(entity);
+const primary = blocks[0];
+
+const breadcrumb = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'ホーム', item: `${origin}/` },
+    { '@type': 'ListItem', position: 2, name: entity.category },
+    { '@type': 'ListItem', position: 3, name: entity.short_name, item: canonical },
+  ],
+};
+
+const dataset = primary
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'Dataset',
+      name: `${entity.name} 受験者数・合格率の推移`,
+      description: `${entity.authority.name}が公表した${entity.name}の受験者数・合格者数・合格率。${primary.stats.series.map((s) => seriesLabel(s)).join('、')}の${primary.stats.series.length}期分。`,
+      url: canonical,
+      isAccessibleForFree: true,
+      creator: { '@type': 'Organization', name: entity.authority.name, url: entity.authority.url },
+      isBasedOn: primary.stats.source_url,
+      temporalCoverage: primary.stats.series.map((s) => seriesLabel(s)).join('/'),
+      variableMeasured: ['申込者数', '受験者数', '合格者数', '合格率'],
+      dateModified: primary.stats.retrieved_at,
+    }
+  : null;
+
+/** 本文の「試験のしくみ」と同じ項目・同じ文言から生成する */
+const faqItems = [
+  { q: '誰でも受験できますか', a: entity.exam.eligibility },
+  { q: 'どんな形式の試験ですか', a: entity.exam.format },
+  { q: '何点取れば合格ですか', a: entity.exam.passing_criteria },
+  { q: 'いつ受験できますか', a: entity.exam.frequency },
+  { q: '合否はいつ、どう分かりますか', a: entity.exam.result_announcement },
+].filter((item) => item.a && item.a.trim().length > 0);
+
+const faq = faqItems.length
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqItems.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
+    }
+  : null;
+
+const blobs = [breadcrumb, dataset, faq].filter(Boolean);
+---
+
+{blobs.map((blob) => <script type="application/ld+json" set:html={JSON.stringify(blob)} />)}

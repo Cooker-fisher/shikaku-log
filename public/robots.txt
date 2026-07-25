@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-
-# 投稿APIはクロール対象にしない
-Disallow: /api/
