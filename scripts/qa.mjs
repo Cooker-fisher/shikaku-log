@@ -19,7 +19,7 @@
  *   --quiet        PASS の行を出さない
  */
 
-import { readFileSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, existsSync, statSync, readdirSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import { join, relative, resolve, dirname, extname, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -613,11 +613,48 @@ function checkPlaceholders(pages) {
   finishCheck('placeholder', '差し替え忘れ(プレースホルダ)', pages.length);
 }
 
+/**
+ * マイグレーションSQLが投入する entities.type が、投稿APIの照合値と一致しているか。
+ *
+ * **なぜ必要か**: 2026-07-25、シードは 'qualification' なのにAPIは 'certification' を
+ * 照合していた。ページは表示されるのに投稿だけ404を返す不具合で、本番で実際に投稿するまで
+ * 気づけなかった。そのとき本番DBは手で直したが、**マイグレーションは壊れたまま残っていた**
+ * (2026-07-26に発覚)。DBを作り直せば同じ不具合が復活する状態だった。
+ *
+ * ビルド成果物には現れないのでHTML検査では捕まらない。ここで機械的に落とす。
+ */
+function checkMigrations() {
+  const dir = join(ROOT, 'migrations');
+  if (!existsSync(dir)) {
+    finishCheck('migration', 'マイグレーション(entity type の整合)', 0);
+    return;
+  }
+  const files = readdirSync(dir).filter((f) => f.endsWith('.sql'));
+  for (const file of files) {
+    const sql = readFileSync(join(dir, file), 'utf8');
+    // INSERT INTO entities (...) VALUES ('<type>', ... の第1値を見る
+    for (const m of sql.matchAll(/INSERT\s+INTO\s+entities[\s\S]{0,200}?VALUES\s*\(\s*'([^']+)'/gi)) {
+      if (!KNOWN_ENTITY_TYPES.includes(m[1])) {
+        error(
+          'migration',
+          `migrations/${file}`,
+          `entities.type に "${m[1]}" を投入している。投稿APIが照合できるのは ${KNOWN_ENTITY_TYPES.join(' / ')} のみ。` +
+            'このままDBを作り直すと、ページは表示されるのに投稿だけ404になる',
+        );
+      }
+    }
+  }
+  finishCheck('migration', 'マイグレーション(entity type の整合)', files.length);
+}
+
 // ---------------------------------------------------------------------------
 // 実行
 // ---------------------------------------------------------------------------
 
-const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder'];
+/** src/lib/entities.ts の KNOWN_ENTITY_TYPES と functions/api/report.ts の SCHEMAS に対応 */
+const KNOWN_ENTITY_TYPES = ['certification'];
+
+const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'migration'];
 
 function report() {
   const errors = findings.filter((f) => f.severity === 'error');
@@ -692,6 +729,7 @@ async function main() {
   checkThin(pages);
   checkPhrases(pages);
   checkPlaceholders(pages);
+  checkMigrations();
 
   process.exit(report());
 }
