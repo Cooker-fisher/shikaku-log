@@ -217,17 +217,22 @@ async function checkSecrets() {
   // .env 等が存在するのに .gitignore に無い
   const gitignorePath = join(ROOT, '.gitignore');
   const gitignore = existsSync(gitignorePath) ? readFileSync(gitignorePath, 'utf8') : '';
+  const ignoreRules = gitignore
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l !== '' && !l.startsWith('#'));
+
+  /** name が .gitignore のいずれかの行(末尾 * のワイルドカードのみ対応)に一致するか */
+  const isIgnored = (name) =>
+    ignoreRules.some((rule) => {
+      const r = rule.replace(/^\//, '');
+      if (r.endsWith('*')) return name.startsWith(r.slice(0, -1));
+      return r === name;
+    });
+
   for (const name of SECRET_FILES) {
-    const p = join(ROOT, name);
-    if (!existsSync(p)) continue;
-    const covered =
-      gitignore.split('\n').some((l) => {
-        const t = l.trim();
-        return t === name || t === `${name}*` || (t.startsWith(name.split('.')[1] ? '' : '') && t === name);
-      }) ||
-      gitignore.includes(`${name}\n`) ||
-      gitignore.includes('.env.*');
-    if (!covered) {
+    if (!existsSync(join(ROOT, name))) continue;
+    if (!isIgnored(name)) {
       error('secrets', name, '秘匿値を持つファイルが .gitignore に含まれていない');
     }
   }

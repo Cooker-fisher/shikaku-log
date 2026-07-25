@@ -94,7 +94,23 @@ function isoSecondsAgo(seconds: number): string {
 
 // --- 本体 -------------------------------------------------------------------
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+/**
+ * ルーティングは onRequest 1本に集約する。
+ * onRequest と onRequestPost を併存させるとどちらが先に走るかが構成依存になるため、
+ * メソッド分岐はこの中で明示的に行う(定義していないメソッドは必ず 405)。
+ */
+export const onRequest: PagesFunction<Env> = async (context) => {
+  switch (context.request.method) {
+    case 'POST':
+      return handleReportPost(context);
+    case 'OPTIONS':
+      return new Response(null, { status: 204, headers: { Allow: 'POST, OPTIONS' } });
+    default:
+      return json({ ok: false, code: 'method_not_allowed' }, 405, { Allow: 'POST, OPTIONS' });
+  }
+};
+
+const handleReportPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
   // 1. 入口のチェック --------------------------------------------------------
