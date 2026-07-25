@@ -1,0 +1,371 @@
+---
+/**
+ * 合格報告の投稿フォーム。
+ *
+ * 設計の要点:
+ * - 入力項目は src/lib/validation.ts の CERTIFICATION_REPORT_SCHEMA と1対1で対応させる。
+ *   サーバ側が正であり、ここは入口を整えるだけ。クライアント検証は親切心であって防御ではない
+ * - **個人を特定できる項目を置かない**(氏名・受験番号・勤務先など)。掟の通り
+ * - 投稿直後に見返りを返す。ただし公開済みが20件未満なら順位は返らない(サーバ側が強制)
+ * - ボット対策: honeypot(website)と、フォーム表示からの経過秒数。どちらもサーバで判定する
+ */
+import { MIN_SAMPLE_SIZE } from '../config';
+
+interface Props {
+  entitySlug: string;
+  entityName: string;
+}
+const { entitySlug, entityName } = Astro.props;
+
+const thisYear = 2026;
+const years = Array.from({ length: 8 }, (_, i) => thisYear - i);
+---
+
+<section class="report" aria-labelledby="h-report" data-user-data-note>
+  <h2 id="h-report">合格報告を送る</h2>
+
+  <p class="intro">
+    {entityName}に合格した方の記録を集めています。
+    集まったデータは、これから受ける人が学習量の見当をつけるために使われます。
+    公開されるのは下記の入力内容だけで、氏名や連絡先は入力項目にありません。
+  </p>
+
+  <form id="report-form" novalidate data-slug={entitySlug}>
+    <div class="grid">
+      <div class="field">
+        <label for="rf-hours">総勉強時間 <span class="req">必須</span></label>
+        <div class="with-unit">
+          <input type="number" id="rf-hours" name="study_hours" min="1" max="10000" step="1" inputmode="numeric" required />
+          <span class="unit">時間</span>
+        </div>
+        <p class="hint">おおよそで構いません。合格までの合計です。</p>
+      </div>
+
+      <div class="field">
+        <label for="rf-attempts">受験回数 <span class="req">必須</span></label>
+        <div class="with-unit">
+          <input type="number" id="rf-attempts" name="attempts" min="1" max="20" step="1" inputmode="numeric" required />
+          <span class="unit">回目で合格</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="rf-year">合格した年 <span class="req">必須</span></label>
+        <select id="rf-year" name="passed_year" required>
+          <option value="">選択してください</option>
+          {years.map((y) => <option value={y}>{y}年</option>)}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="rf-months">学習期間</label>
+        <div class="with-unit">
+          <input type="number" id="rf-months" name="study_months" min="1" max="240" step="1" inputmode="numeric" />
+          <span class="unit">ヶ月</span>
+        </div>
+      </div>
+
+      <div class="field span2">
+        <label for="rf-method">学習方法</label>
+        <select id="rf-method" name="method">
+          <option value="">選択しない</option>
+          <option value="independent">独学</option>
+          <option value="online">通信講座・オンライン</option>
+          <option value="school">通学(予備校・専門学校)</option>
+          <option value="company">勤務先の研修</option>
+        </select>
+      </div>
+
+      <div class="field span2">
+        <label for="rf-materials">使った教材</label>
+        <input
+          type="text"
+          id="rf-materials"
+          name="materials"
+          maxlength="300"
+          placeholder="例: 〇〇テキスト, △△問題集"
+          autocomplete="off"
+        />
+        <p class="hint">カンマ区切りで最大5つまで。書名だけで構いません。</p>
+      </div>
+
+      <div class="field span2">
+        <label for="rf-comment">これから受ける人へ(任意)</label>
+        <textarea id="rf-comment" name="comment" rows="3" maxlength="300"></textarea>
+        <p class="hint">
+          最大300字。氏名・受験番号・勤務先など個人が特定できる内容は書かないでください。
+          書かれていた場合は公開せずに削除します。
+        </p>
+      </div>
+    </div>
+
+    <!-- ボット対策。人間には見えない。埋まっていればサーバ側で黙って捨てる -->
+    <div class="hp" aria-hidden="true">
+      <label for="rf-website">ウェブサイト(入力しないでください)</label>
+      <input type="text" id="rf-website" name="website" tabindex="-1" autocomplete="off" />
+    </div>
+
+    <p class="consent">
+      送信すると、上の内容が公開対象になります。内容を確認したうえで掲載します。
+      掲載後の削除は<a href="/contact/">お問い合わせ</a>から依頼できます。
+      詳しくは<a href="/privacy/">プライバシーポリシー</a>をご確認ください。
+    </p>
+
+    <button type="submit" class="submit" id="rf-submit">合格報告を送る</button>
+  </form>
+
+  <output id="rf-result" class="result" hidden aria-live="polite"></output>
+
+  <noscript>
+    <p class="hint">投稿の送信にはJavaScriptが必要です。</p>
+  </noscript>
+</section>
+
+<script define:vars={{ MIN_SAMPLE_SIZE }}>
+  const form = document.getElementById('report-form');
+  const result = document.getElementById('rf-result');
+  const button = document.getElementById('rf-submit');
+
+  if (form && result && button) {
+    // フォーム表示時刻。人間が読んで入力するには数秒かかる前提でサーバが判定する
+    const loadedAt = Date.now();
+
+    const show = (html, tone) => {
+      result.innerHTML = html;
+      result.dataset.tone = tone;
+      result.hidden = false;
+      result.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    };
+
+    const num = (name) => {
+      const raw = form.elements[name]?.value?.trim();
+      if (!raw) return undefined;
+      const v = Number(raw);
+      return Number.isFinite(v) ? v : undefined;
+    };
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const payload = {
+        study_hours: num('study_hours'),
+        attempts: num('attempts'),
+        passed_year: num('passed_year'),
+      };
+
+      const months = num('study_months');
+      if (months !== undefined) payload.study_months = months;
+
+      const method = form.elements['method']?.value;
+      if (method) payload.method = method;
+
+      const materialsRaw = form.elements['materials']?.value?.trim();
+      if (materialsRaw) {
+        payload.materials = materialsRaw
+          .split(/[,、]/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .slice(0, 5);
+      }
+
+      const comment = form.elements['comment']?.value?.trim();
+      if (comment) payload.comment = comment;
+
+      if (!payload.study_hours || !payload.attempts || !payload.passed_year) {
+        show('<p class="err">必須の3項目(総勉強時間・受験回数・合格した年)を入力してください。</p>', 'error');
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = '送信中…';
+
+      try {
+        const response = await fetch('/api/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            entity_type: 'certification',
+            entity_slug: form.dataset.slug,
+            form_loaded_at: loadedAt,
+            website: form.elements['website']?.value ?? '',
+            payload,
+          }),
+        });
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data?.ok) {
+          const message =
+            data?.code === 'too_fast'
+              ? '送信が早すぎます。少し待ってからもう一度お試しください。'
+              : data?.code === 'validation_failed'
+                ? '入力内容を確認してください。'
+                : data?.message ?? '送信できませんでした。時間をおいてお試しください。';
+          show(`<p class="err">${message}</p>`, 'error');
+          return;
+        }
+
+        // 公開済みが MIN_SAMPLE_SIZE 件未満なら順位は返らない(サーバ側の規則)
+        const positionLine = data.percentileMessage
+          ? `<p class="sub">${data.percentileMessage}</p>`
+          : `<p class="sub">公開済みの報告が${MIN_SAMPLE_SIZE}件に達したら、分布の中での位置を表示できるようになります。</p>`;
+
+        show(
+          `<p class="lead">合格おめでとうございます。</p>
+           <p class="sub">${data.message ?? '投稿を受け付けました。内容を確認したうえで掲載します。'}</p>
+           ${positionLine}`,
+          'ok',
+        );
+        form.reset();
+        button.textContent = '送信しました';
+      } catch {
+        show('<p class="err">通信に失敗しました。時間をおいてお試しください。</p>', 'error');
+      } finally {
+        if (button.textContent === '送信中…') button.textContent = '合格報告を送る';
+        button.disabled = false;
+      }
+    });
+  }
+</script>
+
+<style>
+  .report {
+    border: 1px dashed var(--color-userdata);
+    border-radius: var(--radius-md);
+    padding: var(--space-5) var(--space-4);
+    background: var(--color-userdata-bg);
+  }
+  .intro {
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    color: var(--color-text-muted);
+    margin: 0 0 var(--space-5);
+  }
+  .grid {
+    display: grid;
+    gap: var(--space-4);
+  }
+  @media (min-width: 40rem) {
+    .grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .span2 {
+      grid-column: 1 / -1;
+    }
+  }
+  .field {
+    display: grid;
+    gap: var(--space-2);
+    align-content: start;
+  }
+  label {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+  }
+  .req {
+    font-size: var(--fs-2xs);
+    color: var(--color-userdata-strong);
+    border: 1px solid currentColor;
+    border-radius: var(--radius-sm);
+    padding: 0 0.35em;
+    margin-left: 0.3em;
+    vertical-align: 0.1em;
+  }
+  input,
+  select,
+  textarea {
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text);
+    width: 100%;
+    min-height: 44px;
+  }
+  textarea {
+    min-height: 5.5rem;
+    resize: vertical;
+    font-variant-numeric: normal;
+  }
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--color-userdata);
+    outline-offset: 1px;
+  }
+  .with-unit {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .unit {
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+  .hint {
+    margin: 0;
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+  }
+  /* honeypot: 視覚的にもスクリーンリーダーからも外すが display:none は避ける
+     (一部のボットは display:none を検知して回避するため) */
+  .hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .consent {
+    margin: var(--space-5) 0 var(--space-4);
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+  }
+  .submit {
+    font: inherit;
+    font-weight: var(--fw-bold);
+    padding: var(--space-3) var(--space-5);
+    min-height: 48px;
+    width: 100%;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--color-userdata-strong);
+    color: #fff;
+    cursor: pointer;
+  }
+  .submit:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+  .result {
+    display: block;
+    margin-top: var(--space-4);
+    padding: var(--space-4);
+    border-radius: var(--radius-sm);
+    border-left: 4px solid var(--color-userdata);
+    background: var(--color-surface);
+  }
+  .result[data-tone='error'] {
+    border-left-color: var(--c-danger-500);
+  }
+  .result :global(.lead) {
+    margin: 0;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
+  }
+  .result :global(.sub) {
+    margin: var(--space-2) 0 0;
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+  }
+  .result :global(.err) {
+    margin: 0;
+    font-size: var(--fs-sm);
+  }
+</style>

@@ -13,6 +13,7 @@ import SourceLink from '../../components/SourceLink.astro';
 import StatTrendChart from '../../components/StatTrendChart.astro';
 import StructuredData from '../../components/StructuredData.astro';
 import StudyPaceTool from '../../components/StudyPaceTool.astro';
+import ReportForm from '../../components/ReportForm.astro';
 import { getSnapshot } from '../../lib/reportSummary';
 import {
   entities,
@@ -183,6 +184,8 @@ const canonical = new URL(Astro.url.pathname, origin).href;
         />
       </section>
     ))}
+
+    <ReportForm entitySlug={entity.slug} entityName={entity.short_name} />
 
     <section class="qa" aria-labelledby="h-qa">
       <h2 id="h-qa">試験のしくみ</h2>
