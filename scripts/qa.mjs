@@ -127,13 +127,20 @@ const SECRET_PATTERNS = [
     name: 'ハードコードされた鍵/トークン',
     re: /\b(api[_-]?key|secret|token|password|passwd|access[_-]?key|private[_-]?key|salt)\b\s*[:=]\s*["'][^"'\s]{16,}["']/i,
   },
-  // ASP / アフィリエイトID
-  { name: 'A8.net の媒体ID', re: /a8mat=[A-Za-z0-9._]{6,}/ },
-  { name: 'もしもアフィリエイトの a_id', re: /\ba_id=\d{5,}/ },
-  { name: 'Amazonアソシエイトタグ', re: /[?&]tag=[A-Za-z0-9_]+-2\d\b/ },
-  { name: 'バリューコマースの sid/pid', re: /\bsid=\d{6,}&pid=\d{6,}/ },
-  { name: 'アクセストレードの rk', re: /\brk=\d{10,}/ },
-  // D1 の database_id は意図的に検査対象から外している。
+  // 🔴 アフィリエイトの計測ID(a8mat / a_id / Amazonタグ 等)は**秘匿情報ではない**。
+  //
+  // 当初はこれらをERRORで止めていた。しかしアフィリエイトリンクは
+  // **公開HTMLに出力されなければ機能しない**(誰でもソースを見れば読める)。
+  // 秘匿扱いにすると、収益化した瞬間にデプロイが永久に止まる。
+  // 2026-07-26、最初の提携が承認されてリンクを設定する直前に気づいた。
+  //
+  // 漏れて困るのはA8のログイン情報やAPIトークンであって、計測IDではない。
+  // 計測IDを他人が使っても、成果はこちらに計上されるだけで損害にならない。
+  //
+  // 代わりに「アフィリエイトリンクにPR表記と rel が付いているか」を法務チェックで見る。
+  // 守るべきはIDの秘匿ではなく、**広告であることの明示**(ステマ規制)である。
+  //
+  // D1 の database_id も意図的に検査対象から外している。
   // 認証情報ではなくリソース識別子であり、単体では何も操作できない(操作には
   // アカウント認証が必要)。Cloudflare公式もコミットを前提としており、
   // 隠すとリポジトリからデプロイを再現できなくなる。
@@ -418,8 +425,10 @@ function checkLegal(pages) {
       // sponsored 属性の付け漏れ
       for (const a of affiliates) {
         const rel = (a.getAttribute('rel') ?? '').toLowerCase().split(/\s+/);
+        // WARNではなくERRORにする。付け忘れると広告リンクが自然リンクとして扱われ、
+        // 検索エンジンから手動対策を受けうる。付けるのは一瞬なので通す理由がない。
         if (!rel.includes('sponsored') && !rel.includes('nofollow')) {
-          warn('legal', where, `アフィリエイトリンクに rel="sponsored" が無い: ${a.getAttribute('href')}`);
+          error('legal', where, `アフィリエイトリンクに rel="sponsored" が無い: ${a.getAttribute('href')}`);
         }
       }
     }
