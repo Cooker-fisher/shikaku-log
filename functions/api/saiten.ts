@@ -243,9 +243,17 @@ async function handlePost(context: Parameters<PagesFunction<Env>>[0]): Promise<R
     return fail(423, 'not_open_yet', '試験終了後に受け付けを開始する');
   }
 
+  /**
+   * 受験区分は**統計として記録するだけ**で、解答の長さには影響させない。
+   *
+   * 「登録講習修了者は45問」であることは公表されているが、
+   * **どの5問が免除されるかは一次ソースで確認できていない**。番号を決め打ちすると
+   * 前提が違っていた場合に分布が壊れるため、全員から問1〜50を受け取り、
+   * 免除された問題は未回答('0')として送ってもらう。空欄は集計に数えない。
+   * これならどの5問が免除でも結果は正しい。
+   */
   const answerSet = body['answer_set'] === 'exempt' ? 'exempt' : 'general';
-  const expected = answerSet === 'exempt' ? exam.exempt : exam.general;
-  if (expected === null) return fail(400, 'bad_answer_set', 'この試験に免除区分はない');
+  const expected = exam.general;
 
   const answers = typeof body['answers'] === 'string' ? body['answers'] : '';
   if (answers.length !== expected || !/^[0-4]+$/.test(answers)) {

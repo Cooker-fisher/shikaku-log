@@ -64,8 +64,12 @@ const rows = Array.from({ length: questions }, (_, i) => i + 1);
     {questionsExempt !== null && (
       <fieldset class="mode">
         <legend>受験区分</legend>
-        <label><input type="radio" name="answer_set" value="general" checked /> 一般受験者({questions}問)</label>
-        <label><input type="radio" name="answer_set" value="exempt" /> {exemptLabel}({questionsExempt}問)</label>
+        <label><input type="radio" name="answer_set" value="general" checked /> 一般受験者</label>
+        <label><input type="radio" name="answer_set" value="exempt" /> {exemptLabel}</label>
+        <p class="mode-hint">
+          {exemptLabel}の方は、<strong>免除された問題を空欄のままにしてください。</strong>
+          空欄は集計に含めません。
+        </p>
       </fieldset>
     )}
 
@@ -122,7 +126,6 @@ const rows = Array.from({ length: questions }, (_, i) => i + 1);
     const statusEl = root.querySelector<HTMLElement>('[data-status]')!;
     const resultEl = root.querySelector<HTMLElement>('[data-result]')!;
     const submitBtn = root.querySelector<HTMLButtonElement>('.submit')!;
-    const items = [...root.querySelectorAll<HTMLElement>('.q')];
     const loadedAt = Date.now();
     const STORAGE_KEY = `saiten:${examKey}`;
 
@@ -131,15 +134,24 @@ const rows = Array.from({ length: questions }, (_, i) => i + 1);
         ? 'exempt'
         : 'general';
 
-    const limit = () => (answerSet() === 'exempt' && qExempt !== null ? qExempt : qGeneral);
+    /**
+     * **免除される問題の番号を前提にしない。**
+     *
+     * 「登録講習修了者は45問」であることは実施団体が公表しているが、
+     * **どの5問が免除されるのかは一次ソースで確認できなかった**(予備校の解説は
+     * 問46〜50としているが二次情報)。番号を決め打ちして特定の問を隠すと、
+     * 前提が違っていた場合に分布そのものが壊れる。
+     *
+     * そこで**全員に問1〜50を出し、免除された問題は空欄のままにしてもらう**。
+     * 空欄('0')は集計に数えないので、どの5問が免除でも結果は正しい。
+     * 受験区分は統計として記録するだけで、表示する問題数には影響させない。
+     *
+     * 前提を検証するのではなく、前提を不要にする。
+     */
+    const limit = () => qGeneral;
 
-    /** 免除区分では対象外の問を隠す。値は消さない(区分を戻したら復元される) */
     function applyMode() {
-      const n = limit();
-      items.forEach((li, i) => {
-        li.hidden = i >= n;
-      });
-      totalEl.textContent = String(n);
+      totalEl.textContent = String(limit());
       update();
     }
 
@@ -294,6 +306,13 @@ const rows = Array.from({ length: questions }, (_, i) => i + 1);
   .mode legend {
     font-size: var(--fs-xs);
     color: var(--color-text-muted);
+  }
+  .mode-hint {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
   }
   /* 進捗はスクロールしても常に見えるようにする。50問の途中で現在地を見失わせない */
   .progress {
