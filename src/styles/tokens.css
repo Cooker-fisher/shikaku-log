@@ -48,6 +48,18 @@
   --color-notice-border: var(--c-warn-500);
   --color-data-bg: var(--c-brand-050);
 
+/* --------------------------------------------------------------
+   出所を表す色(公式統計 / ユーザー投稿)
+   青と橙は色覚特性の影響を受けにくい組み合わせ。色だけに頼らず
+   形状(実線/破線・塗り/ハッチ)も必ず併用すること(ADR-009)。
+   -------------------------------------------------------------- */
+  --color-official: #2a6fb5;
+  --color-official-strong: #1b5288;
+  --color-official-bg: #eaf2fa;
+  --color-userdata: #c2571f;
+  --color-userdata-strong: #9a4416;
+  --color-userdata-bg: #fdf0e6;
+
   /* --- タイポグラフィ --------------------------------------------------- */
   --font-sans:
     -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic UI', 'Meiryo',
@@ -129,6 +141,13 @@
     --color-notice-bg: #2a2117;
     --color-notice-border: #b8853a;
     --color-data-bg: #14251f;
+
+    --color-official: #6fa9e0;
+    --color-official-strong: #9cc6ee;
+    --color-official-bg: #14212e;
+    --color-userdata: #e08b52;
+    --color-userdata-strong: #efab7c;
+    --color-userdata-bg: #2a1d13;
   }
 }
 

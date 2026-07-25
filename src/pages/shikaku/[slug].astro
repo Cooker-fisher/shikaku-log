@@ -1,0 +1,423 @@
+---
+/**
+ * 資格詳細ページ。全300ページの原型。
+ *
+ * 構成は ADR-009 の決定に従う:
+ *  - ベースは C案(ツール型)。ただし第1層(公式情報)は投稿がゼロでも単体で成立させる(ADR-007)
+ *  - 本文は B案から移植した「受験者の疑問順」。各節は結論1文 → 数字 → 出典 で閉じる
+ *  - サマリーは A案から移植したタイル + 推移チャート
+ *  - **統計・公式情報は全てサーバ側で静的HTMLとして出力する。**JS に依存させない(ADR-009 必須要件)
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SourceLink from '../../components/SourceLink.astro';
+import StatTrendChart from '../../components/StatTrendChart.astro';
+import {
+  entities,
+  statBlocks,
+  seriesLabel,
+  latestSeries,
+  passRateTrend,
+  sourceFor,
+  type Entity,
+} from '../../lib/entities';
+
+export function getStaticPaths() {
+  return entities.map((entity) => ({
+    params: { slug: entity.slug },
+    props: { entity },
+  }));
+}
+
+interface Props {
+  entity: Entity;
+}
+const { entity } = Astro.props;
+
+const blocks = statBlocks(entity);
+const primary = blocks[0];
+const latest = primary ? latestSeries(primary.stats) : undefined;
+const trend = primary ? passRateTrend(primary.stats) : null;
+
+const num = new Intl.NumberFormat('ja-JP');
+
+/** 合格率の幅。「例年どのくらいか」を1行で答えるために使う */
+const rates = primary
+  ? primary.stats.series.map((s) => s.pass_rate).filter((r): r is number => typeof r === 'number')
+  : [];
+const rateMin = rates.length ? Math.min(...rates) : null;
+const rateMax = rates.length ? Math.max(...rates) : null;
+
+const title = `${entity.name}の合格率・受験者数データ`;
+const description = latest
+  ? `${entity.name}の公式統計。${seriesLabel(latest)}の受験者数は${num.format(latest.examinees ?? 0)}人、合格率は${latest.pass_rate}%。直近5年の推移と試験制度を実施団体の公表資料からまとめています。`
+  : `${entity.name}の試験制度と公式統計をまとめています。`;
+
+/** 出典一覧。項目ごとに異なるURLを持つため重複を除いて並べる */
+const sourceEntries = Object.entries(entity.exam.source_urls ?? {});
+const uniqueSources = [...new Set([...sourceEntries.map(([, url]) => url), ...blocks.map((b) => b.stats.source_url)])];
+---
+
+<BaseLayout title={title} description={description} ogType="article">
+  <article class="page">
+    <nav class="crumbs" aria-label="パンくず">
+      <a href="/">ホーム</a> <span aria-hidden="true">/</span>
+      <span>{entity.category}</span> <span aria-hidden="true">/</span>
+      <span aria-current="page">{entity.short_name}</span>
+    </nav>
+
+    <header class="hd">
+      <h1>{entity.name}</h1>
+      <p class="lede">
+        実施団体が公表している受験者数・合格率と、試験制度の要点をまとめています。
+        数値はすべて出典を明記しています。
+      </p>
+      <ul class="meta">
+        <li>実施: <a href={entity.authority.url} rel="noopener">{entity.authority.name}</a></li>
+        <li>{entity.category}</li>
+      </ul>
+    </header>
+
+    {primary && latest && (
+      <section class="summary" aria-labelledby="h-summary">
+        <h2 id="h-summary">数字で見る{entity.short_name}</h2>
+        <p class="src-note">
+          このセクションの数値はすべて<strong>実施団体の公表資料</strong>によるものです。
+          利用者の投稿データは含みません。
+        </p>
+        <div class="tiles">
+          <div class="tile official">
+            <span class="tile-label">受験者数</span>
+            <span class="tile-value">{num.format(latest.examinees ?? 0)}<span class="unit">人</span></span>
+            <span class="tile-sub">{seriesLabel(latest)}</span>
+          </div>
+          <div class="tile official">
+            <span class="tile-label">合格率</span>
+            <span class="tile-value">{latest.pass_rate}<span class="unit">%</span></span>
+            <span class="tile-sub">
+              {trend && trend.diff !== 0
+                ? `直近5期平均より${trend.diff > 0 ? '+' : ''}${trend.diff}pt`
+                : seriesLabel(latest)}
+            </span>
+          </div>
+          {entity.exam.fee_yen !== null && (
+            <div class="tile official">
+              <span class="tile-label">受験手数料</span>
+              <span class="tile-value">{num.format(entity.exam.fee_yen)}<span class="unit">円</span></span>
+              <span class="tile-sub">{entity.exam.fee_note ? '改定あり(下記参照)' : '公式発表'}</span>
+            </div>
+          )}
+          {entity.exam.duration_minutes !== null && (
+            <div class="tile official">
+              <span class="tile-label">試験時間</span>
+              <span class="tile-value">{entity.exam.duration_minutes}<span class="unit">分</span></span>
+              <span class="tile-sub">{entity.exam.questions ? `${entity.exam.questions}問` : '公式発表'}</span>
+            </div>
+          )}
+        </div>
+      </section>
+    )}
+
+    {blocks.map((block) => (
+      <section class="stats" aria-labelledby={`h-${block.key}`}>
+        <h2 id={`h-${block.key}`}>
+          {blocks.length > 1 ? `${block.label}の受験者数と合格率` : '受験者数と合格率の推移'}
+        </h2>
+
+        {rateMin !== null && rateMax !== null && block.key === primary?.key && (
+          <p class="finding">
+            直近{block.stats.series.length}期の合格率は<strong>{rateMin}%〜{rateMax}%</strong>の範囲で推移しています。
+            {trend && Math.abs(trend.diff) >= 1
+              ? `直近は平均より${trend.diff > 0 ? '高め' : '低め'}です。`
+              : '大きな変動はありません。'}
+          </p>
+        )}
+
+        <StatTrendChart series={block.stats.series} />
+
+        <div class="table-wrap">
+          <table>
+            <caption>{block.stats.unit}</caption>
+            <thead>
+              <tr>
+                <th scope="col">{block.stats.series[0]?.session ? '回次' : '年度'}</th>
+                <th scope="col" class="n">申込者数</th>
+                <th scope="col" class="n">受験者数</th>
+                <th scope="col" class="n">合格者数</th>
+                <th scope="col" class="n">合格率</th>
+              </tr>
+            </thead>
+            <tbody>
+              {block.stats.series.map((s) => (
+                <tr>
+                  <th scope="row">
+                    {seriesLabel(s)}
+                    {s.date && <span class="date">{s.date}</span>}
+                  </th>
+                  <td class="n">{s.applicants !== null ? num.format(s.applicants) : '—'}</td>
+                  <td class="n">{s.examinees !== null ? num.format(s.examinees) : '—'}</td>
+                  <td class="n">{s.passers !== null ? num.format(s.passers) : '—'}</td>
+                  <td class="n strong">{s.pass_rate !== null ? `${s.pass_rate}%` : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {block.stats.notes && <p class="notes">{block.stats.notes}</p>}
+
+        <SourceLink
+          href={block.stats.source_url}
+          label={`${entity.authority.name} ${block.label}`}
+          accessedAt={block.stats.retrieved_at}
+        />
+      </section>
+    ))}
+
+    <section class="qa" aria-labelledby="h-qa">
+      <h2 id="h-qa">試験のしくみ</h2>
+
+      <div class="q">
+        <h3>誰でも受験できますか</h3>
+        <p>{entity.exam.eligibility}</p>
+        {sourceFor(entity, 'eligibility') && (
+          <SourceLink href={sourceFor(entity, 'eligibility')!} label="受験資格(公式)" accessedAt={entity.exam.retrieved_at} />
+        )}
+      </div>
+
+      <div class="q">
+        <h3>どんな形式の試験ですか</h3>
+        <p>{entity.exam.format}</p>
+        {sourceFor(entity, 'format') && (
+          <SourceLink href={sourceFor(entity, 'format')!} label="試験の方法(公式)" accessedAt={entity.exam.retrieved_at} />
+        )}
+      </div>
+
+      <div class="q">
+        <h3>何点取れば合格ですか</h3>
+        <p>{entity.exam.passing_criteria}</p>
+        {sourceFor(entity, 'passing_criteria') && (
+          <SourceLink href={sourceFor(entity, 'passing_criteria')!} label="合格基準(公式)" accessedAt={entity.exam.retrieved_at} />
+        )}
+      </div>
+
+      <div class="q">
+        <h3>いつ受験できますか</h3>
+        <p>{entity.exam.frequency}</p>
+        {entity.schedule_url && (
+          <p class="aside">
+            <a href={entity.schedule_url} rel="noopener">試験日程の確認ページ</a>
+            {entity.schedule_url_note && <span class="hint">{entity.schedule_url_note}</span>}
+          </p>
+        )}
+      </div>
+
+      <div class="q">
+        <h3>合否はいつ、どう分かりますか</h3>
+        <p>{entity.exam.result_announcement}</p>
+        {sourceFor(entity, 'result_announcement') && (
+          <SourceLink href={sourceFor(entity, 'result_announcement')!} label="合格発表(公式)" accessedAt={entity.exam.retrieved_at} />
+        )}
+      </div>
+
+      {entity.exam.fee_yen !== null && (
+        <div class="q">
+          <h3>費用はいくらかかりますか</h3>
+          <p>
+            受験手数料は{num.format(entity.exam.fee_yen)}円です。
+            {entity.exam.fee_note}
+          </p>
+          {sourceFor(entity, 'fee_yen') && (
+            <SourceLink href={sourceFor(entity, 'fee_yen')!} label="受験手数料(公式)" accessedAt={entity.exam.retrieved_at} />
+          )}
+        </div>
+      )}
+    </section>
+
+    <section class="sources" aria-labelledby="h-sources">
+      <h2 id="h-sources">このページの出典</h2>
+      <p>
+        掲載している数値と制度の説明は、すべて下記の公表資料にもとづいています。
+        取得日は{entity.exam.retrieved_at}です。試験制度は改定されることがあるため、
+        出願前には必ず実施団体の最新の案内を確認してください。
+      </p>
+      <ul>
+        {uniqueSources.map((url) => (
+          <li><a href={url} rel="noopener nofollow">{url}</a></li>
+        ))}
+      </ul>
+      {entity.notes && <p class="notes">{entity.notes}</p>}
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: var(--space-4);
+  }
+  .crumbs {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-4);
+  }
+  .hd h1 {
+    font-size: var(--fs-2xl);
+    line-height: var(--lh-heading);
+    margin: 0 0 var(--space-3);
+  }
+  .lede {
+    color: var(--color-text-muted);
+    margin: 0 0 var(--space-3);
+  }
+  .meta {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+
+  section {
+    margin-top: var(--space-7);
+  }
+  h2 {
+    font-size: var(--fs-xl);
+    line-height: var(--lh-heading);
+    margin: 0 0 var(--space-3);
+  }
+  h3 {
+    font-size: var(--fs-md);
+    margin: 0 0 var(--space-2);
+  }
+
+  .src-note,
+  .finding {
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+    margin: 0 0 var(--space-4);
+  }
+  .finding {
+    color: var(--color-text);
+    background: var(--color-official-bg);
+    border-left: 3px solid var(--color-official);
+    padding: var(--space-3) var(--space-4);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: var(--space-3);
+  }
+  .tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+  /* 公式統計は左罫線で出所を示す。ユーザー投稿は別色・破線にして混同を防ぐ */
+  .tile.official {
+    border-left: 4px solid var(--color-official);
+  }
+  .tile-label {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+  .tile-value {
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-bold);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+  }
+  .tile-value .unit {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-normal);
+    margin-left: 0.15em;
+  }
+  .tile-sub {
+    font-size: var(--fs-2xs);
+    color: var(--color-text-muted);
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    margin: var(--space-4) 0 var(--space-3);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+  caption {
+    text-align: left;
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    padding-bottom: var(--space-2);
+  }
+  th,
+  td {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+    white-space: nowrap;
+  }
+  thead th {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    font-weight: var(--fw-medium);
+  }
+  .n {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  td.strong {
+    font-weight: var(--fw-bold);
+  }
+  .date {
+    display: block;
+    font-size: var(--fs-2xs);
+    color: var(--color-text-muted);
+    font-weight: var(--fw-normal);
+  }
+
+  .q {
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .q p {
+    margin: 0 0 var(--space-2);
+    line-height: var(--lh-normal);
+  }
+  .aside {
+    font-size: var(--fs-sm);
+  }
+  .hint {
+    display: block;
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+
+  .notes {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+  }
+  .sources ul {
+    padding-left: 1.2em;
+    font-size: var(--fs-xs);
+    word-break: break-all;
+  }
+  .sources li {
+    margin-bottom: var(--space-2);
+  }
+</style>

@@ -1,0 +1,199 @@
+---
+/**
+ * 受験者数(棒)と合格率(折れ線)の推移チャート。
+ *
+ * 設計方針(ADR-009 でA案から移植):
+ * - チャートは「形」、正確な値は隣接する表で読ませる。直接ラベルは最新年と極値のみ
+ * - 公式統計と投稿データを同一チャートに混在させない(青と緑は第三色覚で分離が弱いため)
+ * - JS を使わずサーバ側で SVG を生成する。JS 無効でもクロール時でも意味が保たれる(ADR-009 の必須要件)
+ */
+import type { StatSeries } from '../lib/entities';
+import { seriesLabel } from '../lib/entities';
+
+interface Props {
+  series: StatSeries[];
+  /** 古い順に描くため、呼び出し側が新しい順で渡す場合は反転する */
+  newestFirst?: boolean;
+}
+const { series, newestFirst = true } = Astro.props;
+
+const rows = (newestFirst ? [...series].reverse() : series).filter(
+  (s) => typeof s.examinees === 'number' && typeof s.pass_rate === 'number',
+);
+
+const W = 640;
+const H = 260;
+const PAD = { top: 20, right: 44, bottom: 44, left: 52 };
+const innerW = W - PAD.left - PAD.right;
+const innerH = H - PAD.top - PAD.bottom;
+
+const maxExaminees = Math.max(...rows.map((r) => r.examinees as number));
+const maxRate = Math.max(...rows.map((r) => r.pass_rate as number));
+// 合格率の軸は 0 起点。棒と二重軸で誤読させないため上限に余白を取る
+const rateAxisMax = Math.ceil((maxRate * 1.35) / 5) * 5;
+
+const bandW = innerW / rows.length;
+const barW = Math.min(48, bandW * 0.52);
+
+const bars = rows.map((r, i) => {
+  const h = ((r.examinees as number) / maxExaminees) * innerH;
+  return {
+    x: PAD.left + bandW * i + (bandW - barW) / 2,
+    y: PAD.top + innerH - h,
+    w: barW,
+    h,
+    label: seriesLabel(r),
+    examinees: r.examinees as number,
+  };
+});
+
+const points = rows.map((r, i) => ({
+  x: PAD.left + bandW * i + bandW / 2,
+  y: PAD.top + innerH - ((r.pass_rate as number) / rateAxisMax) * innerH,
+  rate: r.pass_rate as number,
+}));
+
+const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+
+// 直接ラベルは最新と、合格率の最大・最小だけに絞る
+const lastIdx = rows.length - 1;
+const maxRateIdx = points.reduce((best, p, i) => (p.rate > points[best].rate ? i : best), 0);
+const minRateIdx = points.reduce((best, p, i) => (p.rate < points[best].rate ? i : best), 0);
+const labeled = new Set([lastIdx, maxRateIdx, minRateIdx]);
+
+const fmt = new Intl.NumberFormat('ja-JP');
+const chartId = `chart-${Math.abs(rows.map((r) => r.examinees).join('').split('').reduce((a, c) => a + c.charCodeAt(0), 0))}`;
+---
+
+<figure class="trend">
+  <svg
+    viewBox={`0 0 ${W} ${H}`}
+    role="img"
+    aria-labelledby={`${chartId}-title`}
+    preserveAspectRatio="xMidYMid meet"
+  >
+    <title id={`${chartId}-title`}>
+      受験者数と合格率の推移。{rows.map((r) => `${seriesLabel(r)}は受験者${fmt.format(r.examinees as number)}人・合格率${r.pass_rate}%`).join('、')}。
+    </title>
+
+    <!-- 横のガイド線 -->
+    {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+      <line
+        x1={PAD.left}
+        x2={W - PAD.right}
+        y1={PAD.top + innerH * t}
+        y2={PAD.top + innerH * t}
+        class="grid"
+        aria-hidden="true"
+      />
+    ))}
+
+    <!-- 受験者数(棒) -->
+    {bars.map((b) => <rect x={b.x} y={b.y} width={b.w} height={b.h} class="bar" aria-hidden="true" />)}
+
+    <!-- 合格率(折れ線) -->
+    <path d={linePath} class="line" fill="none" aria-hidden="true" />
+    {points.map((p, i) => (
+      <circle cx={p.x} cy={p.y} r={labeled.has(i) ? 5 : 3.5} class="dot" aria-hidden="true" />
+    ))}
+
+    <!-- 直接ラベル(最新・最大・最小のみ) -->
+    {points.map((p, i) =>
+      labeled.has(i) ? (
+        <text x={p.x} y={p.y - 12} class="pt-label" text-anchor="middle" aria-hidden="true">
+          {p.rate}%
+        </text>
+      ) : null,
+    )}
+
+    <!-- X軸ラベル -->
+    {bars.map((b) => (
+      <text x={b.x + b.w / 2} y={H - PAD.bottom + 20} class="axis" text-anchor="middle" aria-hidden="true">
+        {b.label.replace(/度$/, '')}
+      </text>
+    ))}
+
+    <!-- Y軸(受験者数) -->
+    <text x={PAD.left - 8} y={PAD.top + 4} class="axis" text-anchor="end" aria-hidden="true">
+      {fmt.format(Math.round(maxExaminees / 10000))}万人
+    </text>
+    <text x={PAD.left - 8} y={PAD.top + innerH} class="axis" text-anchor="end" aria-hidden="true">0</text>
+
+    <!-- Y軸(合格率) -->
+    <text x={W - PAD.right + 8} y={PAD.top + 4} class="axis rate" aria-hidden="true">{rateAxisMax}%</text>
+    <text x={W - PAD.right + 8} y={PAD.top + innerH} class="axis rate" aria-hidden="true">0%</text>
+  </svg>
+
+  <figcaption class="legend">
+    <span class="key"><span class="swatch bar-swatch" aria-hidden="true"></span>受験者数(左軸)</span>
+    <span class="key"><span class="swatch line-swatch" aria-hidden="true"></span>合格率(右軸・0%起点)</span>
+  </figcaption>
+</figure>
+
+<style>
+  .trend {
+    margin: 0;
+  }
+  svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .grid {
+    stroke: var(--color-border);
+    stroke-width: 1;
+  }
+  .bar {
+    fill: var(--color-official);
+    opacity: 0.85;
+  }
+  .line {
+    stroke: var(--color-official-strong);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+  }
+  .dot {
+    fill: var(--color-surface);
+    stroke: var(--color-official-strong);
+    stroke-width: 2.5;
+  }
+  .pt-label {
+    fill: var(--color-text);
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .axis {
+    fill: var(--color-text-muted);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .axis.rate {
+    text-anchor: start;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+  .key {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .swatch {
+    width: 1rem;
+    height: 0.65rem;
+    border-radius: 2px;
+  }
+  .bar-swatch {
+    background: var(--color-official);
+  }
+  .line-swatch {
+    height: 0;
+    border-top: 2.5px solid var(--color-official-strong);
+  }
+</style>

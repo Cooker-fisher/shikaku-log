@@ -1,8 +1,18 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE_NAME, MIN_SAMPLE_SIZE } from '../config';
+import { entities, statBlocks, latestSeries, seriesLabel } from '../lib/entities';
 
-// Wave 0 の仮トップ。資格ページが生成され次第、一覧をここに差し込む。
+const num = new Intl.NumberFormat('ja-JP');
+
+// 受験者数の多い順に並べる。孤立ページを作らないため全資格をここから必ずリンクする。
+const cards = entities
+  .map((entity) => {
+    const block = statBlocks(entity)[0];
+    return { entity, latest: block ? latestSeries(block.stats) : undefined };
+  })
+  .sort((a, b) => (b.latest?.examinees ?? 0) - (a.latest?.examinees ?? 0));
+
 const title = `${SITE_NAME} — 資格の受験者数・合格率と合格報告のデータベース`;
 const description =
   '資格試験の受験者数・合格率の推移と試験日程を公式発表から集約し、合格者の自己申告データ(勉強時間・使用教材)を併せて掲載するデータベース。';
@@ -58,11 +68,98 @@ const description =
       「おそらくこの程度」という補間はしない。
     </p>
 
-    <h2>現在の状況</h2>
+    <h2>掲載中の資格</h2>
+
+    <ul class="shikaku-list">
+      {cards.map(({ entity, latest }) => (
+        <li>
+          <a href={`/shikaku/${entity.slug}/`} class="shikaku-link">
+            <span class="shikaku-name">{entity.name}</span>
+            <span class="shikaku-cat">{entity.category}</span>
+          </a>
+          {latest && (
+            <dl class="shikaku-stats">
+              <div>
+                <dt>受験者数</dt>
+                <dd class="num">{num.format(latest.examinees ?? 0)}人</dd>
+              </div>
+              <div>
+                <dt>合格率</dt>
+                <dd class="num">{latest.pass_rate}%</dd>
+              </div>
+              <div>
+                <dt>集計</dt>
+                <dd class="muted">{seriesLabel(latest)}</dd>
+              </div>
+            </dl>
+          )}
+        </li>
+      ))}
+    </ul>
 
     <p>
-      準備中。対象資格の選定と公式統計の収集を進めている。
+      掲載する資格は順次増やす。受験者数の多いものから、実施団体の公表資料で数値を確認できたものだけを載せている。
       掲載方針の詳細は<a href="/about/">このサイトについて</a>に書いている。
     </p>
   </div>
 </BaseLayout>
+
+<style>
+  .shikaku-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: var(--space-3);
+  }
+  .shikaku-list > li {
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-official);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    background: var(--color-surface);
+  }
+  .shikaku-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    text-decoration: none;
+  }
+  .shikaku-name {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
+    color: var(--color-link);
+  }
+  .shikaku-link:hover .shikaku-name {
+    text-decoration: underline;
+  }
+  .shikaku-cat {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+  .shikaku-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-5);
+    margin: var(--space-3) 0 0;
+  }
+  .shikaku-stats > div {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+  .shikaku-stats dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+  .shikaku-stats dd {
+    margin: 0;
+    font-weight: var(--fw-bold);
+    font-variant-numeric: tabular-nums;
+  }
+  .shikaku-stats dd.muted {
+    font-weight: var(--fw-normal);
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+  }
+</style>

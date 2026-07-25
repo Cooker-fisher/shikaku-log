@@ -399,10 +399,18 @@ function checkLegal(pages) {
 
     const bodyEl = page.doc.querySelector('body');
     const declaredUgc = bodyEl?.getAttribute('data-has-user-data') === 'true';
+
+    // テキスト検出はフラグ付け忘れを拾う安全網。ただし「投稿データは含みません」のような
+    // 否定文で誤検知するため、該当語を含む一文が否定で閉じている場合は数えない。
+    const sentences = page.mainText.split(/[。\n]/);
+    const textSignalsUgc = sentences.some(
+      (sentence) =>
+        UGC_SIGNALS.some((re) => re.test(sentence)) &&
+        !/(含みま?せん|ありません|ではありません|掲載していません|使用していません)/.test(sentence),
+    );
+
     const looksUgc =
-      declaredUgc ||
-      page.doc.querySelector('[data-user-data-note]') !== null ||
-      UGC_SIGNALS.some((re) => re.test(page.mainText));
+      declaredUgc || page.doc.querySelector('[data-user-data-note]') !== null || textSignalsUgc;
 
     if (looksUgc) {
       if (!/自己申告/.test(page.mainText)) {
