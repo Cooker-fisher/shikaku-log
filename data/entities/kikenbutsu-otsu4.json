@@ -16,8 +16,17 @@
     "duration_minutes": 120,
     "passing_criteria": "甲種、乙種及び丙種とも、試験科目ごとの成績がそれぞれ60%以上の方を合格とする(試験科目の一部免除を受けた受験者はその科目を除く)。",
     "frequency": "都道府県ごと(消防試験研究センター各支部・中央試験センター)に実施されており、実施回数は都道府県により異なる。公式サイト・FAQでも「都道府県ごとに行われており、年度途中で試験日程等の変更もある」とされるのみで、全国共通の「年◯回」という単一の数値は公表されていない。詳細は試験日程[全国一覧]または受験予定の都道府県支部で個別に確認する必要がある。",
-    "result_announcement": "支部ごとに発表予定日を設定し、当日正午からセンターホームページ上に合格者受験番号を掲示するとともに、各支部窓口・掲示板でも公示、受験者全員に「試験結果通知書」を郵送する。試験日から発表までの標準日数(例:「◯日後」)は公式サイトに一律の記載がなく、試験ごと・支部ごとに発表予定日が個別に定められる。なお公式FAQによれば、ホームページ発表後、地域差はあるが2~3日後には試験結果通知書が受験者の手元に届く。",
-    "source_url": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
+    "result_announcement": "支部別に合格者の受験番号を公示するとともに、受験者には郵便ハガキで合否の結果を直接通知する。試験日から発表までの標準日数は公式サイトに一律の記載がなく、試験ごと・支部ごとに発表予定日が個別に定められる。",
+    "source_urls": {
+      "eligibility": "https://www.shoubo-shiken.or.jp/kikenbutsu/qualified01.html",
+      "fee_yen": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
+      "format": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
+      "questions": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/subject.html",
+      "duration_minutes": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/subject.html",
+      "passing_criteria": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
+      "result_announcement": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html"
+    },
+    "fee_note": "2024年5月1日に4,600円から5,300円へ改定済み(甲種7,200円/丙種4,200円)。",
     "retrieved_at": "2026-07-25"
   },
   "official_stats": {
@@ -71,7 +80,7 @@
     ],
     "source_url": "https://www.shoubo-shiken.or.jp/result/",
     "retrieved_at": "2026-07-25",
-    "notes": "各年度ページの表は「甲種/乙種(1~6類・乙種計)/丙種/合計」のクロス集計表であり、乙種第4類の列(４類)を個別に抽出して記録した(乙種計との合算検算により整合性を確認済み)。項目名は原文どおり「申請者」(=申込者)「受験者」「合格者」「合格率」。令和7年度(2025年4月~2026年3月)は年度終了後の確定値。令和3~7年度の5年度分すべてを第4類単独の粒度で取得できた。",
+    "notes": "各年度ページの表は「甲種/乙種(1~6類・乙種計)/丙種/合計」のクロス集計表であり、乙種第4類の列(４類)を個別に抽出して記録した(乙種計との合算検算により整合性を確認済み)。項目名は原文どおり「申請者」(=申込者)「受験者」「合格者」「合格率」。令和7年度は令和7年4月~令和8年3月を指す(公式ページに明記)。なお公式サイトに確定値/暫定値の区別を示す注記はないため、確定値であるとは断定していない。令和3~7年度の5年度分すべてを第4類単独の粒度で取得できた。全5系列について合格者数÷受験者数と合格率が小数第1位まで一致することを2名の担当が独立に検算済み。",
     "unit_labels": {
       "applicants": "申請者数(申込者数)",
       "examinees": "受験者数(実際に受験した人数)",
@@ -80,5 +89,12 @@
     }
   },
   "schedule_url": "https://shinsei.shoubo-shiken.or.jp/shoubou_ia/iajs9001.do?menjo_kbn=1",
-  "notes": "確認できなかった項目: (1) 試験の実施頻度について、都道府県ごとの「年間◯回」という具体的な回数は公式サイトに一律の記載がなく確認できず(都道府県ごとに異なるとのみ記載)。(2) 合格発表について、試験日から発表日までの標準日数(◯日後、といった具体的な日数)は公式サイトに記載がなく確認できず(支部ごと・試験ごとに個別の発表予定日が定められる方式のため)。上記2点はnullにせず、公式サイトで確認できた「都道府県ごとに異なる」という定性的な事実をfrequency/result_announcementに記載した。数値データ(申請者数・受験者数・合格者数・合格率)は令和3~7年度の5年度分すべて、消防試験研究センター公式サイトの年度別ページ(/result/配下)から乙種第4類単独の数値を取得し、乙種計との合算検算で整合性を確認した。"
+  "schedule_url_note": "このURLは試験日程の一覧表ではなく検索フォーム画面。都道府県を選んで日程を照会する形式である点に注意。",
+  "verification": {
+    "collected_by": "collector-stats",
+    "verified_by": "fact-checker(独立に一次ソースを再取得)",
+    "verified_at": "2026-07-25",
+    "result": "重大な誤りなし。指摘を受けて result_announcement の文言を出典の原文に合わせ、出典URLを項目ごとに分割し、確定値の断定を削除した。"
+  },
+  "notes": "確認できなかった項目: (1) 試験の実施頻度について、都道府県ごとの「年間◯回」という具体的な回数は公式サイトに一律の記載がない(都道府県ごとに異なるとのみ記載)。(2) 合格発表について、試験日から発表日までの標準日数は公式サイトに記載がない(支部ごと・試験ごとに個別の発表予定日が定められる方式のため)。上記2点はnullにせず、公式サイトで確認できた定性的な事実のみをfrequency/result_announcementに記載している。"
 }

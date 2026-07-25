@@ -268,9 +268,3 @@ const handleReportPost: PagesFunction<Env> = async (context) => {
   });
 };
 
-/**
- * POST 以外は Pages が自動で 405 を返す(ハンドラを定義しないことが閉じる意思表示)。
- * OPTIONS だけは明示的に許可メソッドを返す。
- */
-export const onRequestOptions: PagesFunction<Env> = async () =>
-  new Response(null, { status: 204, headers: { Allow: 'POST, OPTIONS' } });
