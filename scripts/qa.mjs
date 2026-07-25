@@ -70,6 +70,21 @@ const UGC_SIGNALS = [/合格報告/, /投稿データ/, /勉強時間の(分布|
  */
 const POLICY_ROUTES = new Set(['/privacy/', '/contact/', '/about/']);
 
+/**
+ * 検査から除外するパス。
+ * 所有権確認ファイル(Search Console等)は中身が1行と決まっており、
+ * 薄いページ・SEO・孤立ページの検査対象にすると必ず落ちる。
+ * これらは我々が書いたページではなく、外部サービスが指定した形式のファイル。
+ */
+const EXCLUDED_ROUTE_PATTERNS = [
+  /^\/google[0-9a-f]{16}\.html$/, // Google Search Console の所有権確認
+  /^\/BingSiteAuth\.xml$/,
+];
+
+function isExcludedRoute(route) {
+  return EXCLUDED_ROUTE_PATTERNS.some((re) => re.test(route));
+}
+
 /** 本文の下限。これ未満は scaled content abuse として扱う */
 const THIN_ERROR_CHARS = 250;
 const THIN_WARN_CHARS = 600;
@@ -275,7 +290,10 @@ function extractText(html) {
 
 async function loadPages() {
   if (!existsSync(DIST)) return null;
-  const files = (await walk(DIST)).filter((f) => f.endsWith('.html'));
+  const files = (await walk(DIST))
+    .filter((f) => f.endsWith('.html'))
+    // 所有権確認ファイルなど、我々が書いたページでないものは全検査から除く
+    .filter((f) => !isExcludedRoute(routeOf(f)));
   return files.map((file) => {
     const html = readFileSync(file, 'utf8');
     const doc = parse(html);
@@ -514,8 +532,17 @@ function checkLinks(pages) {
 // 5. 薄いページ
 // ---------------------------------------------------------------------------
 
+/** noindex 指定のページか(検索結果に出ないページは薄さを問わない) */
+function isNoindex(page) {
+  const meta = page.doc.querySelector('meta[name="robots"]');
+  return /noindex/i.test(meta?.getAttribute('content') ?? '');
+}
+
 function checkThin(pages) {
   for (const page of pages) {
+    // noindex のページ(404など)は検索結果に出ないため、薄さは問題にならない。
+    // 薄いページ検査は「量産ページとしてインデックスされること」を防ぐためのもの。
+    if (isNoindex(page)) continue;
     const len = page.mainText.replace(/\s/g, '').length;
     if (len < THIN_ERROR_CHARS) {
       error('thin', page.route, `本文が ${len} 文字しかない(最低 ${THIN_ERROR_CHARS} 文字)`);
