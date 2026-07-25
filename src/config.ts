@@ -26,6 +26,26 @@ export const FOOTER_LINKS: ReadonlyArray<{ href: string; label: string }> = [
 ];
 
 /** アフィリエイトリンクとして扱うドメイン(qa.mjs と共有する概念)。 */
+
+/**
+ * 資格ごとの講座リンク(アフィリエイト)。
+ *
+ * **ASP審査に通るまで空のままにする。**空にしておけば CourseCta は何も描画しない。
+ * 審査前に空の宣伝枠を置くのは読者に対して不誠実であり、中身のない領域が増えるだけ。
+ *
+ * ⚠️ 実URLに含まれるASPのIDは秘匿情報。ここに直書きせず、
+ *    Cloudflare の環境変数から注入すること(qa.mjs がIDらしき文字列を検出して公開を止める)。
+ */
+export interface CourseLink {
+  name: string;
+  url: string;
+  note?: string;
+}
+
+export const COURSE_LINKS: Record<string, CourseLink[]> = {
+  // 'kikenbutsu-otsu4': [{ name: '...', url: '...' }],
+};
+
 export const AFFILIATE_DOMAINS: readonly string[] = [
   'px.a8.net',
   'af.moshimo.com',

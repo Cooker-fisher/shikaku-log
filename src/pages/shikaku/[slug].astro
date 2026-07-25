@@ -14,6 +14,7 @@ import StatTrendChart from '../../components/StatTrendChart.astro';
 import StructuredData from '../../components/StructuredData.astro';
 import StudyPaceTool from '../../components/StudyPaceTool.astro';
 import ReportForm from '../../components/ReportForm.astro';
+import CourseCta from '../../components/CourseCta.astro';
 import { getSnapshot } from '../../lib/reportSummary';
 import {
   entities,
@@ -184,6 +185,8 @@ const canonical = new URL(Astro.url.pathname, origin).href;
         />
       </section>
     ))}
+
+    <CourseCta entitySlug={entity.slug} entityName={entity.short_name} snapshot={snapshot} />
 
     <ReportForm entitySlug={entity.slug} entityName={entity.short_name} />
 

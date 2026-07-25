@@ -1,0 +1,127 @@
+---
+/**
+ * 講座への導線(アフィリエイト枠)。
+ *
+ * 設計の要点(ADR-009 / brand.md「主張しない、並べる」):
+ * - 「おすすめ講座!」と煽らない。**投稿データから読み取れる事実だけを述べて**その下にリンクを置く
+ *   例:「合格報告248件のうち、78件が通信講座を主教材にしています」
+ * - **提携リンクが1つも設定されていなければ、このセクションは何も描画しない。**
+ *   ASP審査前に空の宣伝枠を置くのは読者に対して不誠実であり、
+ *   中身のないページとして薄いページ判定を受ける原因にもなる
+ * - PR表記は BaseLayout の hasAffiliate が担保する。ここでも近接位置に明示する
+ */
+import { MIN_SAMPLE_SIZE, COURSE_LINKS, type CourseLink } from '../config';
+import type { ReportSnapshot } from '../lib/reportSummary';
+
+interface Props {
+  entitySlug: string;
+  entityName: string;
+  snapshot: ReportSnapshot;
+}
+const { entitySlug, entityName, snapshot } = Astro.props;
+
+const links: CourseLink[] = COURSE_LINKS[entitySlug] ?? [];
+const hasLinks = links.length > 0;
+
+/**
+ * 投稿データから言える事実。n が閾値未満なら件数を語らない。
+ * 「◯件中◯件が通信講座」と書けるのはデータが揃ってからで、
+ * それまでは講座という選択肢が存在することだけを中立に述べる。
+ */
+const n = snapshot.studyHours.sampleSize;
+const canCiteData = snapshot.studyHours.status === 'ready' && n >= MIN_SAMPLE_SIZE;
+---
+
+{hasLinks && (
+  <section class="courses" aria-labelledby="h-courses">
+    <h2 id="h-courses">通信講座という選択肢</h2>
+
+    <p class="pr">
+      <span class="pr-badge">PR</span>
+      以下は広告(アフィリエイトリンク)です。リンク経由で申し込みがあった場合、運営者に報酬が支払われます。
+      このページの公式統計と合格報告の内容は、広告の有無によって変えていません。
+    </p>
+
+    <p class="lede">
+      {canCiteData
+        ? `${entityName}の合格報告${n}件のうち、通信講座を主な教材に挙げた人がいます(自己申告)。`
+        : `${entityName}は独学でも受験できます。教材選びや学習計画を自分で組むのが難しい場合の選択肢として、通信講座があります。`}
+    </p>
+
+    <ul class="list">
+      {links.map((link) => (
+        <li>
+          <a href={link.url} rel="sponsored nofollow noopener" target="_blank">
+            {link.name}
+          </a>
+          {link.note && <span class="note">{link.note}</span>}
+        </li>
+      ))}
+    </ul>
+
+    <p class="disclaimer">
+      掲載順は運営者が決めたもので、成績や合格実績を比較したランキングではありません。
+      料金や講座内容は変更されることがあるため、申し込み前に各社の最新の案内を確認してください。
+    </p>
+  </section>
+)}
+
+<style>
+  .courses {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-5) var(--space-4);
+  }
+  .pr {
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3);
+    background: var(--color-notice-bg);
+    border-left: 3px solid var(--color-notice-border);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+  .pr-badge {
+    flex: none;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.05em;
+    color: var(--color-notice-border);
+  }
+  .lede {
+    margin: 0 0 var(--space-4);
+    line-height: var(--lh-normal);
+  }
+  .list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: var(--space-3);
+  }
+  .list li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+  .list a {
+    font-weight: var(--fw-bold);
+  }
+  .note {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+  .disclaimer {
+    margin: var(--space-4) 0 0;
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+  }
+</style>
