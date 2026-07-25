@@ -1,0 +1,230 @@
+{
+  "type": "certification",
+  "slug": "takken",
+  "draft": true,
+  "draft_reason": "Wave 0 のゲート判定(2026-08-22頃)前のため未公開。加えて fact-checker の検証と、令和6・7年度の合格基準点の補完が未了。公開時は draft を外す。目標は2026年9月中旬(10/18の試験に間に合わせるため)。",
+  "name": "宅地建物取引士",
+  "short_name": "宅建士",
+  "category": "法律・不動産",
+  "authority": {
+    "name": "一般財団法人 不動産適正取引推進機構",
+    "url": "https://www.retio.or.jp/exam/"
+  },
+  "exam": {
+    "eligibility": "受験資格の制限なし。「日本国内に居住する方であれば、年齢、学歴等に関係なく、誰でも受験できます。」と公式に明記されている。",
+    "fee_yen": 8200,
+    "format": "50問・四肢択一式による筆記試験。ただし登録講習(宅建業に従事する者向け)の修了者は5問が免除され45問となる。",
+    "questions": 50,
+    "duration_minutes": 120,
+    "passing_criteria": "合格基準点は年度ごとに定められており、事前に固定の点数は公表されていない。公式に公表されている過去12回の実績では、一般受験者で50問中31点〜38点、登録講習修了者で45問中26点〜33点の範囲で推移している。",
+    "frequency": "年1回。試験日は例年10月の第3日曜日。ただし令和2年度・令和3年度は10月試験と12月試験の2回に分けて実施された。",
+    "result_announcement": "原則として11月下旬。直近2回はいずれも試験日の約5週間後にあたる11月26日に結果が公表された。",
+    "source_urls": {
+      "eligibility": "https://www.retio.or.jp/exam/exam_detail/",
+      "fee_yen": "https://www.retio.or.jp/exam/exam_detail/",
+      "format": "https://www.retio.or.jp/exam/exam_detail/",
+      "questions": "https://www.retio.or.jp/exam/exam_detail/",
+      "duration_minutes": "https://www.retio.or.jp/exam/exam_detail/",
+      "passing_criteria": "https://www.retio.or.jp/wp-content/uploads/2024/10/zissigaikyo.pdf",
+      "frequency": "https://www.retio.or.jp/wp-content/uploads/2024/10/zissigaikyo.pdf",
+      "result_announcement": "https://www.retio.or.jp/exam/exam_detail/"
+    },
+    "subjects": [
+      "土地・建物の形質、地積、地目、種別に関すること",
+      "権利及び権利の変動に関する法令",
+      "法令上の制限に関すること",
+      "税に関する法令",
+      "需給に関する法令及び実務",
+      "価格の評定に関すること",
+      "宅建業法及び関係法令"
+    ],
+    "duration_note": "午後1時〜午後3時の2時間。登録講習修了者は午後1時10分〜午後3時の1時間50分。",
+    "application_note": "申込はインターネット(7月上旬〜下旬)または郵送(7月上旬〜中旬)。",
+    "retrieved_at": "2026-07-26"
+  },
+  "official_stats": {
+    "unit": "全国集計(不動産適正取引推進機構発表)",
+    "series": [
+      {
+        "year": "令和7年度",
+        "applicants": 306099,
+        "examinees": 245462,
+        "passers": 45821,
+        "pass_rate": 18.7,
+        "source_url": "https://goukaku.retio.or.jp/exam/pdf_2025_1_UWbaZCx6hm/2025result.pdf",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和6年度",
+        "applicants": 301336,
+        "examinees": 241436,
+        "passers": 44992,
+        "pass_rate": 18.6,
+        "source_url": "https://www.retio.or.jp/wp-content/uploads/2024/12/2024result.pdf",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和5年度",
+        "applicants": 289096,
+        "examinees": 233276,
+        "passers": 40025,
+        "pass_rate": 17.2,
+        "source_url": "https://www.retio.or.jp/wp-content/uploads/2024/10/zissigaikyo.pdf",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和4年度",
+        "applicants": 283856,
+        "examinees": 226048,
+        "passers": 38525,
+        "pass_rate": 17.0,
+        "source_url": "https://www.retio.or.jp/wp-content/uploads/2024/10/zissigaikyo.pdf",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和3年度(10月試験)",
+        "applicants": 256704,
+        "examinees": 209749,
+        "passers": 37579,
+        "pass_rate": 17.9,
+        "source_url": "https://www.retio.or.jp/wp-content/uploads/2024/10/zissigaikyo.pdf",
+        "retrieved_at": "2026-07-26"
+      }
+    ],
+    "source_url": "https://www.retio.or.jp/exam/",
+    "retrieved_at": "2026-07-26",
+    "notes": "令和3年度は10月試験と12月試験の2回に分けて実施されており、上記series には受験者の大半を占める10月試験のみを収録している(12月試験は申込39,814・受験24,965・合格3,892・合格率15.6%)。同様に令和2年度も2回実施。年度をまたいで単純に比較する際はこの点に注意が必要なため、series は令和3年度10月試験までとした。全5系列について合格者数÷受験者数が公表合格率と小数第1位まで一致することを検算済み。項目名は原文どおり「申込者数」「受験者数」「合格者数」「合格率」。",
+    "unit_labels": {
+      "applicants": "申込者数",
+      "examinees": "受験者数(当日実際に受験した人数)",
+      "passers": "合格者数",
+      "pass_rate": "合格率(%)"
+    },
+    "public_note": "実施団体が公表している全国集計です。令和3年度は10月と12月の2回実施されたため、受験者の大半を占める10月試験の数値を掲載しています。"
+  },
+  "passing_score_history": {
+    "note": "合格基準点は毎年変動する。事前に固定の合格点は公表されていない。",
+    "unit": "一般受験者は50問中、登録講習修了者は45問中",
+    "series": [
+      { "year": "令和5年度", "general": 36, "exempt": 31 },
+      { "year": "令和4年度", "general": 36, "exempt": 31 },
+      { "year": "令和3年度(12月試験)", "general": 34, "exempt": null },
+      { "year": "令和3年度(10月試験)", "general": 34, "exempt": 29 },
+      { "year": "令和2年度(12月試験)", "general": 36, "exempt": 31 },
+      { "year": "令和2年度(10月試験)", "general": 38, "exempt": 33 },
+      { "year": "令和元年度", "general": 35, "exempt": 30 },
+      { "year": "平成30年度", "general": 37, "exempt": 32 },
+      { "year": "平成29年度", "general": 35, "exempt": 30 },
+      { "year": "平成28年度", "general": 35, "exempt": 30 },
+      { "year": "平成27年度", "general": 31, "exempt": 26 },
+      { "year": "平成26年度", "general": 32, "exempt": 27 }
+    ],
+    "source_url": "https://www.retio.or.jp/wp-content/uploads/2024/10/zissigaikyo.pdf",
+    "retrieved_at": "2026-07-26",
+    "gap": "令和6年度・令和7年度の合格基準点は上記PDFに未収載(2024年10月時点のファイルのため)。公開前に一次ソースで補完すること。二次情報では令和6年度=36点とする記述があるが未確認のため採用していない。",
+    "public_note": "合格に必要な点数は毎年変わります。「何点取れば合格」と事前に決まっている試験ではありません。"
+  },
+  "regional_stats": {
+    "year": "令和7年度",
+    "unit_labels": {
+      "applicants": "申込者数",
+      "examinees": "受験者数",
+      "exam_rate": "受験率(%)",
+      "passers": "合格者数",
+      "pass_rate": "合格率(%)"
+    },
+    "source_url": "https://goukaku.retio.or.jp/exam/pdf_2025_1_UWbaZCx6hm/2025result.pdf",
+    "retrieved_at": "2026-07-26",
+    "public_note": "実施団体が公表している都道府県別の集計です。受験した都道府県での区分であり、居住地とは限りません。",
+    "rows": [
+      { "pref": "北海道", "applicants": 8528, "examinees": 6968, "exam_rate": 81.7, "passers": 1268, "pass_rate": 18.2 },
+      { "pref": "青森", "applicants": 1157, "examinees": 952, "exam_rate": 82.3, "passers": 197, "pass_rate": 20.7 },
+      { "pref": "岩手", "applicants": 1258, "examinees": 1053, "exam_rate": 83.7, "passers": 167, "pass_rate": 15.9 },
+      { "pref": "宮城", "applicants": 4995, "examinees": 4027, "exam_rate": 80.6, "passers": 686, "pass_rate": 17.0 },
+      { "pref": "秋田", "applicants": 890, "examinees": 731, "exam_rate": 82.1, "passers": 133, "pass_rate": 18.2 },
+      { "pref": "山形", "applicants": 1070, "examinees": 863, "exam_rate": 80.7, "passers": 160, "pass_rate": 18.5 },
+      { "pref": "福島", "applicants": 2449, "examinees": 1962, "exam_rate": 80.1, "passers": 315, "pass_rate": 16.1 },
+      { "pref": "茨城", "applicants": 4168, "examinees": 3359, "exam_rate": 80.6, "passers": 604, "pass_rate": 18.0 },
+      { "pref": "栃木", "applicants": 2791, "examinees": 2263, "exam_rate": 81.1, "passers": 399, "pass_rate": 17.6 },
+      { "pref": "群馬", "applicants": 3006, "examinees": 2445, "exam_rate": 81.3, "passers": 418, "pass_rate": 17.1 },
+      { "pref": "新潟", "applicants": 2741, "examinees": 2176, "exam_rate": 79.4, "passers": 354, "pass_rate": 16.3 },
+      { "pref": "山梨", "applicants": 1169, "examinees": 921, "exam_rate": 78.8, "passers": 138, "pass_rate": 15.0 },
+      { "pref": "長野", "applicants": 2986, "examinees": 2449, "exam_rate": 82.0, "passers": 440, "pass_rate": 18.0 },
+      { "pref": "埼玉", "applicants": 20678, "examinees": 16477, "exam_rate": 79.7, "passers": 3126, "pass_rate": 19.0 },
+      { "pref": "千葉", "applicants": 17385, "examinees": 13978, "exam_rate": 80.4, "passers": 2620, "pass_rate": 18.7 },
+      { "pref": "東京", "applicants": 66926, "examinees": 52461, "exam_rate": 78.4, "passers": 10529, "pass_rate": 20.1 },
+      { "pref": "神奈川", "applicants": 28118, "examinees": 22688, "exam_rate": 80.7, "passers": 4390, "pass_rate": 19.3 },
+      { "pref": "富山", "applicants": 1337, "examinees": 1074, "exam_rate": 80.3, "passers": 216, "pass_rate": 20.1 },
+      { "pref": "石川", "applicants": 1973, "examinees": 1582, "exam_rate": 80.2, "passers": 330, "pass_rate": 20.9 },
+      { "pref": "福井", "applicants": 910, "examinees": 744, "exam_rate": 81.8, "passers": 136, "pass_rate": 18.3 },
+      { "pref": "岐阜", "applicants": 2754, "examinees": 2286, "exam_rate": 83.0, "passers": 408, "pass_rate": 17.8 },
+      { "pref": "静岡", "applicants": 6252, "examinees": 5115, "exam_rate": 81.8, "passers": 953, "pass_rate": 18.6 },
+      { "pref": "愛知", "applicants": 16682, "examinees": 13477, "exam_rate": 80.8, "passers": 2680, "pass_rate": 19.9 },
+      { "pref": "三重", "applicants": 2357, "examinees": 1896, "exam_rate": 80.4, "passers": 329, "pass_rate": 17.4 },
+      { "pref": "滋賀", "applicants": 2632, "examinees": 2122, "exam_rate": 80.6, "passers": 400, "pass_rate": 18.9 },
+      { "pref": "京都", "applicants": 6544, "examinees": 5296, "exam_rate": 80.9, "passers": 995, "pass_rate": 18.8 },
+      { "pref": "大阪", "applicants": 28622, "examinees": 23073, "exam_rate": 80.6, "passers": 4275, "pass_rate": 18.5 },
+      { "pref": "兵庫", "applicants": 12590, "examinees": 10234, "exam_rate": 81.3, "passers": 1965, "pass_rate": 19.2 },
+      { "pref": "奈良", "applicants": 2622, "examinees": 2108, "exam_rate": 80.4, "passers": 365, "pass_rate": 17.3 },
+      { "pref": "和歌山", "applicants": 1201, "examinees": 987, "exam_rate": 82.2, "passers": 151, "pass_rate": 15.3 },
+      { "pref": "鳥取", "applicants": 651, "examinees": 524, "exam_rate": 80.5, "passers": 107, "pass_rate": 20.4 },
+      { "pref": "島根", "applicants": 851, "examinees": 711, "exam_rate": 83.5, "passers": 111, "pass_rate": 15.6 },
+      { "pref": "岡山", "applicants": 3226, "examinees": 2619, "exam_rate": 81.2, "passers": 470, "pass_rate": 17.9 },
+      { "pref": "広島", "applicants": 5603, "examinees": 4492, "exam_rate": 80.2, "passers": 761, "pass_rate": 16.9 },
+      { "pref": "山口", "applicants": 1829, "examinees": 1454, "exam_rate": 79.5, "passers": 267, "pass_rate": 18.4 },
+      { "pref": "徳島", "applicants": 961, "examinees": 763, "exam_rate": 79.4, "passers": 125, "pass_rate": 16.4 },
+      { "pref": "香川", "applicants": 1664, "examinees": 1339, "exam_rate": 80.5, "passers": 235, "pass_rate": 17.6 },
+      { "pref": "愛媛", "applicants": 1853, "examinees": 1510, "exam_rate": 81.5, "passers": 273, "pass_rate": 18.1 },
+      { "pref": "高知", "applicants": 808, "examinees": 650, "exam_rate": 80.4, "passers": 126, "pass_rate": 19.4 },
+      { "pref": "福岡", "applicants": 14574, "examinees": 11736, "exam_rate": 80.5, "passers": 2037, "pass_rate": 17.4 },
+      { "pref": "佐賀", "applicants": 1228, "examinees": 1009, "exam_rate": 82.2, "passers": 163, "pass_rate": 16.2 },
+      { "pref": "長崎", "applicants": 1820, "examinees": 1491, "exam_rate": 81.9, "passers": 258, "pass_rate": 17.3 },
+      { "pref": "熊本", "applicants": 3463, "examinees": 2772, "exam_rate": 80.0, "passers": 417, "pass_rate": 15.0 },
+      { "pref": "大分", "applicants": 1891, "examinees": 1503, "exam_rate": 79.5, "passers": 239, "pass_rate": 15.9 },
+      { "pref": "宮崎", "applicants": 1411, "examinees": 1154, "exam_rate": 81.8, "passers": 183, "pass_rate": 15.9 },
+      { "pref": "鹿児島", "applicants": 2438, "examinees": 1933, "exam_rate": 79.3, "passers": 289, "pass_rate": 15.0 },
+      { "pref": "沖縄", "applicants": 5037, "examinees": 4035, "exam_rate": 80.1, "passers": 613, "pass_rate": 15.2 }
+    ]
+  },
+  "exempt_stats": {
+    "note": "登録講習(宅建業従事者向け)を修了すると5問が免除され、45問での受験となる。",
+    "series": [
+      { "year": "令和7年度", "examinees": 50920, "passers": 12316, "pass_rate": 24.2 },
+      { "year": "令和6年度", "examinees": 49337, "passers": 10822, "pass_rate": 21.9 }
+    ],
+    "source_url": "https://goukaku.retio.or.jp/exam/pdf_2025_1_UWbaZCx6hm/2025result.pdf",
+    "retrieved_at": "2026-07-26",
+    "public_note": "5問免除を受けた受験者だけを取り出した集計です。全体の合格率とは母集団が異なります。"
+  },
+  "passer_profile": {
+    "year": "令和7年度",
+    "average_age": 36.2,
+    "occupation_share": {
+      "不動産業": 33.2,
+      "他業種": 27.9,
+      "学生": 10.9,
+      "建設業": 8.7,
+      "金融業": 8.1,
+      "その他": 11.3
+    },
+    "source_url": "https://goukaku.retio.or.jp/exam/pdf_2025_1_UWbaZCx6hm/2025result.pdf",
+    "retrieved_at": "2026-07-26",
+    "caution": "令和7年度より「主婦」は「その他」に含められている。令和6年度以前の職業別構成比と単純比較しないこと。",
+    "public_note": "合格者の平均年齢と職業の内訳です。実施団体の公表資料に基づきます。"
+  },
+  "schedule_url": "https://www.retio.or.jp/exam/",
+  "next_exam": {
+    "date": "2026-10-18",
+    "note": "令和8年度試験。申込は2026年7月1日(水)から開始。",
+    "source_url": "https://www.retio.or.jp/exam/takken_shiken.html",
+    "retrieved_at": "2026-07-26"
+  },
+  "verification": {
+    "collected_by": "PM(Fable)",
+    "verified_by": "未実施",
+    "verified_at": null,
+    "result": "🔴 公開前に fact-checker の独立検証が必須。特に (1) 令和6・7年度の合格基準点の補完 (2) 都道府県別47行の転記ミスの有無 (3) next_exam の試験日を令和8年度の公式案内で再確認すること。"
+  },
+  "notes": "確認できなかった項目: 令和6年度・令和7年度の合格基準点。実施団体の「試験実施概況(過去10年間)」PDFが2024年10月時点のファイルで令和5年度までしか収録していないため。二次情報に令和6年度=36点とする記述があるが、一次ソースで確認できていないため採用しない(CLAUDE.md 規則1-b)。",
+  "public_note": "数値はすべて実施団体である不動産適正取引推進機構の公表資料に基づきます。合格に必要な点数は毎年変わるため、事前に「何点で合格」と決まっているわけではありません。"
+}

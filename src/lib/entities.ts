@@ -34,6 +34,15 @@ export interface OfficialStats {
 export interface Entity {
   type: string;
   slug: string;
+  /**
+   * true の間はページを生成しない(sitemap にも一覧にも出ない)。
+   *
+   * 波のゲート([ADR-003])を通る前に用意したデータを、デプロイのたびに
+   * 意図せず公開してしまう事故を防ぐためのフラグ。データは先に集めてよいが、
+   * 公開はゲート判定を通ってから `draft` を外して行う。
+   * fact-checker の検証が済んでいないものにも付けておく。
+   */
+  draft?: boolean;
   name: string;
   short_name: string;
   category: string;
@@ -82,9 +91,16 @@ const modules = import.meta.glob<Entity>('../../data/entities/*.json', {
  */
 const KNOWN_ENTITY_TYPES = new Set(['certification']);
 
-export const entities: Entity[] = Object.values(modules);
+/** 下書きを含む全件。集計や検算など、公開可否と関係ない用途にだけ使う */
+export const allEntities: Entity[] = Object.values(modules);
 
-for (const e of entities) {
+/**
+ * 公開対象の entity。**ページ生成・一覧・sitemap は必ずこちらを使う。**
+ * `draft: true` のものはここに入らないので、デプロイしても公開されない。
+ */
+export const entities: Entity[] = allEntities.filter((e) => !e.draft);
+
+for (const e of allEntities) {
   if (!KNOWN_ENTITY_TYPES.has(e.type)) {
     throw new Error(
       `entity "${e.slug}" の type が "${e.type}" になっている。` +
