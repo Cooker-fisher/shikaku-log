@@ -1,0 +1,340 @@
+---
+/**
+ * 学習ペースの逆算ツール。ADR-009 で採用した C案の核心。
+ *
+ * 設計の要点:
+ * - **投稿がゼロでも動く。** 他人のデータを必要とせず、利用者自身の目標と試験日だけで
+ *   1日あたりの必要時間を返す。これが n=0 の期間を橋渡しする唯一の実用機能(ADR-007)
+ * - 投稿が MIN_SAMPLE_SIZE 件集まったら「合格者の中央値」を目標値の候補として追加する。
+ *   **集まるまでは中央値を出さない。**存在しない標準をこちらで捏造しない
+ * - JS はこのツールの対話部分だけ。ページの情報価値(統計・制度)は静的HTMLにある
+ */
+import { MIN_SAMPLE_SIZE } from '../config';
+import type { ReportSnapshot } from '../lib/reportSummary';
+
+interface Props {
+  entityName: string;
+  snapshot: ReportSnapshot;
+}
+const { entityName, snapshot } = Astro.props;
+
+const ready = snapshot.studyHours.status === 'ready';
+const median = snapshot.studyHours.median;
+const n = snapshot.studyHours.sampleSize;
+const remaining = Math.max(0, MIN_SAMPLE_SIZE - n);
+---
+
+<section class="tool" aria-labelledby="h-tool">
+  <h2 id="h-tool">学習ペースを逆算する</h2>
+
+  <p class="intro">
+    試験日と目標の総学習時間を入れると、1日あたり何時間が必要かを計算します。
+    {ready
+      ? `目標時間の候補として、合格報告${n}件の中央値(${median}時間)も選べます。`
+      : `合格報告が${MIN_SAMPLE_SIZE}件集まったら、目標時間の候補として実際の合格者の中央値も出します(現在${n}件)。`}
+  </p>
+
+  <form class="pace" id="pace-form" novalidate>
+    <div class="field">
+      <label for="pace-date">試験日</label>
+      <input type="date" id="pace-date" name="date" required />
+    </div>
+
+    <div class="field">
+      <label for="pace-target">目標の総学習時間</label>
+      <div class="with-unit">
+        <input
+          type="number"
+          id="pace-target"
+          name="target"
+          min="1"
+          max="5000"
+          step="10"
+          inputmode="numeric"
+          placeholder="200"
+          required
+        />
+        <span class="unit">時間</span>
+      </div>
+      {ready && (
+        <button type="button" class="chip" id="use-median" data-median={median}>
+          合格報告の中央値({median}時間)を使う
+        </button>
+      )}
+    </div>
+
+    <div class="field">
+      <label for="pace-done">すでに勉強した時間(任意)</label>
+      <div class="with-unit">
+        <input type="number" id="pace-done" name="done" min="0" max="5000" step="5" inputmode="numeric" placeholder="0" />
+        <span class="unit">時間</span>
+      </div>
+    </div>
+
+    <button type="submit" class="submit">計算する</button>
+  </form>
+
+  <output id="pace-result" class="result" hidden aria-live="polite"></output>
+
+  <noscript>
+    <p class="notes">
+      この計算にはJavaScriptが必要です。無効の場合でも、このページの公式統計と試験制度の情報はすべて表示されています。
+    </p>
+  </noscript>
+
+  {!ready && (
+    <div class="collecting" data-user-data-note>
+      <h3>合格報告を集めています</h3>
+      <p class="gauge-label">
+        <strong>{n}件</strong> / 公開ラインまであと <strong>{remaining}件</strong>
+      </p>
+      <div class="gauge" role="img" aria-label={`${MIN_SAMPLE_SIZE}件中${n}件を収集`}>
+        <span style={`width:${Math.min(100, (n / MIN_SAMPLE_SIZE) * 100)}%`}></span>
+      </div>
+      <p class="why">
+        {MIN_SAMPLE_SIZE}件に達するまで、中央値や分布は表示しません。
+        数件しかない状態の中央値は、投稿が1件増えるだけで大きく動きます。
+        その数字が「{entityName}の相場」として一人歩きすると、かえって判断を誤らせるためです。
+        集計データは利用者の自己申告にもとづくもので、公的な統計ではありません。
+      </p>
+    </div>
+  )}
+</section>
+
+<script>
+  const form = document.getElementById('pace-form');
+  const result = document.getElementById('pace-result');
+
+  if (form && result) {
+    const medianBtn = document.getElementById('use-median');
+    const targetInput = document.getElementById('pace-target');
+
+    if (medianBtn && targetInput) {
+      medianBtn.addEventListener('click', () => {
+        targetInput.value = medianBtn.dataset.median ?? '';
+        targetInput.focus();
+      });
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const dateValue = form.querySelector('#pace-date').value;
+      const target = Number(form.querySelector('#pace-target').value);
+      const done = Number(form.querySelector('#pace-done').value || 0);
+
+      const show = (html, tone) => {
+        result.innerHTML = html;
+        result.dataset.tone = tone;
+        result.hidden = false;
+      };
+
+      if (!dateValue || !Number.isFinite(target) || target <= 0) {
+        show('<p class="err">試験日と目標の総学習時間を入力してください。</p>', 'error');
+        return;
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const examDate = new Date(dateValue + 'T00:00:00');
+      const days = Math.ceil((examDate.getTime() - today.getTime()) / 86400000);
+
+      if (days <= 0) {
+        show('<p class="err">試験日は今日より後の日付を入れてください。</p>', 'error');
+        return;
+      }
+
+      const remainingHours = Math.max(0, target - done);
+
+      if (remainingHours === 0) {
+        show(
+          `<p class="lead">目標の <strong>${target}時間</strong> はすでに達しています。</p>
+           <p class="sub">試験日まであと ${days} 日です。</p>`,
+          'done',
+        );
+        return;
+      }
+
+      const perDay = remainingHours / days;
+      const perWeek = perDay * 7;
+
+      // 1日24時間を超える結果は、計算としては正しくても数字として意味がない。
+      // 「1日42.9時間」と出すとツールが壊れて見えるので、達成不能である事実だけを返す。
+      if (perDay >= 24) {
+        show(
+          `<p class="lead">この日程では <strong>達成できません</strong>。</p>
+           <p class="sub">残り ${remainingHours} 時間を ${days} 日で割ると、1日24時間以上になります。試験日か目標時間のどちらかを見直してください。</p>`,
+          'error',
+        );
+        return;
+      }
+
+      const hoursText = perDay >= 1 ? `${perDay.toFixed(1)}時間` : `${Math.round(perDay * 60)}分`;
+
+      // 1日8時間を超える計画は現実的でないので、その旨を添える(煽らず事実として)
+      const tone = perDay > 8 ? 'tight' : perDay > 4 ? 'warn' : 'ok';
+      const caution =
+        perDay > 8
+          ? '<p class="sub">1日8時間を超える計画です。試験日を後ろにずらすか、目標時間の見直しを検討してください。</p>'
+          : perDay > 4
+            ? '<p class="sub">1日4時間を超えるペースです。まとまった時間を確保できるか確認してください。</p>'
+            : '';
+
+      show(
+        `<p class="lead">試験日まで <strong>${days}日</strong>。1日あたり <strong>${hoursText}</strong> が必要です。</p>
+         <p class="sub">残り ${remainingHours} 時間 / 週あたり ${perWeek.toFixed(1)} 時間の計算です。</p>
+         ${caution}`,
+        tone,
+      );
+    });
+  }
+</script>
+
+<style>
+  .tool {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-5) var(--space-4);
+    background: var(--color-bg-subtle);
+  }
+  .intro {
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+    margin: 0 0 var(--space-4);
+  }
+  .pace {
+    display: grid;
+    gap: var(--space-4);
+  }
+  .field {
+    display: grid;
+    gap: var(--space-2);
+  }
+  label {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+  }
+  input {
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text);
+    width: 100%;
+    min-height: 44px;
+  }
+  input:focus-visible {
+    outline: 2px solid var(--color-official);
+    outline-offset: 1px;
+  }
+  .with-unit {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .unit {
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+  .chip {
+    justify-self: start;
+    font: inherit;
+    font-size: var(--fs-xs);
+    padding: var(--space-2) var(--space-3);
+    min-height: 36px;
+    border: 1px dashed var(--color-userdata);
+    color: var(--color-userdata-strong);
+    background: var(--color-userdata-bg);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .submit {
+    font: inherit;
+    font-weight: var(--fw-bold);
+    padding: var(--space-3) var(--space-5);
+    min-height: 48px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
+    cursor: pointer;
+  }
+  .submit:hover {
+    background: var(--color-link-hover);
+  }
+
+  .result {
+    display: block;
+    margin-top: var(--space-4);
+    padding: var(--space-4);
+    border-radius: var(--radius-sm);
+    border-left: 4px solid var(--color-official);
+    background: var(--color-official-bg);
+  }
+  .result[data-tone='error'] {
+    border-left-color: var(--c-danger-500);
+    background: transparent;
+  }
+  .result[data-tone='warn'],
+  .result[data-tone='tight'] {
+    border-left-color: var(--color-notice-border);
+    background: var(--color-notice-bg);
+  }
+  .result :global(.lead) {
+    margin: 0;
+    font-size: var(--fs-lg);
+    line-height: var(--lh-heading);
+  }
+  .result :global(.lead strong) {
+    font-variant-numeric: tabular-nums;
+  }
+  .result :global(.sub) {
+    margin: var(--space-2) 0 0;
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+  }
+  .result :global(.err) {
+    margin: 0;
+    font-size: var(--fs-sm);
+  }
+
+  .collecting {
+    margin-top: var(--space-5);
+    padding-top: var(--space-5);
+    border-top: 1px dashed var(--color-userdata);
+  }
+  .collecting h3 {
+    font-size: var(--fs-md);
+    margin: 0 0 var(--space-2);
+  }
+  .gauge-label {
+    margin: 0 0 var(--space-2);
+    font-size: var(--fs-sm);
+    font-variant-numeric: tabular-nums;
+  }
+  .gauge {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--color-border);
+    overflow: hidden;
+  }
+  .gauge span {
+    display: block;
+    height: 100%;
+    background: var(--color-userdata);
+  }
+  .why {
+    margin: var(--space-3) 0 0;
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+  }
+  .notes {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+</style>
