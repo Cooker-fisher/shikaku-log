@@ -20,6 +20,14 @@ export const MIN_SAMPLE_SIZE = 20;
  */
 export const CONTACT_FORM_URL = 'https://forms.gle/p74hYkAqS8WMqvEv5';
 
+
+/**
+ * Google アナリティクス(GA4)の測定ID。
+ * 空文字にすると計測タグを出力しない(ローカル開発・プレビューで汚さないため)。
+ * 測定IDは秘匿情報ではない(HTMLに出る前提の公開値)。
+ */
+export const GA_MEASUREMENT_ID = 'G-Z7RFR77QVW';
+
 export const NAV_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: '/about/', label: 'このサイトについて' },
 ];

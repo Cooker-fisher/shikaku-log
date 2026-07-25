@@ -4,7 +4,7 @@
  * ここでしか組み立てない。qa.mjs がこの出力を検査する。
  */
 import '../styles/global.css';
-import { SITE_NAME, SITE_TAGLINE, NAV_LINKS, FOOTER_LINKS } from '../config';
+import { SITE_NAME, SITE_TAGLINE, NAV_LINKS, FOOTER_LINKS, GA_MEASUREMENT_ID } from '../config';
 
 interface Props {
   title: string;
@@ -48,6 +48,31 @@ const fullTitle = Astro.url.pathname === '/' ? title : `${title} | ${SITE_NAME}`
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="color-scheme" content="light dark" />
     <slot name="head" />
+
+    {/* GA4。本番のみ読み込む。プレビュー/ローカルの数字が混ざると
+        週次の意思決定(構築ループ)が狂うため、ホスト名で判定する。 */}
+    {GA_MEASUREMENT_ID && (
+      <>
+        <script
+          type="text/partytown-ignore"
+          is:inline
+          define:vars={{ GA_MEASUREMENT_ID }}
+          set:html={`
+            if (location.hostname === 'shikaku-log.com') {
+              var s = document.createElement('script');
+              s.async = true;
+              s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_MEASUREMENT_ID;
+              document.head.appendChild(s);
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){ dataLayer.push(arguments); }
+              window.gtag = gtag;
+              gtag('js', new Date());
+              gtag('config', GA_MEASUREMENT_ID);
+            }
+          `}
+        />
+      </>
+    )}
   </head>
   <body data-has-affiliate={hasAffiliate ? 'true' : 'false'} data-has-user-data={hasUserData ? 'true' : 'false'}>
     <a class="skip-link" href="#main">本文へ移動</a>
