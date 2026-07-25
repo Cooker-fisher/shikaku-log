@@ -1,0 +1,136 @@
+---
+/**
+ * 自己採点ページ。/shikaku/[slug]/saiten/
+ *
+ * 資格詳細ページとは分ける。検索意図が違うため
+ * (詳細ページ=「合格率は?」/ このページ=「解答速報・自己採点」)。
+ * 試験当日だけ需要が跳ね上がるので、独立したURLで先にインデックスさせておく。
+ *
+ * `saiten` を持つ entity にだけ生成される。draft の資格には生成されない。
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import SaitenTool from '../../../components/SaitenTool.astro';
+import PassingScoreTable from '../../../components/PassingScoreTable.astro';
+import SourceLink from '../../../components/SourceLink.astro';
+import { entities, type Entity } from '../../../lib/entities';
+
+export function getStaticPaths() {
+  return entities
+    .filter((e) => e.saiten)
+    .map((entity) => ({ params: { slug: entity.slug }, props: { entity } }));
+}
+
+interface Props {
+  entity: Entity;
+}
+const { entity } = Astro.props;
+const saiten = entity.saiten!;
+
+const title = `${entity.name}の自己採点 — みんなの解答と比べる`;
+const description =
+  `${entity.name}(${saiten.exam_date})の自己採点ページ。自分が選んだ選択肢を入力すると、` +
+  '同じ試験を受けた人たちの解答の分布が分かります。正解は掲載していません。得点や合否の判定もしません。';
+---
+
+<BaseLayout title={title} description={description} ogType="article" hasUserData={true}>
+  <article class="page">
+    <nav class="crumbs" aria-label="パンくず">
+      <a href="/">ホーム</a> <span aria-hidden="true">/</span>
+      <a href={`/shikaku/${entity.slug}/`}>{entity.short_name}</a> <span aria-hidden="true">/</span>
+      <span aria-current="page">自己採点</span>
+    </nav>
+
+    <header class="hd">
+      <h1>{entity.name}の自己採点</h1>
+      <p class="lede">
+        {saiten.exam_date}に実施される{entity.name}の自己採点ページです。
+        試験終了後、自分が選んだ選択肢を入力すると、同じ試験を受けた人たちが何を選んだかが分かります。
+      </p>
+    </header>
+
+    <section class="policy" aria-labelledby="h-policy">
+      <h2 id="h-policy">このページがしないこと</h2>
+      <ul>
+        <li><strong>正解を掲載しません。</strong>設問文も選択肢の文言も扱いません</li>
+        <li><strong>得点を出しません。</strong>「あなたは◯点です」とは言いません</li>
+        <li><strong>合否を判定しません。</strong>合格に必要な点数は毎年変わるためです</li>
+      </ul>
+      <p>
+        表示するのは、受験者が自己申告した選択肢の分布だけです。
+        <strong>多数派が正しいとは限りません。</strong>
+        判断の材料として、実施団体が公表している過去の合格基準点も下に並べています。
+      </p>
+    </section>
+
+    <SaitenTool
+      examKey={saiten.exam_key}
+      entityShortName={entity.short_name}
+      questions={saiten.questions}
+      questionsExempt={saiten.questions_exempt}
+      exemptLabel={saiten.exempt_label}
+      examDate={saiten.exam_date}
+    />
+
+    {entity.passing_score_history && (
+      <PassingScoreTable history={entity.passing_score_history} entityShortName={entity.short_name} />
+    )}
+
+    <section class="after" aria-labelledby="h-after">
+      <h2 id="h-after">合格発表まで</h2>
+      <p>{entity.exam.result_announcement}</p>
+      {entity.exam.source_urls?.result_announcement && (
+        <SourceLink
+          href={entity.exam.source_urls.result_announcement}
+          label="合格発表(公式)"
+          accessedAt={entity.exam.retrieved_at}
+        />
+      )}
+      <p>
+        受験者数や合格率の推移は<a href={`/shikaku/${entity.slug}/`}>{entity.short_name}のデータページ</a>にまとめています。
+      </p>
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: var(--space-4);
+  }
+  .crumbs {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-4);
+  }
+  .hd h1 {
+    font-size: var(--fs-2xl);
+    line-height: var(--lh-heading);
+    margin: 0 0 var(--space-3);
+  }
+  .lede {
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+  }
+  section {
+    margin-top: var(--space-7);
+  }
+  h2 {
+    font-size: var(--fs-xl);
+    line-height: var(--lh-heading);
+    margin: 0 0 var(--space-3);
+  }
+  .policy ul {
+    padding-left: 1.2em;
+    line-height: var(--lh-normal);
+  }
+  .policy li {
+    margin-bottom: var(--space-2);
+  }
+  .after p {
+    line-height: var(--lh-normal);
+  }
+</style>

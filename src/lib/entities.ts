@@ -92,6 +92,19 @@ export interface Entity {
   official_stats_cbt?: OfficialStats;
   regional_stats?: RegionalStats;
   /**
+   * 自己採点ページの設定。**全受験者が同一問題を解く一斉試験にのみ持たせる。**
+   * 都道府県ごとに問題が違う試験(危険物)やランダム出題(簿記CBT)では
+   * 選択肢の分布が意味を持たない([backlog B-013])。
+   */
+  saiten?: {
+    /** APIに渡す識別子。例: 'takken-2026' */
+    exam_key: string;
+    exam_date: string;
+    questions: number;
+    questions_exempt: number | null;
+    exempt_label?: string;
+  };
+  /**
    * 合格基準点の推移。事前に合格点が公表されない試験にのみ存在する。
    * 「◯点で合格」と断定しないための根拠として使う([backlog B-013])。
    */

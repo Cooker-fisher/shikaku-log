@@ -116,7 +116,45 @@ async function checkApi() {
   record(badSlug === 404, 'API: 存在しない資格は404', `status=${badSlug}`);
 }
 
-/** 5. Search Consoleの所有権確認ファイルが到達可能か */
+/**
+ * 5. 自己採点API が本番で応答するか
+ *
+ * **10月まで放置しない。**このAPIが必要になるのは宅建試験当日(2026/10/18 15:00)の
+ * 一度きりで、そこで動かなければ年に一度の機会をまるごと失う。
+ * 何ヶ月も前から本番で叩いておき、当日に初めて動かす状況を作らない。
+ */
+async function checkSaitenApi() {
+  const { status, res } = await fetchStatus('/api/saiten?exam=takken-2026');
+  if (status !== 200 || !res) {
+    record(false, '自己採点API: 集計を返す', `status=${status}`);
+  } else {
+    const body = await res.json().catch(() => null);
+    record(body?.ok === true && typeof body.submissions === 'number', '自己採点API: 集計を返す');
+    record(
+      typeof body?.disclaimer === 'string' && body.disclaimer.includes('正解ではありません'),
+      'API応答に「正解ではない」注記が入っている',
+    );
+  }
+
+  const { status: notFound } = await fetchStatus('/api/saiten?exam=no-such-exam');
+  record(notFound === 404, '自己採点API: 未登録の試験は404', `status=${notFound}`);
+
+  // 試験終了時刻より前は受け付けない。当日に手でデプロイして開放する運用にしないための守り
+  const { status: locked } = await fetchStatus('/api/saiten', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'User-Agent': UA },
+    body: JSON.stringify({
+      exam: 'takken-2026',
+      answer_set: 'general',
+      answers: '1'.repeat(50),
+      form_loaded_at: Date.now() - 60_000,
+      website: '',
+    }),
+  });
+  record(locked === 423, '自己採点API: 試験終了前の投稿は423で拒否', `status=${locked}`);
+}
+
+/** 6. Search Consoleの所有権確認ファイルが到達可能か */
 async function checkVerification() {
   try {
     const res = await fetch(`${BASE}/google38dead6bcabaacdf.html`, {
@@ -139,6 +177,7 @@ async function main() {
   await checkNotFound();
   await checkStaticContent();
   await checkApi();
+  await checkSaitenApi();
   await checkVerification();
 
   const failed = results.filter((r) => !r.ok);

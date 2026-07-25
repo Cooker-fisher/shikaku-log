@@ -1,0 +1,436 @@
+---
+/**
+ * 自己採点ツール(選択肢の分布)。設計の根拠は decisions/013-自己採点ツールの設計.md
+ *
+ * **正解を持たない。得点も合否も出さない。**
+ * 設問文も選択肢の文言も扱わない(著作権に触れないための設計)。
+ * 画面に出るのは「問1」と 1〜4 の番号だけ。
+ *
+ * 返すのは「多数派と何問一致したか」であって得点ではない。画面上で必ずそう書く。
+ *
+ * **50問の入力は重い。だがこの摩擦が堀である**(AIが代行できない/入力自体が投稿になる)。
+ * 重さを受け入れる代わりに、入力を失わせないことに全力を注ぐ:
+ *   - 1タップごとに localStorage へ保存する(リロード・誤操作で消えない)
+ *   - 未回答のまま送信できる
+ *   - 進捗を常に表示する
+ *
+ * ADR-009 は「統計は静的HTMLで出す」と定めているが、このツールは
+ * 利用者の入力がなければ何も表示できない性質のものなので例外として扱う。
+ * ページの公式統計は従来どおり静的HTMLのままである。
+ */
+import { SITE_NAME } from '../config';
+
+interface Props {
+  /** API に渡す試験の識別子。例: 'takken-2026' */
+  examKey: string;
+  entityShortName: string;
+  /** 一般受験者の問題数 */
+  questions: number;
+  /** 免除区分がある場合の問題数。無ければ null */
+  questionsExempt: number | null;
+  /** 免除区分の呼び名。例: '登録講習修了者(5問免除)' */
+  exemptLabel?: string;
+  /** 試験日。まだ来ていなければ「当日に開放」と案内する */
+  examDate: string;
+}
+
+const {
+  examKey,
+  entityShortName,
+  questions,
+  questionsExempt,
+  exemptLabel = '免除区分',
+  examDate,
+} = Astro.props;
+
+const rows = Array.from({ length: questions }, (_, i) => i + 1);
+---
+
+<section class="saiten" aria-labelledby="h-saiten" data-exam={examKey} data-questions={questions} data-questions-exempt={questionsExempt ?? ''}>
+  <h2 id="h-saiten">自己採点(みんなの解答と比べる)</h2>
+
+  <div class="lead">
+    <p>
+      自分が選んだ選択肢を入力すると、<strong>同じ試験を受けた人たちが何を選んだか</strong>が分かります。
+      {examDate}の{entityShortName}が対象です。
+    </p>
+    <p class="strong-note">
+      <strong>このツールは正解を持っていません。得点も合否も出しません。</strong>
+      表示するのは受験者の自己申告を集計した分布だけです。多数派が正しいとは限りません。
+    </p>
+  </div>
+
+  <form class="grid-form" novalidate>
+    {questionsExempt !== null && (
+      <fieldset class="mode">
+        <legend>受験区分</legend>
+        <label><input type="radio" name="answer_set" value="general" checked /> 一般受験者({questions}問)</label>
+        <label><input type="radio" name="answer_set" value="exempt" /> {exemptLabel}({questionsExempt}問)</label>
+      </fieldset>
+    )}
+
+    <div class="progress" role="status" aria-live="polite">
+      <span class="p-count"><strong data-count>0</strong> / <span data-total>{questions}</span> 問</span>
+      <span class="p-hint">分からない問題は空欄のままで送信できます。入力は自動で保存されます。</span>
+    </div>
+
+    <ol class="qlist">
+      {rows.map((n) => (
+        <li class="q" data-q={n}>
+          <span class="qno">問{n}</span>
+          <div class="choices" role="group" aria-label={`問${n}の解答`}>
+            {[1, 2, 3, 4].map((c) => (
+              <label class="ch">
+                <input type="radio" name={`q${n}`} value={c} />
+                <span>{c}</span>
+              </label>
+            ))}
+            <button type="button" class="clear" data-clear={n} aria-label={`問${n}の解答を消す`}>×</button>
+          </div>
+        </li>
+      ))}
+    </ol>
+
+    {/* honeypot: 人間は絶対に埋めない。display:none にすると埋めないボットがいるので画面外に置く */}
+    <div class="hp" aria-hidden="true">
+      <label>website<input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="submit" disabled>入力した解答を送信する</button>
+      <p class="note" data-status></p>
+    </div>
+  </form>
+
+  <div class="result" data-result hidden></div>
+
+  <p class="foot">
+    送信された解答は{SITE_NAME}が集計し、選択肢の分布としてこのページに反映します。
+    個人が特定できる情報は保存しません。
+  </p>
+</section>
+
+<script>
+  const root = document.querySelector<HTMLElement>('.saiten');
+  if (root) {
+    const examKey = root.dataset.exam ?? '';
+    const qGeneral = Number(root.dataset.questions ?? '0');
+    const qExempt = root.dataset.questionsExempt ? Number(root.dataset.questionsExempt) : null;
+    const form = root.querySelector<HTMLFormElement>('.grid-form')!;
+    const countEl = root.querySelector<HTMLElement>('[data-count]')!;
+    const totalEl = root.querySelector<HTMLElement>('[data-total]')!;
+    const statusEl = root.querySelector<HTMLElement>('[data-status]')!;
+    const resultEl = root.querySelector<HTMLElement>('[data-result]')!;
+    const submitBtn = root.querySelector<HTMLButtonElement>('.submit')!;
+    const items = [...root.querySelectorAll<HTMLElement>('.q')];
+    const loadedAt = Date.now();
+    const STORAGE_KEY = `saiten:${examKey}`;
+
+    const answerSet = (): 'general' | 'exempt' =>
+      (form.querySelector<HTMLInputElement>('input[name="answer_set"]:checked')?.value as 'exempt') === 'exempt'
+        ? 'exempt'
+        : 'general';
+
+    const limit = () => (answerSet() === 'exempt' && qExempt !== null ? qExempt : qGeneral);
+
+    /** 免除区分では対象外の問を隠す。値は消さない(区分を戻したら復元される) */
+    function applyMode() {
+      const n = limit();
+      items.forEach((li, i) => {
+        li.hidden = i >= n;
+      });
+      totalEl.textContent = String(n);
+      update();
+    }
+
+    function collect(): string {
+      const n = limit();
+      let s = '';
+      for (let i = 1; i <= n; i += 1) {
+        const checked = form.querySelector<HTMLInputElement>(`input[name="q${i}"]:checked`);
+        s += checked ? checked.value : '0';
+      }
+      return s;
+    }
+
+    function update() {
+      const answers = collect();
+      const answered = [...answers].filter((c) => c !== '0').length;
+      countEl.textContent = String(answered);
+      submitBtn.disabled = answered === 0;
+      // 1問ごとに保存する。50問入れ終える前にリロードされても消えないようにする
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ set: answerSet(), answers }));
+      } catch {
+        /* 保存できない環境でも入力自体は続行できる */
+      }
+    }
+
+    function restore() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw) as { set?: string; answers?: string };
+        if (saved.set === 'exempt') {
+          const r = form.querySelector<HTMLInputElement>('input[name="answer_set"][value="exempt"]');
+          if (r) r.checked = true;
+        }
+        const a = saved.answers ?? '';
+        for (let i = 0; i < a.length; i += 1) {
+          const v = a[i];
+          if (v === '0') continue;
+          const input = form.querySelector<HTMLInputElement>(`input[name="q${i + 1}"][value="${v}"]`);
+          if (input) input.checked = true;
+        }
+      } catch {
+        /* 壊れた保存データは無視する */
+      }
+    }
+
+    form.addEventListener('change', (e) => {
+      if ((e.target as HTMLInputElement).name === 'answer_set') applyMode();
+      else update();
+    });
+
+    root.querySelectorAll<HTMLButtonElement>('[data-clear]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const n = btn.dataset.clear;
+        form.querySelectorAll<HTMLInputElement>(`input[name="q${n}"]`).forEach((i) => (i.checked = false));
+        update();
+      });
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      statusEl.textContent = '送信しています…';
+      try {
+        const res = await fetch('/api/saiten', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            exam: examKey,
+            answer_set: answerSet(),
+            answers: collect(),
+            form_loaded_at: loadedAt,
+            website: (form.querySelector<HTMLInputElement>('input[name="website"]')?.value ?? ''),
+          }),
+        });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          message?: string;
+          matched?: number;
+          comparable?: number;
+          submissions?: number;
+          answered?: number;
+        };
+        if (!res.ok || !data.ok) {
+          statusEl.textContent = data.message ?? '送信できませんでした。時間をおいて試してください。';
+          submitBtn.disabled = false;
+          return;
+        }
+        statusEl.textContent = '';
+        showResult(data);
+      } catch {
+        statusEl.textContent = '通信に失敗しました。電波の良い場所で試してください。';
+        submitBtn.disabled = false;
+      }
+    });
+
+    function showResult(d: { matched?: number; comparable?: number; submissions?: number; answered?: number }) {
+      const n = d.submissions ?? 0;
+      const matched = d.matched ?? 0;
+      const comparable = d.comparable ?? 0;
+      // **母数を必ず併記する。**n が小さいうちに「多数派」と言うと誤解を生む
+      const body =
+        n < 20
+          ? `<p class="big">集計中(現在 ${n} 件)</p>
+             <p>まだ比較できるだけの解答が集まっていません。時間をおいて開き直すと分布が表示されます。</p>`
+          : `<p class="big">多数派と <strong>${matched}</strong> / ${comparable} 問 一致</p>
+             <p>${n.toLocaleString('ja-JP')}件の解答をもとにした集計です。</p>`;
+      resultEl.innerHTML = `
+        <h3>送信を受け付けました</h3>
+        ${body}
+        <p class="disclaim"><strong>これは得点ではありません。</strong>受験者の自己申告を集計したもので、
+        多数派が正しいとは限りません。合格に必要な点数は毎年変わります。</p>`;
+      resultEl.hidden = false;
+      resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    restore();
+    applyMode();
+  }
+</script>
+
+<style>
+  .saiten {
+    margin-top: var(--space-7);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    background: var(--color-surface);
+  }
+  .lead p {
+    margin: 0 0 var(--space-2);
+    line-height: var(--lh-normal);
+  }
+  /* 「正解ではない」は最も読み飛ばされてはいけない一文なので帯で目立たせる */
+  .strong-note {
+    background: var(--color-warn-050, #fdf3e3);
+    border-left: 3px solid var(--color-warn-500, #a8620a);
+    padding: var(--space-3) var(--space-4);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+  .mode {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-3);
+    margin: var(--space-4) 0 var(--space-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    font-size: var(--fs-sm);
+  }
+  .mode legend {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+  /* 進捗はスクロールしても常に見えるようにする。50問の途中で現在地を見失わせない */
+  .progress {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-2) 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-3);
+  }
+  .p-count {
+    font-size: var(--fs-lg);
+    font-variant-numeric: tabular-nums;
+  }
+  .p-hint {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+  .qlist {
+    list-style: none;
+    margin: var(--space-3) 0;
+    padding: 0;
+  }
+  .q {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .q[hidden] {
+    display: none;
+  }
+  .qno {
+    width: 3.5rem;
+    flex: none;
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .choices {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+  }
+  .ch input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  /* タップ目標は最低44px。50問を指で入れるので、ここを削ると入力完了率が落ちる */
+  .ch span {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    user-select: none;
+  }
+  .ch input:checked + span {
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
+    border-color: var(--color-primary);
+    font-weight: var(--fw-bold);
+  }
+  .ch input:focus-visible + span {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+  }
+  .clear {
+    width: 2rem;
+    height: 2.75rem;
+    border: none;
+    background: none;
+    color: var(--color-text-faint);
+    cursor: pointer;
+    font-size: var(--fs-md);
+  }
+  .clear:hover {
+    color: var(--color-text);
+  }
+  .hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .actions {
+    margin-top: var(--space-4);
+  }
+  .submit {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--fs-md);
+    font-weight: var(--fw-bold);
+    color: var(--color-primary-contrast);
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+  .submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .note {
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+    margin: var(--space-2) 0 0;
+  }
+  .result {
+    margin-top: var(--space-4);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+  }
+  .result :global(.big) {
+    font-size: var(--fs-xl);
+    margin: var(--space-2) 0;
+  }
+  .result :global(.disclaim) {
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+  }
+  .foot {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    margin-top: var(--space-4);
+  }
+</style>

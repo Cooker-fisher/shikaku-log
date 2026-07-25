@@ -42,9 +42,17 @@ const PER_EXAM_LIMIT = 3;
 const MIN_FILL_SECONDS = 20;
 const HONEYPOT_FIELD = 'website';
 
-/** 受け付ける試験。ここに無いものは404。試験ごとに問題数の想定を持つ */
-const EXAMS: Record<string, { general: number; exempt: number | null }> = {
-  'takken-2026': { general: QUESTIONS_GENERAL, exempt: QUESTIONS_EXEMPT },
+/**
+ * 受け付ける試験。ここに無いものは404。
+ *
+ * `opensAt` は投稿を受け付け始める時刻(ISO8601)。**試験終了時刻より前は受け付けない。**
+ * 試験中に解答が流出する経路を作らないためと、当日に手でデプロイして開放する運用に
+ * しないため(その運用は担当が寝坊した瞬間に年1回の機会を失う)。
+ * サーバ側で守るので、クライアントのJSが壊れていても早期投稿は通らない。
+ */
+const EXAMS: Record<string, { general: number; exempt: number | null; opensAt: string }> = {
+  // 令和8年度宅建試験。試験時間は13:00〜15:00(JST)。15:00 JST = 06:00 UTC
+  'takken-2026': { general: QUESTIONS_GENERAL, exempt: QUESTIONS_EXEMPT, opensAt: '2026-10-18T06:00:00Z' },
 };
 
 type Counts = Record<string, number[]>;
@@ -180,6 +188,8 @@ async function handleGet(context: Parameters<PagesFunction<Env>>[0]): Promise<Re
       submissions: tally.submissions,
       counts: JSON.parse(tally.counts_json),
       updated_at: tally.updated_at,
+      opens_at: EXAMS[examKey]?.opensAt,
+      open: Date.now() >= Date.parse(EXAMS[examKey]!.opensAt),
       // 「これは得点ではない」ことはUIだけでなくAPIの返り値にも書いておく。
       // 他所がこのデータを引用するときに文脈ごと持っていけるようにする。
       disclaimer: '受験者の自己申告による選択肢の分布です。正解ではありません。',
@@ -228,6 +238,10 @@ async function handlePost(context: Parameters<PagesFunction<Env>>[0]): Promise<R
   const examKey = typeof body['exam'] === 'string' ? body['exam'] : '';
   const exam = EXAMS[examKey];
   if (!exam) return fail(404, 'exam_not_found', '対象の試験が見つからない');
+
+  if (Date.now() < Date.parse(exam.opensAt)) {
+    return fail(423, 'not_open_yet', '試験終了後に受け付けを開始する');
+  }
 
   const answerSet = body['answer_set'] === 'exempt' ? 'exempt' : 'general';
   const expected = answerSet === 'exempt' ? exam.exempt : exam.general;
