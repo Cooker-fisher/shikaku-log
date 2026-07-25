@@ -1,0 +1,70 @@
+---
+/**
+ * お問い合わせ。ASP審査の必須要件。
+ *
+ * ⚠️ CONTACT_EMAIL は公開前にオーナーが実在のアドレスへ差し替える必要がある。
+ * 差し替え忘れを防ぐため qa.mjs がプレースホルダ文字列を検出して公開をブロックする。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_NAME, CONTACT_EMAIL } from '../config';
+
+const title = 'お問い合わせ';
+const description = `${SITE_NAME}への連絡方法。掲載内容の誤りの指摘、投稿データの削除依頼、取材や掲載の相談を受け付けています。`;
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="prose stack">
+    <h1>お問い合わせ</h1>
+
+    <p>
+      下記のメールアドレスで連絡を受け付けている。
+      個人で運営しているため返信に時間がかかることがある。
+    </p>
+
+    <p class="addr"><code>{CONTACT_EMAIL}</code></p>
+
+    <h2>特に歓迎する連絡</h2>
+
+    <h3>掲載内容の誤りの指摘</h3>
+    <p>
+      数値の誤り、出典リンクの切れ、制度改定の反映漏れなどを見つけたら教えてほしい。
+      このサイトは数字が正確であることだけが取り柄なので、指摘は最優先で確認して直す。
+      該当ページのURLと、どの数値がどう違うかを書いてもらえると早い。
+    </p>
+
+    <h3>投稿データの削除依頼</h3>
+    <p>
+      投稿は匿名で受け付けているため本人確認ができない。
+      <strong>投稿日時・資格名・投稿内容の特徴</strong>を伝えてもらい、一致するものを削除する。
+      詳細は<a href="/privacy/">プライバシーポリシー</a>に書いている。
+    </p>
+
+    <h3>実施団体・講座提供者からの連絡</h3>
+    <p>
+      掲載している統計の出典や記載内容について指摘がある場合も、同じ窓口で受け付ける。
+      なお、掲載順位や数値の変更を目的とした依頼には応じない。
+    </p>
+
+    <h2>返信できないもの</h2>
+    <p>
+      試験の内容についての質問、学習方法の個別相談、合否の見込みの判断には答えられない。
+      実施団体または各講座の窓口に問い合わせてほしい。
+    </p>
+  </div>
+</BaseLayout>
+
+<style>
+  .addr {
+    font-size: var(--fs-lg);
+  }
+  .addr code {
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+  h3 {
+    font-size: var(--fs-md);
+    margin-top: var(--space-5);
+  }
+</style>

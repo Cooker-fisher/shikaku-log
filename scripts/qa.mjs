@@ -64,6 +64,12 @@ const PR_MARKERS = [/(^|[^A-Za-z])PR([^A-Za-z]|$)/, /広告/, /プロモーシ�
 /** 投稿データを扱っているページの判定 */
 const UGC_SIGNALS = [/合格報告/, /投稿データ/, /勉強時間の(分布|中央値)/, /教材(ランキング|の使用件数)/];
 
+/**
+ * ポリシー系ページ。投稿データを「表示」せず「扱い方を説明」するため、
+ * 本文のUGC検出から除外する(構造マーカーによる判定は引き続き効く)。
+ */
+const POLICY_ROUTES = new Set(['/privacy/', '/contact/', '/about/']);
+
 /** 本文の下限。これ未満は scaled content abuse として扱う */
 const THIN_ERROR_CHARS = 250;
 const THIN_WARN_CHARS = 600;
@@ -400,14 +406,18 @@ function checkLegal(pages) {
     const bodyEl = page.doc.querySelector('body');
     const declaredUgc = bodyEl?.getAttribute('data-has-user-data') === 'true';
 
-    // テキスト検出はフラグ付け忘れを拾う安全網。ただし「投稿データは含みません」のような
-    // 否定文で誤検知するため、該当語を含む一文が否定で閉じている場合は数えない。
+    // テキスト検出はフラグ付け忘れを拾う安全網。ただし2種類の誤検知がある:
+    //  (1) 「投稿データは含みません」のような否定文
+    //  (2) ポリシー系ページ(投稿データを"表示"せず"扱い方を説明"しているだけ)
+    // どちらも本文検出から除く。構造マーカー(data-has-user-data)による判定は残す。
     const sentences = page.mainText.split(/[。\n]/);
-    const textSignalsUgc = sentences.some(
-      (sentence) =>
-        UGC_SIGNALS.some((re) => re.test(sentence)) &&
-        !/(含みま?せん|ありません|ではありません|掲載していません|使用していません)/.test(sentence),
-    );
+    const textSignalsUgc =
+      !POLICY_ROUTES.has(page.route) &&
+      sentences.some(
+        (sentence) =>
+          UGC_SIGNALS.some((re) => re.test(sentence)) &&
+          !/(含みま?せん|ありません|ではありません|掲載していません|使用していません)/.test(sentence),
+      );
 
     const looksUgc =
       declaredUgc || page.doc.querySelector('[data-user-data-note]') !== null || textSignalsUgc;
@@ -540,10 +550,38 @@ function checkPhrases(pages) {
 }
 
 // ---------------------------------------------------------------------------
+// 7. 差し替え忘れ(プレースホルダ)
+// ---------------------------------------------------------------------------
+
+/**
+ * 公開前に実在の値へ差し替える必要がある箇所を検出する。
+ * 問い合わせ先が example.com のまま公開されると、ASP審査に落ちるだけでなく
+ * 「連絡できないサイト」として信頼を失う。人の注意力に頼らず機械で止める。
+ */
+const PLACEHOLDER_PATTERNS = [
+  { re: /REPLACE_ME/i, why: '差し替え用のマーカーが残っている' },
+  { re: /@example\.(com|org|net)/i, why: 'ダミーのメールアドレスが残っている' },
+  { re: /03-XXXX-XXXX|000-0000-0000/, why: 'ダミーの電話番号が残っている' },
+  { re: /(?:ここに|TODO:|FIXME:)\s*(?:入力|記入|差し替え)/, why: '未記入のマーカーが残っている' },
+];
+
+function checkPlaceholders(pages) {
+  for (const page of pages) {
+    for (const { re, why } of PLACEHOLDER_PATTERNS) {
+      const m = page.mainText.match(re);
+      if (m) {
+        error('placeholder', page.route, `「${m[0]}」が残っている(${why})`);
+      }
+    }
+  }
+  finishCheck('placeholder', '差し替え忘れ(プレースホルダ)', pages.length);
+}
+
+// ---------------------------------------------------------------------------
 // 実行
 // ---------------------------------------------------------------------------
 
-const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases'];
+const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder'];
 
 function report() {
   const errors = findings.filter((f) => f.severity === 'error');
@@ -553,7 +591,11 @@ function report() {
   console.log(bold('  QA レポート'));
   console.log(gray('  ' + '-'.repeat(62)));
 
-  for (const key of CHECK_ORDER) {
+  // CHECK_ORDER に無いキーも末尾に出す。登録漏れでエラーが黙殺されると
+  // 「デプロイ不可」とだけ出て理由が分からなくなる。
+  const orderedKeys = [...CHECK_ORDER, ...[...checkStats.keys()].filter((k) => !CHECK_ORDER.includes(k))];
+
+  for (const key of orderedKeys) {
     const stat = checkStats.get(key);
     if (!stat) continue;
     const own = findings.filter((f) => f.check === key);
@@ -613,6 +655,7 @@ async function main() {
   checkLinks(pages);
   checkThin(pages);
   checkPhrases(pages);
+  checkPlaceholders(pages);
 
   process.exit(report());
 }
