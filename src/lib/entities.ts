@@ -189,8 +189,8 @@ export function latestSeries(stats: OfficialStats): StatSeries | undefined {
  */
 export function passRateTrend(stats: OfficialStats): { latest: number; average: number; diff: number } | null {
   const rates = stats.series.map((s) => s.pass_rate).filter((r): r is number => typeof r === 'number');
-  if (rates.length < 2) return null;
   const latest = rates[0];
+  if (rates.length < 2 || latest === undefined) return null;
   const average = rates.reduce((a, b) => a + b, 0) / rates.length;
   return { latest, average, diff: Number((latest - average).toFixed(1)) };
 }

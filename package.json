@@ -10,11 +10,12 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "wrangler pages dev",
-    "qa": "node scripts/qa.mjs",
+    "qa": "tsc --noEmit -p tsconfig.json && node scripts/qa.mjs",
     "check": "astro check",
     "db:migrate:local": "wrangler d1 migrations apply shikakulog --local",
     "db:migrate": "wrangler d1 migrations apply shikakulog --remote",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "astro": "^5.0.0"
