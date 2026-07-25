@@ -25,6 +25,8 @@ export interface OfficialStats {
   series: StatSeries[];
   source_url: string;
   retrieved_at: string;
+  /** 読者向けの短い注記。内部メモ(notes)とは分けて扱う */
+  public_note?: string;
   notes?: string;
   unit_labels?: Record<string, string>;
 }
@@ -59,6 +61,8 @@ export interface Entity {
   schedule_url?: string;
   schedule_url_note?: string;
   verification?: Record<string, string>;
+  /** 読者向けの短い注記。内部メモ(notes)は表示しない */
+  public_note?: string;
   notes?: string;
 }
 

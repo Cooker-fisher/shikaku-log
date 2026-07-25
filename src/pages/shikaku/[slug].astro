@@ -57,9 +57,30 @@ const description = latest
   ? `${entity.name}の公式統計。${seriesLabel(latest)}の受験者数は${num.format(latest.examinees ?? 0)}人、合格率は${latest.pass_rate}%。直近5年の推移と試験制度を実施団体の公表資料からまとめています。`
   : `${entity.name}の試験制度と公式統計をまとめています。`;
 
-/** 出典一覧。項目ごとに異なるURLを持つため重複を除いて並べる */
-const sourceEntries = Object.entries(entity.exam.source_urls ?? {});
-const uniqueSources = [...new Set([...sourceEntries.map(([, url]) => url), ...blocks.map((b) => b.stats.source_url)])];
+/**
+ * 出典一覧。生URLの羅列は読者にとって何のページか分からないのでラベルを付ける。
+ * 同じURLが複数項目の根拠になっている場合はラベルをまとめる。
+ */
+const FIELD_LABELS: Record<string, string> = {
+  eligibility: '受験資格',
+  fee_yen: '受験手数料',
+  format: '試験の形式',
+  questions: '問題数',
+  duration_minutes: '試験時間',
+  passing_criteria: '合格基準',
+  result_announcement: '合格発表',
+};
+
+const sourceMap = new Map<string, string[]>();
+for (const [field, url] of Object.entries(entity.exam.source_urls ?? {})) {
+  const label = FIELD_LABELS[field] ?? field;
+  sourceMap.set(url, [...(sourceMap.get(url) ?? []), label]);
+}
+for (const block of blocks) {
+  const label = blocks.length > 1 ? `${block.label}の統計` : '受験者数・合格率の統計';
+  sourceMap.set(block.stats.source_url, [...(sourceMap.get(block.stats.source_url) ?? []), label]);
+}
+const uniqueSources = [...sourceMap.entries()].map(([url, labels]) => ({ url, labels: [...new Set(labels)] }));
 
 const snapshot = getSnapshot(entity.slug);
 
@@ -176,7 +197,7 @@ const canonical = new URL(Astro.url.pathname, origin).href;
           </table>
         </div>
 
-        {block.stats.notes && <p class="notes">{block.stats.notes}</p>}
+        {block.stats.public_note && <p class="notes">{block.stats.public_note}</p>}
 
         <SourceLink
           href={block.stats.source_url}
@@ -258,11 +279,14 @@ const canonical = new URL(Astro.url.pathname, origin).href;
         出願前には必ず実施団体の最新の案内を確認してください。
       </p>
       <ul>
-        {uniqueSources.map((url) => (
-          <li><a href={url} rel="noopener nofollow">{url}</a></li>
+        {uniqueSources.map(({ url, labels }) => (
+          <li>
+            <span class="src-labels">{labels.join(' / ')}</span>
+            <a href={url} rel="noopener nofollow">{url}</a>
+          </li>
         ))}
       </ul>
-      {entity.notes && <p class="notes">{entity.notes}</p>}
+      {entity.public_note && <p class="notes">{entity.public_note}</p>}
     </section>
   </article>
 </BaseLayout>
@@ -435,6 +459,13 @@ const canonical = new URL(Astro.url.pathname, origin).href;
     word-break: break-all;
   }
   .sources li {
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+  .src-labels {
+    display: block;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    color: var(--color-text);
+    word-break: normal;
   }
 </style>
