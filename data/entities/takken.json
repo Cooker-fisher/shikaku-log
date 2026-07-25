@@ -16,7 +16,7 @@
     "format": "50問・四肢択一式による筆記試験。ただし登録講習(宅建業に従事する者向け)の修了者は5問が免除され45問となる。",
     "questions": 50,
     "duration_minutes": 120,
-    "passing_criteria": "合格基準点は年度ごとに定められており、事前に固定の点数は公表されていない。公式に公表されている過去12回の実績では、一般受験者で50問中31点〜38点、登録講習修了者で45問中26点〜33点の範囲で推移している。",
+    "passing_criteria": "合格基準点は年度ごとに定められており、事前に固定の点数は公表されていない。実施団体が公表している令和7年度以前10年間(12回)の実績では、一般受験者で50問中33点〜38点、登録講習修了者で45問中28点〜33点の範囲で推移している。直近では令和6年度の37点から令和7年度の33点へ、1年で4点動いた。",
     "frequency": "年1回。試験日は例年10月の第3日曜日。ただし令和2年度・令和3年度は10月試験と12月試験の2回に分けて実施された。",
     "result_announcement": "原則として11月下旬。直近2回はいずれも試験日の約5週間後にあたる11月26日に結果が公表された。",
     "source_urls": {
@@ -25,8 +25,8 @@
       "format": "https://www.retio.or.jp/exam/exam_detail/",
       "questions": "https://www.retio.or.jp/exam/exam_detail/",
       "duration_minutes": "https://www.retio.or.jp/exam/exam_detail/",
-      "passing_criteria": "https://www.retio.or.jp/wp-content/uploads/2024/10/zissigaikyo.pdf",
-      "frequency": "https://www.retio.or.jp/wp-content/uploads/2024/10/zissigaikyo.pdf",
+      "passing_criteria": "https://www.retio.or.jp/wp-content/uploads/2025/12/10years_result2025.pdf",
+      "frequency": "https://www.retio.or.jp/wp-content/uploads/2025/12/10years_result2025.pdf",
       "result_announcement": "https://www.retio.or.jp/exam/exam_detail/"
     },
     "subjects": [
@@ -105,7 +105,11 @@
   "passing_score_history": {
     "note": "合格基準点は毎年変動する。事前に固定の合格点は公表されていない。",
     "unit": "一般受験者は50問中、登録講習修了者は45問中",
+    "total_questions": 50,
+    "total_questions_exempt": 45,
     "series": [
+      { "year": "令和7年度", "general": 33, "exempt": 28 },
+      { "year": "令和6年度", "general": 37, "exempt": 32 },
       { "year": "令和5年度", "general": 36, "exempt": 31 },
       { "year": "令和4年度", "general": 36, "exempt": 31 },
       { "year": "令和3年度(12月試験)", "general": 34, "exempt": null },
@@ -115,13 +119,11 @@
       { "year": "令和元年度", "general": 35, "exempt": 30 },
       { "year": "平成30年度", "general": 37, "exempt": 32 },
       { "year": "平成29年度", "general": 35, "exempt": 30 },
-      { "year": "平成28年度", "general": 35, "exempt": 30 },
-      { "year": "平成27年度", "general": 31, "exempt": 26 },
-      { "year": "平成26年度", "general": 32, "exempt": 27 }
+      { "year": "平成28年度", "general": 35, "exempt": 30 }
     ],
-    "source_url": "https://www.retio.or.jp/wp-content/uploads/2024/10/zissigaikyo.pdf",
+    "source_url": "https://www.retio.or.jp/wp-content/uploads/2025/12/10years_result2025.pdf",
     "retrieved_at": "2026-07-26",
-    "gap": "令和6年度・令和7年度の合格基準点は上記PDFに未収載(2024年10月時点のファイルのため)。公開前に一次ソースで補完すること。二次情報では令和6年度=36点とする記述があるが未確認のため採用していない。",
+    "collection_note": "当初参照した zissigaikyo.pdf(2024年10月版)は令和5年度までしか収録しておらず、令和6・7年度が欠けていた。実施団体が2025年12月に更新した「試験実施概況(令和7年度以前10年間)」で補完した。なお二次情報には令和6年度を36点とする記述があったが、一次ソースの実際の値は37点であり誤りだった。採用しなくて正解だった(CLAUDE.md 規則1-b)。",
     "public_note": "合格に必要な点数は毎年変わります。「何点取れば合格」と事前に決まっている試験ではありません。"
   },
   "regional_stats": {
@@ -223,8 +225,8 @@
     "collected_by": "PM(Fable)",
     "verified_by": "未実施",
     "verified_at": null,
-    "result": "🔴 公開前に fact-checker の独立検証が必須。特に (1) 令和6・7年度の合格基準点の補完 (2) 都道府県別47行の転記ミスの有無 (3) next_exam の試験日を令和8年度の公式案内で再確認すること。"
+    "result": "🔴 公開前に fact-checker の独立検証が必須。(1) 令和6・7年度の合格基準点は補完済み(2025年12月更新のPDFより) (2) 都道府県別47行は合計が公表値と完全一致することを機械で検算済み(申込306,099/受験245,462/合格45,821) (3) 🔴 next_exam の試験日を令和8年度の公式案内で再確認すること。"
   },
-  "notes": "確認できなかった項目: 令和6年度・令和7年度の合格基準点。実施団体の「試験実施概況(過去10年間)」PDFが2024年10月時点のファイルで令和5年度までしか収録していないため。二次情報に令和6年度=36点とする記述があるが、一次ソースで確認できていないため採用しない(CLAUDE.md 規則1-b)。",
+  "notes": "合格基準点は当初、実施団体の「試験実施概況(過去10年間)」PDFが2024年10月版で令和5年度までしか収録しておらず欠測だった。2025年12月更新版で令和6年度=37点・令和7年度=33点を取得し補完済み。二次情報には令和6年度を36点とする記述があったが一次ソースの値は37点で誤りだった。",
   "public_note": "数値はすべて実施団体である不動産適正取引推進機構の公表資料に基づきます。合格に必要な点数は毎年変わるため、事前に「何点で合格」と決まっているわけではありません。"
 }

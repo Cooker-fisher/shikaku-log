@@ -12,6 +12,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import SourceLink from '../../components/SourceLink.astro';
 import StatTrendChart from '../../components/StatTrendChart.astro';
 import RegionalStatsTable from '../../components/RegionalStatsTable.astro';
+import PassingScoreTable from '../../components/PassingScoreTable.astro';
 import StructuredData from '../../components/StructuredData.astro';
 import StudyPaceTool from '../../components/StudyPaceTool.astro';
 import ReportForm from '../../components/ReportForm.astro';
@@ -207,6 +208,10 @@ const canonical = new URL(Astro.url.pathname, origin).href;
         />
       </section>
     ))}
+
+    {entity.passing_score_history && (
+      <PassingScoreTable history={entity.passing_score_history} entityShortName={entity.short_name} />
+    )}
 
     {entity.regional_stats && latest?.pass_rate !== null && latest?.pass_rate !== undefined && (
       <RegionalStatsTable

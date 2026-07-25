@@ -91,6 +91,18 @@ export interface Entity {
   official_stats_unified?: OfficialStats;
   official_stats_cbt?: OfficialStats;
   regional_stats?: RegionalStats;
+  /**
+   * 合格基準点の推移。事前に合格点が公表されない試験にのみ存在する。
+   * 「◯点で合格」と断定しないための根拠として使う([backlog B-013])。
+   */
+  passing_score_history?: {
+    series: Array<{ year: string; general: number; exempt: number | null }>;
+    total_questions: number;
+    total_questions_exempt: number;
+    source_url: string;
+    retrieved_at: string;
+    public_note?: string;
+  };
   cbt_details?: Record<string, unknown>;
   unified_2026_schedule?: Record<string, unknown>;
   schedule_url?: string;

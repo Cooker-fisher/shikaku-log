@@ -1,0 +1,184 @@
+---
+/**
+ * 合格基準点の推移。
+ *
+ * **このコンポーネントの本質は「断定しないこと」にある。**
+ * 宅建の合格基準点は事前に公表されず、毎年変わる。
+ * 令和6年度は37点、令和7年度は33点で、**1年で4点動いた**。
+ * 「36点取れば合格」と書いた自己採点ツールは令和7年度に3点ぶん間違えることになる。
+ *
+ * だから **「◯点で合格」と言わない。**過去の実績の幅を見せるだけにする。
+ * これは自己採点ツール([backlog B-013])の設計原則そのものであり、
+ * 「合格ラインを教えてくれる便利なツール」に寄せた瞬間にこのサイトは信頼を失う。
+ *
+ * 表示は全てサーバ側で静的HTMLとして出力する(ADR-009 の必須要件)。
+ */
+import SourceLink from './SourceLink.astro';
+
+interface ScoreRow {
+  year: string;
+  general: number;
+  exempt: number | null;
+}
+interface Props {
+  history: {
+    series: ScoreRow[];
+    total_questions: number;
+    total_questions_exempt: number;
+    source_url: string;
+    retrieved_at: string;
+    public_note?: string;
+  };
+  entityShortName: string;
+}
+
+const { history: h, entityShortName: name } = Astro.props;
+
+const generals = h.series.map((s) => s.general);
+const min = Math.min(...generals);
+const max = Math.max(...generals);
+
+const latest = h.series[0];
+const previous = h.series[1];
+const swing = previous ? latest.general - previous.general : null;
+
+/** 直近3回の幅。「最近はだいたい何点か」に答える。10年の幅より実用的 */
+const recent = generals.slice(0, 3);
+const recentMin = Math.min(...recent);
+const recentMax = Math.max(...recent);
+
+/** 棒の基準。0点から描くと差が潰れるので、記録のある最低点の3点下を原点にする */
+const base = min - 3;
+const span = max - base;
+---
+
+<section class="scores" aria-labelledby="h-scores">
+  <h2 id="h-scores">合格に必要だった点数の推移</h2>
+
+  <p class="warn">
+    <strong>{name}に「何点取れば合格」という固定の基準はありません。</strong>
+    合格基準点は毎回の試験のあとに決まり、事前に公表されません。
+    公表されている{h.series.length}回では<strong>{h.total_questions}問中{min}点〜{max}点</strong>の幅があります。
+    {swing !== null && Math.abs(swing) >= 2 && (
+      <>
+        直近も{previous.year}の{previous.general}点から{latest.year}の{latest.general}点へ、
+        <strong>1年で{Math.abs(swing)}点</strong>動いています。
+      </>
+    )}
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <caption>{name} 合格基準点の推移(直近{h.series.length}回)</caption>
+      <thead>
+        <tr>
+          <th scope="col">実施年度</th>
+          <th scope="col" class="n">一般受験者<span class="sub">{h.total_questions}問中</span></th>
+          <th scope="col" class="n">登録講習修了者<span class="sub">{h.total_questions_exempt}問中</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {h.series.map((s) => (
+          <tr>
+            <th scope="row">{s.year}</th>
+            <td class="n bar-cell">
+              <span
+                class="bar"
+                style={`width:${(((s.general - base) / span) * 100).toFixed(1)}%`}
+                aria-hidden="true"></span>
+              <span class="val">{s.general}点</span>
+            </td>
+            <td class="n">{s.exempt !== null ? `${s.exempt}点` : '—'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="notes">
+    直近3回は{recentMin}点〜{recentMax}点です。
+    ただしこれは過去の結果であって、次回の基準点を示すものではありません。
+    {h.public_note}
+  </p>
+
+  <SourceLink href={h.source_url} label="合格基準点の推移(公式)" accessedAt={h.retrieved_at} />
+</section>
+
+<style>
+  .scores {
+    margin-top: var(--space-7);
+  }
+  /* 注意喚起なので公式統計の青ではなく警告色の帯を使い、統計ブロックと役割を区別する */
+  .warn {
+    background: var(--color-warn-050, #fdf3e3);
+    border-left: 3px solid var(--color-warn-500, #a8620a);
+    padding: var(--space-3) var(--space-4);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    margin: 0 0 var(--space-4);
+    line-height: var(--lh-normal);
+  }
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+  caption {
+    text-align: left;
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    padding: var(--space-2) var(--space-3);
+  }
+  th,
+  td {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+    white-space: nowrap;
+  }
+  thead th {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    font-weight: var(--fw-medium);
+    border-bottom: 1px solid var(--color-border-strong);
+  }
+  .sub {
+    display: block;
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-normal);
+  }
+  tbody th {
+    font-weight: var(--fw-medium);
+  }
+  .n {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .bar-cell {
+    position: relative;
+    min-width: 8rem;
+  }
+  .bar {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 1.1rem;
+    background: var(--color-official-bg);
+    border-radius: var(--radius-sm);
+  }
+  .val {
+    position: relative;
+    font-weight: var(--fw-bold);
+  }
+  .notes {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+    margin-top: var(--space-3);
+  }
+</style>
