@@ -18,7 +18,7 @@ export const MIN_SAMPLE_SIZE = 20;
  * ⚠️ 公開前にオーナーが実在のフォームURLへ差し替えること。
  * 差し替え忘れると qa.mjs がプレースホルダを検出して公開をブロックする。
  */
-export const CONTACT_FORM_URL = 'https://forms.gle/REPLACE_ME';
+export const CONTACT_FORM_URL = 'https://forms.gle/p74hYkAqS8WMqvEv5';
 
 export const NAV_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: '/about/', label: 'このサイトについて' },

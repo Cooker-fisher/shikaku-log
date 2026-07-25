@@ -26,7 +26,8 @@ const description = `${SITE_NAME}への連絡方法。掲載内容の誤りの�
     </p>
 
     <p class="hint">
-      メールアドレスの入力は任意にしてある。返信が必要な場合だけ記入してほしい。
+      フォームの項目は「お名前」「メールアドレス」「お問い合わせ内容」の3つ。
+      返信が不要な場合、お名前とメールアドレスは空欄のままで構わない。
     </p>
 
     <h2>特に歓迎する連絡</h2>
@@ -40,8 +41,16 @@ const description = `${SITE_NAME}への連絡方法。掲載内容の誤りの�
 
     <h3>投稿データの削除依頼</h3>
     <p>
-      投稿は匿名で受け付けているため本人確認ができない。
-      <strong>投稿日時・資格名・投稿内容の特徴</strong>を伝えてもらい、一致するものを削除する。
+      投稿は匿名で受け付けているため、こちらでは本人確認ができない。
+      そのため、フォームの<strong>「お問い合わせ内容」欄に次の3点</strong>を書いてほしい。
+      内容が一致する投稿を削除する。
+    </p>
+    <ul class="req-list">
+      <li>投稿したおおよその日時</li>
+      <li>どの資格のページか</li>
+      <li>投稿内容の特徴(勉強時間の数値、コメントの書き出しなど)</li>
+    </ul>
+    <p>
       詳細は<a href="/privacy/">プライバシーポリシー</a>に書いている。
     </p>
 
@@ -83,5 +92,12 @@ const description = `${SITE_NAME}への連絡方法。掲載内容の誤りの�
   h3 {
     font-size: var(--fs-md);
     margin-top: var(--space-5);
+  }
+  .req-list {
+    padding-left: 1.3em;
+    line-height: var(--lh-normal);
+  }
+  .req-list li {
+    margin-bottom: var(--space-2);
   }
 </style>
