@@ -1,0 +1,214 @@
+---
+/**
+ * 都道府県別の合格率ランキング。
+ *
+ * **なぜこれを作るか**: 「宅建の合格率は?」は数値1個で答えが完結するため、
+ * AI Overviews に要約されてクリックが発生しない([backlog B-006])。
+ * 一方この47行の分布は**表そのものが答え**なので、要約すると価値が消える。
+ * 一次データを持っている強みが最も出る形であり、AIに代替されにくい。
+ *
+ * **地理順でなく合格率順に並べる。**読者が知りたいのは「自分の県は上か下か」であって、
+ * 北海道から南下する順番ではない。公式PDFは地方ブロック順だが、そのまま写しても読めない。
+ *
+ * **全てサーバ側で静的HTMLとして出力する**(ADR-009 の必須要件)。棒の長さもインラインstyleで焼く。
+ */
+import SourceLink from './SourceLink.astro';
+import type { RegionalStats } from '../lib/entities';
+
+interface Props {
+  regional: RegionalStats;
+  entityShortName: string;
+  /** 全国の合格率。各県が平均より上か下かの基準にする */
+  nationalRate: number;
+}
+
+const { regional: r, entityShortName: name, nationalRate: national } = Astro.props;
+
+const num = new Intl.NumberFormat('ja-JP');
+
+const ranked = [...r.rows].sort((a, b) => b.pass_rate - a.pass_rate);
+const maxRate = ranked[0].pass_rate;
+const minRate = ranked[ranked.length - 1].pass_rate;
+
+/**
+ * 同率の県をまとめて扱う。
+ * 令和7年度は最下位が15.0%で3県が並ぶ。1県だけを「最も低い」と書くと事実に反する。
+ */
+const topPrefs = ranked.filter((x) => x.pass_rate === maxRate).map((x) => x.pref);
+const bottomPrefs = ranked.filter((x) => x.pass_rate === minRate).map((x) => x.pref);
+
+/** 18.7 も 15.0 も同じ桁で見せる。JSの既定では 15.0 が "15" になり、精度が落ちて見える */
+const pct = (v: number) => `${v.toFixed(1)}%`;
+
+const aboveRows = ranked.filter((x) => x.pass_rate >= national);
+const above = aboveRows.length;
+
+/**
+ * 全国の合格率は受験者数で重みづけされるため、受験者の多い都市部に引っ張られる。
+ * 令和7年度は47都道府県のうち13しか全国値を上回っていないが、
+ * その13が全受験者の過半を占めるので矛盾ではない。
+ * **「自分の県は平均以下だ」と読者が落ち込む前に、平均の性質を説明しておく。**
+ */
+const totalExaminees = r.rows.reduce((a, x) => a + x.examinees, 0);
+const aboveShare = Math.round((aboveRows.reduce((a, x) => a + x.examinees, 0) / totalExaminees) * 100);
+
+/**
+ * 受験者数が少ない県は年による振れ幅が大きい。
+ * 公表値は標本ではなく全数なので「誤差」ではないが、
+ * **来年も同じ順位になるとは限らない**ことは伝えないと誤読を招く。
+ */
+const SMALL_N = 1000;
+const smallCount = ranked.filter((x) => x.examinees < SMALL_N).length;
+---
+
+<section class="regional" aria-labelledby="h-regional">
+  <h2 id="h-regional">都道府県別の合格率({r.year})</h2>
+
+  <p class="finding">
+    合格率が最も高いのは<strong>{topPrefs.join('・')}の{pct(maxRate)}</strong>、
+    最も低いのは<strong>{bottomPrefs.join('・')}の{pct(minRate)}</strong>で、
+    その差は<strong>{(maxRate - minRate).toFixed(1)}ポイント</strong>あります。
+    全国の合格率{pct(national)}を上回ったのは{above}都道府県でした。
+  </p>
+
+  <p class="caveat">
+    上回った県が少なく見えますが、全国の合格率は受験者数で重みづけされるため、
+    受験者の多い都市部に引き寄せられます。
+    実際、上回った{above}都道府県だけで<strong>全受験者の{aboveShare}%</strong>を占めます。
+    平均より低い県だから不利、という意味ではありません。
+  </p>
+
+  <p class="caveat">
+    受験した都道府県での区分であり、居住地とは限りません。
+    また受験者が{num.format(SMALL_N)}人に満たない県が{smallCount}あり、
+    そうした県は年による振れ幅が大きくなります。<strong>順位は毎年入れ替わります。</strong>
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <caption>{name} {r.year} 都道府県別(合格率の高い順)</caption>
+      <thead>
+        <tr>
+          <th scope="col" class="rank">順位</th>
+          <th scope="col">都道府県</th>
+          <th scope="col" class="n">受験者数</th>
+          <th scope="col" class="n">合格者数</th>
+          <th scope="col" class="n">合格率</th>
+        </tr>
+      </thead>
+      <tbody>
+        {ranked.map((row, i) => (
+          <tr class={row.pass_rate >= national ? 'over' : undefined}>
+            <td class="rank">{i + 1}</td>
+            <th scope="row">{row.pref}</th>
+            <td class="n">{num.format(row.examinees)}</td>
+            <td class="n">{num.format(row.passers)}</td>
+            <td class="n rate">
+              <span class="bar" style={`width:${((row.pass_rate / maxRate) * 100).toFixed(1)}%`} aria-hidden="true"></span>
+              <span class="val">{pct(row.pass_rate)}</span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  {r.public_note && <p class="notes">{r.public_note}</p>}
+
+  <SourceLink href={r.source_url} label={`${r.year} 都道府県別集計(公式)`} accessedAt={r.retrieved_at} />
+</section>
+
+<style>
+  .regional {
+    margin-top: var(--space-7);
+  }
+  .finding {
+    color: var(--color-text);
+    background: var(--color-official-bg);
+    border-left: 3px solid var(--color-official);
+    padding: var(--space-3) var(--space-4);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    margin: 0 0 var(--space-3);
+  }
+  .caveat {
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+    margin: 0 0 var(--space-4);
+    line-height: var(--lh-normal);
+  }
+  /* 47行は縦に長い。画面内で収めてスクロールさせる方が全体像を掴みやすい */
+  .table-wrap {
+    max-height: 32rem;
+    overflow: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+  caption {
+    text-align: left;
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    padding: var(--space-2) var(--space-3);
+  }
+  thead th {
+    position: sticky;
+    top: 0;
+    background: var(--color-surface);
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    font-weight: var(--fw-medium);
+    border-bottom: 1px solid var(--color-border-strong);
+    z-index: 1;
+  }
+  th,
+  td {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+    white-space: nowrap;
+  }
+  tbody th {
+    font-weight: var(--fw-medium);
+  }
+  .rank {
+    width: 2.5rem;
+    text-align: right;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .n {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  /* 合格率のセルは棒と数値を重ねる。棒はサーバ側で幅を焼いてあるのでJS不要 */
+  .rate {
+    position: relative;
+    min-width: 7rem;
+  }
+  .bar {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 1.1rem;
+    background: var(--color-official-bg);
+    border-radius: var(--radius-sm);
+  }
+  tr.over .bar {
+    background: color-mix(in srgb, var(--color-official) 22%, transparent);
+  }
+  .val {
+    position: relative;
+    font-weight: var(--fw-bold);
+  }
+  .notes {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+    margin-top: var(--space-3);
+  }
+</style>

@@ -31,6 +31,31 @@ export interface OfficialStats {
   unit_labels?: Record<string, string>;
 }
 
+export interface RegionalRow {
+  pref: string;
+  applicants: number;
+  examinees: number;
+  exam_rate: number;
+  passers: number;
+  pass_rate: number;
+}
+
+/**
+ * 都道府県別の集計。実施団体が公表している資格にのみ存在する。
+ *
+ * **これは AI Overviews 対策の主力になる**([backlog B-006])。
+ * 「合格率は◯%」は数値1個で完結するのでAIの要約に奪われるが、
+ * 47行の分布は表そのものが答えなので、要約すると価値が消える。
+ */
+export interface RegionalStats {
+  year: string;
+  rows: RegionalRow[];
+  source_url: string;
+  retrieved_at: string;
+  public_note?: string;
+  unit_labels?: Record<string, string>;
+}
+
 export interface Entity {
   type: string;
   slug: string;
@@ -65,6 +90,7 @@ export interface Entity {
   official_stats?: OfficialStats;
   official_stats_unified?: OfficialStats;
   official_stats_cbt?: OfficialStats;
+  regional_stats?: RegionalStats;
   cbt_details?: Record<string, unknown>;
   unified_2026_schedule?: Record<string, unknown>;
   schedule_url?: string;
