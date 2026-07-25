@@ -89,6 +89,21 @@ const fullTitle = Astro.url.pathname === '/' ? title : `${title} | ${SITE_NAME}`
 
     <main id="main">
       <div class="container">
+        {/*
+          広告を含むページでは**本文の冒頭**にPR表記を出す。
+          ステマ規制が求めるのは「広告であることが一般消費者にとって明瞭であること」であり、
+          ページ下部の広告枠の中に書いてあるだけでは、そこまで到達しない読者には伝わらない。
+          2026-07-26、最初のアフィリエイトリンクを入れる直前にQAが
+          「PR表記が本文の1030文字目」と検出したため追加した。
+        */}
+        {hasAffiliate && (
+          <p class="pr-top" data-pr-disclosure>
+            <span class="pr-top__badge">PR</span>
+            このページには広告(アフィリエイトリンク)が含まれます。
+            リンク経由の申し込みで運営者に報酬が支払われますが、
+            掲載している公式統計と投稿データの内容は広告の有無で変えていません。
+          </p>
+        )}
         <slot />
       </div>
     </main>
