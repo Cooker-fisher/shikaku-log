@@ -8,11 +8,17 @@ export const MIN_SAMPLE_SIZE = 20;
 
 
 /**
- * 問い合わせ先。
- * ⚠️ 公開前にオーナーが実在のアドレスへ差し替えること。
+ * 問い合わせ先(Googleフォーム)。
+ *
+ * メールアドレスを直接載せない理由:
+ *  - 公開ページに書くとスパムの標的になる
+ *  - フォームなら「掲載内容の誤り」「削除依頼」などを項目で分けられ、
+ *    削除依頼に必要な情報(投稿日時・資格名)を確実に集められる
+ *
+ * ⚠️ 公開前にオーナーが実在のフォームURLへ差し替えること。
  * 差し替え忘れると qa.mjs がプレースホルダを検出して公開をブロックする。
  */
-export const CONTACT_EMAIL = 'REPLACE_ME@example.com';
+export const CONTACT_FORM_URL = 'https://forms.gle/REPLACE_ME';
 
 export const NAV_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: '/about/', label: 'このサイトについて' },

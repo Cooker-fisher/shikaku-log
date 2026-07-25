@@ -14,7 +14,7 @@ import { defineConfig } from 'astro/config';
  */
 export default defineConfig({
   // 独自ドメイン取得後に SITE_URL を差し替える(canonical / og:url に使う)
-  site: process.env.SITE_URL ?? 'https://shikakulog.pages.dev',
+  site: process.env.SITE_URL ?? 'https://shikaku-log.com',
   output: 'static',
   trailingSlash: 'always',
   build: {

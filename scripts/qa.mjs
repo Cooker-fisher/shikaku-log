@@ -563,12 +563,18 @@ const PLACEHOLDER_PATTERNS = [
   { re: /@example\.(com|org|net)/i, why: 'ダミーのメールアドレスが残っている' },
   { re: /03-XXXX-XXXX|000-0000-0000/, why: 'ダミーの電話番号が残っている' },
   { re: /(?:ここに|TODO:|FIXME:)\s*(?:入力|記入|差し替え)/, why: '未記入のマーカーが残っている' },
+  { re: /forms\.gle\/(REPLACE_ME|xxx+|TODO)/i, why: 'ダミーのフォームURLが残っている' },
+  { re: /https?:\/\/example\.(com|org|net)/i, why: 'ダミーのURLが残っている' },
 ];
 
 function checkPlaceholders(pages) {
   for (const page of pages) {
+    // **本文テキストだけでなく生HTMLを見る。**
+    // 問い合わせ先がリンクになっている場合、プレースホルダは href 属性の中にあり
+    // 本文テキストには現れない。本文だけ見ていると「通るはずのないものが通る」。
+    // (2026-07-25: メール表記からGoogleフォームのリンクに変えた際に実際に起きた)
     for (const { re, why } of PLACEHOLDER_PATTERNS) {
-      const m = page.mainText.match(re);
+      const m = page.html.match(re);
       if (m) {
         error('placeholder', page.route, `「${m[0]}」が残っている(${why})`);
       }

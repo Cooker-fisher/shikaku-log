@@ -8,7 +8,7 @@
 import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = ({ site }) => {
-  const origin = (site ?? new URL('https://shikakulog.pages.dev')).origin;
+  const origin = (site ?? new URL('https://shikaku-log.com')).origin;
 
   const body = `User-agent: *
 Allow: /
