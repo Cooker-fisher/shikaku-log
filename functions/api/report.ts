@@ -251,7 +251,7 @@ const handleReportPost: PagesFunction<Env> = async (context) => {
     return json({
       ok: true,
       status: 'received',
-      message: '投稿を受け付けた。内容の確認後に公開する。',
+      message: 'ありがとうございます。投稿を受け付けました。内容を確認したうえで公開します。',
       sampleSize: rank.sampleSize,
       percentile: rank.percentile,
       percentileMessage: `公開済み${rank.sampleSize}件の自己申告のうち、勉強時間が短い方から約${rank.percentile}%の位置。`,
@@ -261,10 +261,13 @@ const handleReportPost: PagesFunction<Env> = async (context) => {
   return json({
     ok: true,
     status: 'received',
-    message: '投稿を受け付けた。内容の確認後に公開する。',
+    message: 'ありがとうございます。投稿を受け付けました。内容を確認したうえで公開します。',
     sampleSize: rank.sampleSize,
     minSampleSize: MIN_SAMPLE_SIZE,
-    collectingMessage: `現在の公開済みは${rank.sampleSize}件。${MIN_SAMPLE_SIZE}件に達するまで集計は出さない。`,
+    collectingMessage:
+      rank.sampleSize === 0
+        ? 'この資格の合格報告は、あなたが最初の1件です。'
+        : `この資格の合格報告は、あなたで${rank.sampleSize + 1}件目です。`,
   });
 };
 

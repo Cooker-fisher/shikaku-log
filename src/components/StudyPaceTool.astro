@@ -21,17 +21,16 @@ const { entityName, snapshot } = Astro.props;
 const ready = snapshot.studyHours.status === 'ready';
 const median = snapshot.studyHours.median;
 const n = snapshot.studyHours.sampleSize;
-const remaining = Math.max(0, MIN_SAMPLE_SIZE - n);
 ---
 
 <section class="tool" aria-labelledby="h-tool">
   <h2 id="h-tool">学習ペースを逆算する</h2>
 
   <p class="intro">
-    試験日と目標の総学習時間を入れると、1日あたり何時間が必要かを計算します。
+    試験日と、1日に使える時間を入れると、<strong>試験日までに合計何時間ぶん積めるか</strong>を計算します。
     {ready
-      ? `目標時間の候補として、合格報告${n}件の中央値(${median}時間)も選べます。`
-      : `合格報告が${MIN_SAMPLE_SIZE}件集まったら、目標時間の候補として実際の合格者の中央値も出します(現在${n}件)。`}
+      ? `合格報告${n}件の中央値は${median}時間です。積める時間がそれに届くかも判定します。`
+      : '「何時間必要か」は人によって違い、公式にも発表されていません。まず自分が積める量を知るための計算です。'}
   </p>
 
   <form class="pace" id="pace-form" novalidate>
@@ -41,34 +40,38 @@ const remaining = Math.max(0, MIN_SAMPLE_SIZE - n);
     </div>
 
     <div class="field">
-      <label for="pace-target">目標の総学習時間</label>
+      <label for="pace-weekday">平日1日に使える時間</label>
       <div class="with-unit">
-        <input
-          type="number"
-          id="pace-target"
-          name="target"
-          min="1"
-          max="5000"
-          step="10"
-          inputmode="numeric"
-          placeholder="200"
-          required
-        />
+        <input type="number" id="pace-weekday" name="weekday" min="0" max="14" step="0.5" inputmode="decimal" placeholder="1" required />
         <span class="unit">時間</span>
       </div>
+      <p class="hint">通勤中や昼休みを含めて構いません。</p>
+    </div>
+
+    <div class="field">
+      <label for="pace-weekend">休日1日に使える時間</label>
+      <div class="with-unit">
+        <input type="number" id="pace-weekend" name="weekend" min="0" max="14" step="0.5" inputmode="decimal" placeholder="3" required />
+        <span class="unit">時間</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="pace-target">目標の総学習時間(任意)</label>
+      <div class="with-unit">
+        <input type="number" id="pace-target" name="target" min="1" max="5000" step="10" inputmode="numeric" placeholder="未入力可" />
+        <span class="unit">時間</span>
+      </div>
+      <p class="hint">
+        {ready
+          ? '入れると、積める時間で足りるかを判定します。'
+          : '決まっていなければ空のままで構いません。目標を知るために来た人に、目標を入力させないための任意項目です。'}
+      </p>
       {ready && (
         <button type="button" class="chip" id="use-median" data-median={median}>
           合格報告の中央値({median}時間)を使う
         </button>
       )}
-    </div>
-
-    <div class="field">
-      <label for="pace-done">すでに勉強した時間(任意)</label>
-      <div class="with-unit">
-        <input type="number" id="pace-done" name="done" min="0" max="5000" step="5" inputmode="numeric" placeholder="0" />
-        <span class="unit">時間</span>
-      </div>
     </div>
 
     <button type="submit" class="submit">計算する</button>
@@ -82,18 +85,20 @@ const remaining = Math.max(0, MIN_SAMPLE_SIZE - n);
     </p>
   </noscript>
 
+  {/*
+    **「公開ラインまであと◯件」のカウンタは撤去した(ADR-016)。**
+    集計を{MIN_SAMPLE_SIZE}件まで出さない判断自体は統計的に正しいので維持する。
+    しかし進捗ゲージは、投稿の対価を「他人が先に19人来ること」に条件づけており、
+    1人目にとっては報酬がゼロであることを可視化していた。
+    第三者レビューでも「0件を3か所で告知しており、空席を照明で照らしている」と指摘された。
+    非表示の理由だけを静かに書き、件数の不足は数えて見せない。
+  */}
   {!ready && (
     <div class="collecting" data-user-data-note>
-      <h3>合格報告を集めています</h3>
-      <p class="gauge-label">
-        <strong>{n}件</strong> / 公開ラインまであと <strong>{remaining}件</strong>
-      </p>
-      <div class="gauge" role="img" aria-label={`${MIN_SAMPLE_SIZE}件中${n}件を収集`}>
-        <span style={`width:${Math.min(100, (n / MIN_SAMPLE_SIZE) * 100)}%`}></span>
-      </div>
       <p class="why">
-        {MIN_SAMPLE_SIZE}件に達するまで、中央値や分布は表示しません。
-        数件しかない状態の中央値は、投稿が1件増えるだけで大きく動きます。
+        合格した人の勉強時間は公式に発表されていないため、このサイトでは利用者の報告を集めています。
+        ただし中央値や分布は、報告が{MIN_SAMPLE_SIZE}件に達するまで表示しません。
+        数件しかない状態の中央値は、報告が1件増えるだけで大きく動きます。
         その数字が「{entityName}の相場」として一人歩きすると、かえって判断を誤らせるためです。
         集計データは利用者の自己申告にもとづくもので、公的な統計ではありません。
       </p>
@@ -120,8 +125,10 @@ const remaining = Math.max(0, MIN_SAMPLE_SIZE - n);
       event.preventDefault();
 
       const dateValue = form.querySelector('#pace-date').value;
-      const target = Number(form.querySelector('#pace-target').value);
-      const done = Number(form.querySelector('#pace-done').value || 0);
+      const weekday = Number(form.querySelector('#pace-weekday').value);
+      const weekend = Number(form.querySelector('#pace-weekend').value);
+      const targetRaw = form.querySelector('#pace-target').value;
+      const target = targetRaw === '' ? null : Number(targetRaw);
 
       const show = (html, tone) => {
         result.innerHTML = html;
@@ -129,8 +136,26 @@ const remaining = Math.max(0, MIN_SAMPLE_SIZE - n);
         result.hidden = false;
       };
 
-      if (!dateValue || !Number.isFinite(target) || target <= 0) {
-        show('<p class="err">試験日と目標の総学習時間を入力してください。</p>', 'error');
+      if (!dateValue || !Number.isFinite(weekday) || !Number.isFinite(weekend)) {
+        show('<p class="err">試験日と、平日・休日に使える時間を入力してください。</p>', 'error');
+        return;
+      }
+      if (weekday < 0 || weekend < 0) {
+        show('<p class="err">使える時間に負の数は入れられません。</p>', 'error');
+        return;
+      }
+      // 上限は「1日24時間」ではなく人間が確保できる量で切る(掟 3-8)。
+      // 睡眠・食事・移動を除くと、専業でも持続可能なのは1日10〜12時間が限界。
+      const MAX_FEASIBLE_HOURS_PER_DAY = 14;
+      if (weekday > MAX_FEASIBLE_HOURS_PER_DAY || weekend > MAX_FEASIBLE_HOURS_PER_DAY) {
+        show(
+          `<p class="err">1日に使える時間は${MAX_FEASIBLE_HOURS_PER_DAY}時間までで入力してください。睡眠や生活の時間を考えると、それ以上を続けるのは現実的ではありません。</p>`,
+          'error',
+        );
+        return;
+      }
+      if (weekday === 0 && weekend === 0) {
+        show('<p class="err">平日か休日のどちらかに、使える時間を入れてください。</p>', 'error');
         return;
       }
 
@@ -144,51 +169,45 @@ const remaining = Math.max(0, MIN_SAMPLE_SIZE - n);
         return;
       }
 
-      const remainingHours = Math.max(0, target - done);
-
-      if (remainingHours === 0) {
-        show(
-          `<p class="lead">目標の <strong>${target}時間</strong> はすでに達しています。</p>
-           <p class="sub">試験日まであと ${days} 日です。</p>`,
-          'done',
-        );
-        return;
+      // 今日から試験日前日までの平日・休日を実際に数える。
+      // 「日数÷7×5」で概算すると、試験日が日曜(資格試験に多い)のとき
+      // 休日の数が1〜2日ずれ、積算時間が数時間単位で変わる。
+      let weekdayCount = 0;
+      let weekendCount = 0;
+      const cursor = new Date(today);
+      for (let i = 0; i < days; i += 1) {
+        cursor.setDate(cursor.getDate() + 1);
+        const dow = cursor.getDay();
+        if (dow === 0 || dow === 6) weekendCount += 1;
+        else weekdayCount += 1;
       }
 
-      const perDay = remainingHours / days;
-      const perWeek = perDay * 7;
+      const totalHours = weekdayCount * weekday + weekendCount * weekend;
+      const perWeek = weekday * 5 + weekend * 2;
 
-      // 上限は「1日24時間」ではなく「人間が確保できる時間」で切る。
-      // 睡眠・食事・移動を除けば、仕事を休んで専業で臨んでも持続可能なのは
-      // せいぜい1日10〜12時間。14時間を超える計画は数字を出さず、
-      // 計画として成立していないことを伝える。
-      // (当初24時間で切っていたが、それは「1日は24時間だから」という
-      //  機械的な発想で、実際に確保できる時間を考えていなかった)
-      const MAX_FEASIBLE_HOURS_PER_DAY = 14;
-      if (perDay > MAX_FEASIBLE_HOURS_PER_DAY) {
-        show(
-          `<p class="lead">この日程では <strong>計画として成立しません</strong>。</p>
-           <p class="sub">残り ${remainingHours} 時間を ${days} 日で割ると1日${perDay.toFixed(1)}時間になります。睡眠や生活の時間を考えると確保できる量ではありません。試験日か目標時間のどちらかを見直してください。</p>`,
-          'error',
-        );
-        return;
+      const fmt = (h) => (h >= 10 ? Math.round(h).toLocaleString('ja-JP') : h.toFixed(1));
+
+      let verdict = '';
+      let tone = 'ok';
+      if (target !== null && Number.isFinite(target) && target > 0) {
+        const diff = totalHours - target;
+        if (diff >= 0) {
+          verdict = `<p class="sub">目標の ${target.toLocaleString('ja-JP')} 時間に対して <strong>${fmt(diff)}時間の余裕</strong>があります。</p>`;
+          tone = 'ok';
+        } else {
+          const needPerDay = target / days;
+          verdict =
+            `<p class="sub">目標の ${target.toLocaleString('ja-JP')} 時間には <strong>${fmt(-diff)}時間足りません</strong>。` +
+            `届かせるには1日平均 ${needPerDay.toFixed(1)} 時間が必要です。</p>`;
+          tone = 'warn';
+        }
       }
-
-      const hoursText = perDay >= 1 ? `${perDay.toFixed(1)}時間` : `${Math.round(perDay * 60)}分`;
-
-      // 1日8時間を超える計画は現実的でないので、その旨を添える(煽らず事実として)
-      const tone = perDay > 8 ? 'tight' : perDay > 3 ? 'warn' : 'ok';
-      const caution =
-        perDay > 8
-          ? '<p class="sub">1日8時間を超えます。仕事や学校と並行しては難しい水準です。試験日を後ろにずらすか、目標時間の見直しを検討してください。</p>'
-          : perDay > 3
-            ? '<p class="sub">平日にこの時間を確保できるか確認してください。休日にまとめて充てる前提なら、平日と休日で配分を変えて考える必要があります。</p>'
-            : '';
 
       show(
-        `<p class="lead">試験日まで <strong>${days}日</strong>。1日あたり <strong>${hoursText}</strong> が必要です。</p>
-         <p class="sub">残り ${remainingHours} 時間 / 週あたり ${perWeek.toFixed(1)} 時間の計算です。</p>
-         ${caution}`,
+        `<p class="lead">試験日まで <strong>${days}日</strong>(平日${weekdayCount}日・休日${weekendCount}日)。
+           このペースなら合計 <strong>${fmt(totalHours)}時間</strong> 積めます。</p>
+         <p class="sub">1週間あたり ${fmt(perWeek)} 時間の計算です。</p>
+         ${verdict}`,
         tone,
       );
     });

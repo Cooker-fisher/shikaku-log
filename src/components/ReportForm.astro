@@ -57,6 +57,18 @@ const years = Array.from({ length: 8 }, (_, i) => thisYear - i);
         </select>
       </div>
 
+    </div>
+
+    <!--
+      任意項目は折りたたむ。
+      **理由**: ボタンには「3項目・30秒」と書いてあるのに、開くと8欄が並んでいた。
+      第三者レビューで「実際に自分でフォームを試していないと分かる嘘」と指摘された。
+      約束の文言を長くするのではなく、**既定の状態を約束どおり3欄にする**。
+      書きたい人は開けばよく、書きたくない人は必須3つだけで送信できる。
+    -->
+    <details class="more">
+      <summary>もっと書く(任意・投稿には不要です)</summary>
+      <div class="grid">
       <div class="field">
         <label for="rf-months">学習期間</label>
         <div class="with-unit">
@@ -97,7 +109,8 @@ const years = Array.from({ length: 8 }, (_, i) => thisYear - i);
           書かれていた場合は公開せずに削除します。
         </p>
       </div>
-    </div>
+      </div>
+    </details>
 
     <!-- ボット対策。人間には見えない。埋まっていればサーバ側で黙って捨てる -->
     <div class="hp" aria-hidden="true">
@@ -205,10 +218,16 @@ const years = Array.from({ length: 8 }, (_, i) => thisYear - i);
           return;
         }
 
-        // 公開済みが MIN_SAMPLE_SIZE 件未満なら順位は返らない(サーバ側の規則)
+        // 公開済みが MIN_SAMPLE_SIZE 件未満なら順位は返らない(サーバ側の規則)。
+        // **その場合に「あと◯件で表示できます」と返さない。**
+        // 投稿の対価を「他人が先に来ること」に条件づける文言であり、
+        // 1人目にとっては報酬がゼロだと宣言しているのと同じだった(ADR-016)。
+        // 代わりに、他人を待たずに成立する事実(何件目か)をサーバから受けて返す。
         const positionLine = data.percentileMessage
           ? `<p class="sub">${data.percentileMessage}</p>`
-          : `<p class="sub">公開済みの報告が${MIN_SAMPLE_SIZE}件に達したら、分布の中での位置を表示できるようになります。</p>`;
+          : data.collectingMessage
+            ? `<p class="sub">${data.collectingMessage}</p>`
+            : '';
 
         show(
           `<p class="lead">合格おめでとうございます。</p>
@@ -313,6 +332,24 @@ const years = Array.from({ length: 8 }, (_, i) => thisYear - i);
   }
   /* honeypot: 視覚的にもスクリーンリーダーからも外すが display:none は避ける
      (一部のボットは display:none を検知して回避するため) */
+  /* 任意項目の折りたたみ。既定では閉じており、必須3項目だけが見えている */
+  .more {
+    margin-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--space-3);
+  }
+  .more > summary {
+    cursor: pointer;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  .more[open] > summary {
+    margin-bottom: var(--space-3);
+  }
+
   .hp {
     position: absolute;
     left: -9999px;
