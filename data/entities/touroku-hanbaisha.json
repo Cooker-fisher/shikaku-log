@@ -4,28 +4,26 @@
   "name": "登録販売者試験",
   "short_name": "登録販売者",
   "category": "医療・福祉",
-  "draft": true,
-  "draft_reason": "fact-checker の独立検証が未了。検証を通ってから公開する。",
   "authority": {
     "name": "各都道府県(全国集計は厚生労働省)",
-    "url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000073924.html"
+    "url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/newpage_57810.html"
   },
   "exam": {
-    "eligibility": "学歴・実務経験の要件はなく、誰でも受験できる(平成27年度の試験から要件が撤廃された)。かつては実務経験が受験の条件だったが、現在は合格して登録したあとに、店舗管理者などの下で実務経験を積む仕組みに変わっている。",
+    "eligibility": "学歴・実務経験の要件はない(平成27年度の試験から要件が撤廃された)。",
     "fee_yen": null,
     "format": "マークシート方式の筆記試験。全120問を、120分×2部の計240分で解く。出題は厚生労働省の「試験問題作成に関する手引き」に基づくが、試験問題そのものは実施する都道府県(または広域連合)ごとに異なる。",
     "questions": 120,
     "duration_minutes": 240,
     "passing_criteria": "総得点の7割以上で、かつ試験項目ごとにも一定割合以上の正答が必要。項目ごとの下限は北海道では「4割以上」と明記されているが、都道府県により異なる場合があるため、受験する自治体の要項で確認が必要。",
-    "frequency": "年1回、都道府県(または関西広域連合などの広域連合)ごとに実施される。全国一斉の試験日はなく、地域によって8月〜12月の間で日程が異なる。",
+    "frequency": "年1回、都道府県(または関西広域連合などの広域連合)ごとに実施される。全国一斉の試験日はなく、日程は地域によって異なる。",
     "result_announcement": "実施主体のウェブサイトに合格者の受験番号が掲示される。合格者には「合格通知書」が後日郵送されるが、不合格者への通知はない(関西広域連合の受験案内による)。",
     "source_urls": {
       "eligibility": "https://www.hokeniryo.metro.tokyo.lg.jp/anzen/iyaku/tourokushiken/tourokuqa/r6shiken",
       "format": "https://www.kouiki-kansai.jp/material/files/group/12/20260518tohan_juken_annai.pdf",
       "questions": "https://www.kouiki-kansai.jp/material/files/group/12/20260518tohan_juken_annai.pdf",
       "duration_minutes": "https://www.kouiki-kansai.jp/material/files/group/12/20260518tohan_juken_annai.pdf",
-      "passing_criteria": "https://www.pref.hokkaido.lg.jp/hf/iyk/r7tohansiken.html",
-      "frequency": "https://www.pref.hokkaido.lg.jp/hf/iyk/r7tohansiken.html",
+      "passing_criteria": "https://www.pref.hokkaido.lg.jp/hf/iyk/258176.html",
+      "frequency": "https://www.pref.hokkaido.lg.jp/hf/iyk/258176.html",
       "result_announcement": "https://www.kouiki-kansai.jp/material/files/group/12/20260518tohan_juken_annai.pdf"
     },
     "subjects": [
@@ -41,33 +39,68 @@
   "official_stats": {
     "unit": "全国集計(厚生労働省発表・延べ人数)",
     "series": [
-      { "year": "令和6年度", "applicants": null, "examinees": 54526, "passers": 25459, "pass_rate": 46.7, "source_url": "https://www.mhlw.go.jp/content/11121000/001487496.pdf", "retrieved_at": "2026-07-26" },
-      { "year": "令和5年度", "applicants": null, "examinees": 52214, "passers": 22814, "pass_rate": 43.7, "source_url": "https://www.mhlw.go.jp/content/11121000/001487495.pdf", "retrieved_at": "2026-07-26" },
-      { "year": "令和4年度", "applicants": null, "examinees": 55606, "passers": 24707, "pass_rate": 44.4, "source_url": "https://www.mhlw.go.jp/content/11121000/001487494.pdf", "retrieved_at": "2026-07-26" },
-      { "year": "令和3年度", "applicants": null, "examinees": 61070, "passers": 30082, "pass_rate": 49.3, "source_url": "https://www.mhlw.go.jp/content/11121000/001487493.pdf", "retrieved_at": "2026-07-26" }
+      {
+        "year": "令和6年度",
+        "applicants": null,
+        "examinees": 54526,
+        "passers": 25459,
+        "pass_rate": 46.7,
+        "source_url": "https://www.mhlw.go.jp/content/11121000/001487496.pdf",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和5年度",
+        "applicants": null,
+        "examinees": 52214,
+        "passers": 22814,
+        "pass_rate": 43.7,
+        "source_url": "https://www.mhlw.go.jp/content/11121000/001487495.pdf",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和4年度",
+        "applicants": null,
+        "examinees": 55606,
+        "passers": 24707,
+        "pass_rate": 44.4,
+        "source_url": "https://www.mhlw.go.jp/content/11121000/001487494.pdf",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和3年度",
+        "applicants": null,
+        "examinees": 61070,
+        "passers": 30082,
+        "pass_rate": 49.3,
+        "source_url": "https://www.mhlw.go.jp/content/11121000/001487493.pdf",
+        "retrieved_at": "2026-07-26"
+      }
     ],
-    "source_url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000073924.html",
+    "source_url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/newpage_57810.html",
     "retrieved_at": "2026-07-26",
-    "notes": "厚生労働省が公表する年度別の試験実施状況(都道府県別一覧)の「年度計」から取得した。受験者数・合格者数は延べ人数で、同一人が複数の都道府県で受験した分を含むと資料に明記されている。全4年度で合格者数÷受験者数が公表合格率と一致することを検算済み。令和7年度の集計は取得時点で該当PDFを特定できなかった(未公表とは断定していない)。見つかり次第追加する。",
+    "notes": "厚生労働省が公表する年度別の試験実施状況(都道府県別一覧)の「年度計」から取得した。受験者数・合格者数は延べ人数で、同一人が複数の都道府県で受験した分を含むと資料に明記されている。全4年度で合格者数÷受験者数が公表合格率と一致することを検算済み。令和7年度の集計は、厚労省の一覧ページに掲載が無いことを独立検証で確認した(未公表とは断定していない)。掲載され次第追加する。",
     "unit_labels": {
       "applicants": "申込者数(未公表)",
       "examinees": "受験者数(延べ人数)",
       "passers": "合格者数(延べ人数)",
       "pass_rate": "合格率(%)"
     },
-    "public_note": "受験者数・合格者数は延べ人数です。この試験は同じ年に複数の都道府県で受験できるため、同じ人が2回以上数えられている場合があります。また令和6年度の合格率は北海道62.3%〜沖縄24.5%と地域差が大きいですが、試験問題は都道府県ごとに異なるため、この差には問題の難易度の違いが含まれます。"
+    "public_note": "受験者数・合格者数は延べ人数です。この試験は同じ年に複数の都道府県で受験できるため、同じ人が2回以上数えられている場合があります。また令和6年度の合格率は北海道62.3%〜沖縄24.5%と地域差が大きいですが、試験問題は都道府県ごとに異なるため、地域間の単純比較はできません。"
   },
   "related": [
-    { "slug": "eisei-kanri-1", "reason": "同じく就労に直結する免許系の資格。こちらは全国共通の問題で実施される" }
+    {
+      "slug": "eisei-kanri-1",
+      "reason": "同じく就労に直結する免許系の資格"
+    }
   ],
-  "schedule_url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000073924.html",
+  "schedule_url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/newpage_57810.html",
   "schedule_url_note": "試験日程は都道府県ごとに公表される。厚労省ページは制度全体の案内。",
   "verification": {
     "collected_by": "researcher(一次ソースのみ)+ PM(Fable)",
-    "verified_by": "未実施",
-    "verified_at": null,
-    "result": "🔴 独立検証が未実施のため draft のまま。統計4年度分は検算済み。未検証の中心は (1) 受験資格の撤廃時期(東京都のQ&Aページを出典としている) (2) 合格基準の項目別下限の県差 (3) 手数料の例2件。"
+    "verified_by": "fact-checker(独立に一次ソースを再取得。PDFはローカル抽出で本文照合)",
+    "verified_at": "2026-07-26",
+    "result": "統計4年度分は全件一致。修正2件+表現5件を反映した。(1) 厚労省の制度ページURLが404だった(3か所)。検証側が正しいページを特定し差し替えた。(2) 受験資格に禁止語「誰でも」を使っていた(掟3-7)。同じ事実を基本情報のページでは断定回避しており、基準の不一致でもあった。ほか、出典に無い記述(登録後の実務の仕組み・実施月の範囲・難易度差の断定)を削るか言い換えた。"
   },
-  "notes": "確認できなかった項目: (1) 令和7年度の全国集計。連番のURLが404で、掲載先が変わった可能性があるため「未公表」とは断定していない。(2) 項目別の正答率下限が全国共通かどうか(北海道の「4割以上」の明記のみ確認)。いずれも推測で埋めていない。",
+  "notes": "確認できなかった項目: (1) 令和7年度の全国集計(厚労省の一覧ページに未掲載であることは確認済み。未公表とは断定していない)。(2) 項目別の正答率下限が全国共通かどうか(北海道の「各項目4割以上」の明記のみ確認)。(3) 実施月の全国的な範囲。いずれも推測で埋めていない。",
   "public_note": "試験は都道府県ごとに実施され、手数料・日程・合格基準の細部が地域で異なります。申込前に必ず受験する自治体の要項をご確認ください。"
 }
