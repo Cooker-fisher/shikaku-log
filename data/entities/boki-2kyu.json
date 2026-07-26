@@ -34,11 +34,56 @@
   "official_stats_unified": {
     "unit": "統一試験(ペーパー)・全国集計・2級",
     "series": [
-      { "session": "第173回", "date": "2026-06-14", "applicants": 5724, "examinees": 4821, "passers": 728, "pass_rate": 15.1, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" },
-      { "session": "第172回", "date": "2026-02-22", "applicants": 7115, "examinees": 6038, "passers": 911, "pass_rate": 15.1, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" },
-      { "session": "第171回", "date": "2025-11-16", "applicants": 7512, "examinees": 6332, "passers": 1492, "pass_rate": 23.6, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" },
-      { "session": "第170回", "date": "2025-06-08", "applicants": 6560, "examinees": 5383, "passers": 1193, "pass_rate": 22.2, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" },
-      { "session": "第169回", "date": "2025-02-23", "applicants": 8606, "examinees": 7118, "passers": 1486, "pass_rate": 20.9, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" }
+      {
+        "session": "第173回",
+        "date": "2026-06-14",
+        "applicants": 5724,
+        "examinees": 4821,
+        "passers": 728,
+        "pass_rate": 15.1,
+        "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "session": "第172回",
+        "date": "2026-02-22",
+        "applicants": 7115,
+        "examinees": 6038,
+        "passers": 911,
+        "pass_rate": 15.1,
+        "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "session": "第171回",
+        "date": "2025-11-16",
+        "applicants": 7512,
+        "examinees": 6332,
+        "passers": 1492,
+        "pass_rate": 23.6,
+        "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "session": "第170回",
+        "date": "2025-06-08",
+        "applicants": 6560,
+        "examinees": 5383,
+        "passers": 1193,
+        "pass_rate": 22.2,
+        "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "session": "第169回",
+        "date": "2025-02-23",
+        "applicants": 8606,
+        "examinees": 7118,
+        "passers": 1486,
+        "pass_rate": 20.9,
+        "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data",
+        "retrieved_at": "2026-07-26"
+      }
     ],
     "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data",
     "retrieved_at": "2026-07-26",
@@ -54,10 +99,42 @@
   "official_stats_cbt": {
     "unit": "ネット試験(CBT)・全国集計・2級・年度単位",
     "series": [
-      { "period": "2025年4月〜2026年3月", "applicants": null, "examinees": 141072, "passers": 46351, "pass_rate": 32.9, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" },
-      { "period": "2024年4月〜2025年3月", "applicants": null, "examinees": 124429, "passers": 44359, "pass_rate": 35.7, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" },
-      { "period": "2023年4月〜2024年3月", "applicants": null, "examinees": 119036, "passers": 41912, "pass_rate": 35.2, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" },
-      { "period": "2022年4月〜2023年3月", "applicants": null, "examinees": 105289, "passers": 39076, "pass_rate": 37.1, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" }
+      {
+        "period": "2025年4月〜2026年3月",
+        "applicants": null,
+        "examinees": 141072,
+        "passers": 46351,
+        "pass_rate": 32.9,
+        "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "period": "2024年4月〜2025年3月",
+        "applicants": null,
+        "examinees": 124429,
+        "passers": 44359,
+        "pass_rate": 35.7,
+        "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "period": "2023年4月〜2024年3月",
+        "applicants": null,
+        "examinees": 119036,
+        "passers": 41912,
+        "pass_rate": 35.2,
+        "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "period": "2022年4月〜2023年3月",
+        "applicants": null,
+        "examinees": 105289,
+        "passers": 39076,
+        "pass_rate": 37.1,
+        "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data",
+        "retrieved_at": "2026-07-26"
+      }
     ],
     "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data",
     "retrieved_at": "2026-07-26",
@@ -71,14 +148,17 @@
     "public_note": "ネット試験(CBT)の集計です。統一試験と出題範囲・合格基準は同じですが、合格率は別々に公表されています。"
   },
   "related": [
-    { "slug": "boki-3kyu", "reason": "商業簿記のみの下位級。2級では工業簿記が加わり、試験時間も60分から90分になる" }
+    {
+      "slug": "boki-3kyu",
+      "reason": "商業簿記のみの下位級。2級では工業簿記が加わり、試験時間も60分から90分になる"
+    }
   ],
   "schedule_url": "https://www.kentei.ne.jp/calendar_2026",
   "verification": {
     "collected_by": "researcher(一次ソースのみ)+ PM(Fable)",
     "verified_by": "未実施",
     "verified_at": null,
-    "result": "🔴 独立検証が未実施。統計9系列は合格者数÷受験者数の検算を全件通している。未検証の中心は (1) ネット試験の事務手数料550円の出典が実施団体ではなく運営受託先(CBT-Solutions)である点 (2) 施行休止期間の日付。"
+    "result": "🔴 独立検証は未実施(検証エージェントがオーナー操作で停止されたため。勝手に再実行しない)。PMによる要点の再照合のみ実施済み(2026-07-26): 統一試験第173回(4,821/728/15.1%)とネット試験2025年度(141,072/46,351/32.9%)が公式ページと一致することを確認した。全項目の独立検証は次回の検証バッチに載せる。"
   },
   "notes": "確認できなかった項目: (1) 商業簿記と工業簿記それぞれの配点比率。公式の試験科目ページに記載が無い。(2) 統一試験の合格発表までの全国一律の標準日数。商工会議所ごとに異なるため公表されていない。(3) ネット試験の申込者数。公表は受験者数のみ。いずれも推測で埋めていない。",
   "public_note": "統一試験(ペーパー)とネット試験(CBT)は出題範囲・合格基準が同じで、合格すれば同等の資格になります。ただし合格率は別々に公表されているため、このページでも分けて掲載しています。"

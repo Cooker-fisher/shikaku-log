@@ -39,11 +39,51 @@
   "official_stats": {
     "unit": "全国集計(年度単位・IPA発表)",
     "series": [
-      { "year": "令和7年度", "applicants": 307266, "examinees": 271352, "passers": 132012, "pass_rate": 48.6, "source_url": "https://www3.jitec.ipa.go.jp/JitesCbt/html/openinfo/pdf/statistics/202603_ip_shikenkekka.pdf", "retrieved_at": "2026-07-26" },
-      { "year": "令和6年度", "applicants": 309068, "examinees": 273905, "passers": 134617, "pass_rate": 49.1, "source_url": "https://www3.jitec.ipa.go.jp/JitesCbt/html/openinfo/pdf/statistics/202503_ip_shikenkekka.pdf", "retrieved_at": "2026-07-26" },
-      { "year": "令和5年度", "applicants": 297864, "examinees": 265040, "passers": 133292, "pass_rate": 50.3, "source_url": "https://www3.jitec.ipa.go.jp/JitesCbt/html/openinfo/pdf/statistics/202403_ip_shikenkekka.pdf", "retrieved_at": "2026-07-26" },
-      { "year": "令和4年度", "applicants": 253159, "examinees": 231526, "passers": 119495, "pass_rate": 51.6, "source_url": "https://www3.jitec.ipa.go.jp/JitesCbt/html/openinfo/pdf/statistics/202303_ip_shikenkekka.pdf", "retrieved_at": "2026-07-26" },
-      { "year": "令和3年度", "applicants": 244254, "examinees": 211145, "passers": 111241, "pass_rate": 52.7, "source_url": "https://www3.jitec.ipa.go.jp/JitesCbt/html/openinfo/pdf/statistics/202203_ip_shikenkekka.pdf", "retrieved_at": "2026-07-26" }
+      {
+        "year": "令和7年度",
+        "applicants": 307266,
+        "examinees": 271352,
+        "passers": 132012,
+        "pass_rate": 48.6,
+        "source_url": "https://www3.jitec.ipa.go.jp/JitesCbt/html/openinfo/pdf/statistics/202603_ip_shikenkekka.pdf",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和6年度",
+        "applicants": 309068,
+        "examinees": 273905,
+        "passers": 134617,
+        "pass_rate": 49.1,
+        "source_url": "https://www3.jitec.ipa.go.jp/JitesCbt/html/openinfo/pdf/statistics/202503_ip_shikenkekka.pdf",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和5年度",
+        "applicants": 297864,
+        "examinees": 265040,
+        "passers": 133292,
+        "pass_rate": 50.3,
+        "source_url": "https://www3.jitec.ipa.go.jp/JitesCbt/html/openinfo/pdf/statistics/202403_ip_shikenkekka.pdf",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和4年度",
+        "applicants": 253159,
+        "examinees": 231526,
+        "passers": 119495,
+        "pass_rate": 51.6,
+        "source_url": "https://www3.jitec.ipa.go.jp/JitesCbt/html/openinfo/pdf/statistics/202303_ip_shikenkekka.pdf",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和3年度",
+        "applicants": 244254,
+        "examinees": 211145,
+        "passers": 111241,
+        "pass_rate": 52.7,
+        "source_url": "https://www3.jitec.ipa.go.jp/JitesCbt/html/openinfo/pdf/statistics/202203_ip_shikenkekka.pdf",
+        "retrieved_at": "2026-07-26"
+      }
     ],
     "source_url": "https://www3.jitec.ipa.go.jp/JitesCbt/html/openinfo/pass.html",
     "retrieved_at": "2026-07-26",
@@ -57,14 +97,17 @@
     "public_note": "IPAが公表している年度単位の全国集計です。「応募者」は申し込んだ人数、「受験者」は実際に受験した人数を指します。"
   },
   "related": [
-    { "slug": "boki-3kyu", "reason": "同じく受験資格の制限がなく、通年のCBTで受けられる入門級の資格" }
+    {
+      "slug": "boki-3kyu",
+      "reason": "同じく受験資格の制限がなく、通年のCBTで受けられる入門級の資格"
+    }
   ],
   "schedule_url": "https://www.ipa.go.jp/shiken/mousikomi/schedule.html",
   "verification": {
     "collected_by": "researcher(一次ソースのみ)+ PM(Fable)",
     "verified_by": "未実施",
     "verified_at": null,
-    "result": "🔴 独立検証が未実施。統計5年度分は合格者数÷受験者数の検算を全件通している。未検証の中心は (1) 分野別の出題数(「程度」とされ固定ではない) (2) 合格発表の時期を個別月の例から一般化して記述している点。"
+    "result": "🔴 独立検証は未実施(検証エージェントがオーナー操作で停止されたため。勝手に再実行しない)。PMによる要点の再照合のみ実施済み(2026-07-26): 受験手数料7,500円(消費税込み)と通年CBT実施の記述が公式ページと一致することを確認した。統計5年度分は収集時に検算済み。全項目の独立検証は次回の検証バッチに載せる。"
   },
   "notes": "確認できなかった項目: (1) 試験日から合格発表日までの日数を定めた一般ルール。公式には個別月の発表日(翌月22日前後)が示されるのみで、「何日後」という明文の規定を見つけられなかった。(2) 受験手数料をITパスポート単独で「税込」と明記した文。情報処理技術者試験全体について消費税込みとする記述はある。いずれも推測で埋めていない。",
   "public_note": "合格には、総合点だけでなく3分野それぞれで300点以上を取る必要があります。総合点が合格ラインを超えていても、1分野でも下回ると不合格になります。"
