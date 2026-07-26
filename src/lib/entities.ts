@@ -116,6 +116,26 @@ export interface Entity {
     retrieved_at: string;
     public_note?: string;
   };
+  /**
+   * 次回試験。**申込締切を必ず持たせる。**
+   *
+   * 当初は日付と「申込は7月1日から開始」しか持っていなかった。
+   * 開始日だけを見せると、9月に読んだ人には締切が過ぎていることが伝わらない。
+   * 読者が最も損をするのは「締切を知らずに1年待つ」ことなので、締切を必須項目にしている。
+   */
+  next_exam?: {
+    /** 試験日 YYYY-MM-DD */
+    date: string;
+    time?: string;
+    note?: string;
+    /** ISO8601。時刻まで公表されている場合は時刻も入れる */
+    application_deadline_internet?: string;
+    application_deadline_mail?: string;
+    /** 合格発表日 YYYY-MM-DD。**過去の発表日から推測して入れてはならない** */
+    result_date?: string;
+    source_url: string;
+    retrieved_at?: string;
+  };
   cbt_details?: Record<string, unknown>;
   unified_2026_schedule?: Record<string, unknown>;
   schedule_url?: string;

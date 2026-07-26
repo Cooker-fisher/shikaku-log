@@ -1,0 +1,78 @@
+{
+  "type": "certification",
+  "slug": "boiler-2kyu",
+  "name": "二級ボイラー技士",
+  "short_name": "二級ボイラー技士",
+  "category": "労働安全衛生",
+  "authority": {
+    "name": "公益財団法人 安全衛生技術試験協会",
+    "url": "https://www.exam.or.jp/"
+  },
+  "exam": {
+    "eligibility": "試験そのものには受験資格の制限がない。ただし申込時に本人確認証明書の添付が必要。なお試験に合格しても、それだけでは免許が交付されない点に注意(後述)。",
+    "fee_yen": 8800,
+    "format": "学科試験のみ。実技試験はない。「ボイラーの構造に関する知識」「ボイラーの取扱いに関する知識」「燃料及び燃焼に関する知識」「関係法令」の4科目から、各10問・100点が出題される(合計40問・400点満点)。",
+    "questions": 40,
+    "duration_minutes": 180,
+    "passing_criteria": "科目ごとの得点が40%以上で、かつその合計が60%以上であること。1科目でも40%を下回ると、合計が60%を超えていても不合格になる。",
+    "frequency": "北海道・東北・関東(市原)・東京試験場・中部・近畿(大阪)・中国四国・九州の8か所で、月1回程度・年12回実施される(令和8年4月〜令和9年3月の日程で確認)。年1回の一斉試験ではない。",
+    "result_announcement": "合格者には「免許試験合格通知書」が郵送され、試験結果はセンターのホームページにも掲載される。電話等による問い合わせには応じない旨が明記されている。試験結果発表日を10日以上過ぎても通知が届かない場合は連絡するよう案内がある。なお試験日から発表日までの日数は、受験地・試験ごとに定められる。",
+    "license_requirement": "試験に合格しただけでは免許は交付されない。免許を申請する際に「実務経験等を証する書類」の添付が必要で(試験日が平成24年4月1日以降の場合)、その要件は次のいずれかを満たすこと。(1) ボイラーに関する学科を修めて卒業し、3か月以上の実地修習を経た (2) 6か月以上の実地修習を経た (3) ボイラー取扱技能講習を修了し、4か月以上小規模ボイラーを取り扱った経験がある (4) ボイラー実技講習を修了した (5) 厚生労働大臣が定める者に該当する。実務経験が無い受験者は、(4)のボイラー実技講習を受けるのが一般的な経路になる。",
+    "source_urls": {
+      "eligibility": "https://www.exam.or.jp/introduction/h_shokai122/",
+      "fee_yen": "https://www.exam.or.jp/h_tesuryo/",
+      "format": "https://www.exam.or.jp/introduction/h_shokai122/",
+      "questions": "https://www.exam.or.jp/introduction/h_shokai122/",
+      "duration_minutes": "https://www.exam.or.jp/introduction/h_shokai122/",
+      "passing_criteria": "https://www.exam.or.jp/introduction/h_shokai122/",
+      "frequency": "https://www.exam.or.jp/schedule/h_nittei122",
+      "result_announcement": "https://www.exam.or.jp/introduction/h_shokai122/",
+      "license_requirement": "https://jsite.mhlw.go.jp/kagoshima-roudoukyoku/hourei_seido_tetsuzuki/anzen_eisei/shiken/2019-1011-5.html"
+    },
+    "subjects": [
+      "ボイラーの構造に関する知識 10問・100点",
+      "ボイラーの取扱いに関する知識 10問・100点",
+      "燃料及び燃焼に関する知識 10問・100点",
+      "関係法令 10問・100点"
+    ],
+    "license_requirement_note": "実施団体(安全衛生技術試験協会)のサイトには「実務経験等を証する書類」が必要という記載までしかなく、その具体的な要件を列挙したページが無い。そのため要件の内訳は、厚生労働省の地方組織である鹿児島労働局が公開している免許交付要件の一覧を出典としている。二次情報のまとめサイトは根拠にしていない。",
+    "retrieved_at": "2026-07-26"
+  },
+  "official_stats": {
+    "unit": "全国集計(安全衛生技術試験協会発表)",
+    "series": [
+      {
+        "year": "令和7年度",
+        "applicants": null,
+        "examinees": 21349,
+        "passers": 11303,
+        "pass_rate": 52.9,
+        "source_url": "https://www.exam.or.jp/h_gokakuritsu/",
+        "retrieved_at": "2026-07-26"
+      }
+    ],
+    "source_url": "https://www.exam.or.jp/h_gokakuritsu/",
+    "retrieved_at": "2026-07-26",
+    "notes": "実施団体の統計ページから令和7年度の値を取得した。申込者数は同ページに掲載が無いため null としている。過去年度の系列は未取得で、次回の更新時に追加する。11,303÷21,349=52.94%で、公表値52.9%と小数第1位まで一致することを検算済み。",
+    "unit_labels": {
+      "applicants": "申込者数(未公表)",
+      "examinees": "受験者数",
+      "passers": "合格者数",
+      "pass_rate": "合格率(%)"
+    },
+    "public_note": "実施団体が公表している全国集計です。申込者数は公表されていないため掲載していません。"
+  },
+  "related": [
+    { "slug": "eisei-kanri-1", "reason": "同じ安全衛生技術試験協会が実施する免許試験。合格基準の考え方(各科目40%以上かつ合計60%以上)が共通" },
+    { "slug": "eisei-kanri-2", "reason": "同上。試験会場と実施体制が同じ" }
+  ],
+  "schedule_url": "https://www.exam.or.jp/schedule/h_nittei122",
+  "verification": {
+    "collected_by": "researcher(一次ソースのみ)+ PM(Fable)",
+    "verified_by": "未実施",
+    "verified_at": null,
+    "result": "🔴 独立検証が未実施。特に (1) 免許交付の実務要件を実施団体以外の一次ソース(鹿児島労働局)から取っている点 (2) 統計が令和7年度の1年分のみ。"
+  },
+  "notes": "確認できなかった項目: (1) 試験日から合格発表までの日数。実施日ごとに各センターが個別に公表するため、協会サイトに一律の記載が無い。(2) 出張特別試験を実施する都市の一覧。実施すること自体は公式ページに記載があるが、都市の一覧ページを特定できなかった。いずれも推測で埋めていない。",
+  "public_note": "この試験は、合格しても自動的に免許が交付されるわけではありません。免許の申請には実務経験またはボイラー実技講習の修了が必要です。受験を検討する際は、試験の難易度だけでなくこの要件も併せてご確認ください。"
+}

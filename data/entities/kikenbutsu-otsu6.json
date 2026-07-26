@@ -1,0 +1,74 @@
+{
+  "type": "certification",
+  "slug": "kikenbutsu-otsu6",
+  "name": "危険物取扱者 乙種第6類",
+  "short_name": "危険物乙6",
+  "category": "技能・技術",
+  "authority": {
+    "name": "一般財団法人 消防試験研究センター",
+    "url": "https://www.shoubo-shiken.or.jp/"
+  },
+  "exam": {
+    "eligibility": "受験資格の制限なし。公式サイトに「乙種・丙種 誰でも受験できます。」と明記されている(甲種のみ化学に関する学歴等の受験資格が必要)。",
+    "fee_yen": 5300,
+    "format": "マーク・カードを使う筆記試験(五肢択一式)。実技試験なし。試験科目は「危険物に関する法令」「基礎的な物理学及び基礎的な化学」「危険物の性質並びにその火災予防及び消火の方法」の3科目で、乙種はどの類(1〜6類)でも科目構成・問題数は共通。第6類が対象とするのは酸化性液体。",
+    "questions": 35,
+    "duration_minutes": 120,
+    "passing_criteria": "甲種、乙種及び丙種とも、試験科目ごとの成績がそれぞれ60%以上の方を合格とする(試験科目の一部免除を受けた受験者はその科目を除く)。",
+    "exemption": "乙種のいずれかの類の免状を既に持っている場合、「危険物に関する法令」と「基礎的な物理学及び基礎的な化学」が全部免除され、「危険物の性質並びにその火災予防及び消火の方法」の10問だけになる。試験時間も35分に短縮される。乙種第4類の合格者が他の類を追加で取りに行く場合が、この免除にあたる。",
+    "frequency": "都道府県ごと(消防試験研究センター各支部・中央試験センター)に実施されており、実施回数は都道府県により異なる。公式サイト・FAQでも「都道府県ごとに行われており、年度途中で試験日程等の変更もある」とされるのみで、全国共通の「年◯回」という単一の数値は公表されていない。詳細は試験日程[全国一覧]または受験予定の都道府県支部で個別に確認する必要がある。",
+    "result_announcement": "支部別に合格者の受験番号を公示するとともに、受験者には郵便ハガキで合否の結果を直接通知する。試験日から発表までの標準日数は公式サイトに一律の記載がなく、試験ごと・支部ごとに発表予定日が個別に定められる。",
+    "source_urls": {
+      "eligibility": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/qualified.html",
+      "fee_yen": "https://www.shoubo-shiken.or.jp/news/pdf_files/R0605kaisei.pdf",
+      "format": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/subject.html",
+      "questions": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/subject.html",
+      "duration_minutes": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
+      "passing_criteria": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
+      "exemption": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/subject.html",
+      "result_announcement": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html"
+    },
+    "subjects": [
+      "危険物に関する法令 15問",
+      "基礎的な物理学及び基礎的な化学 10問",
+      "危険物の性質並びにその火災予防及び消火の方法 10問"
+    ],
+    "fee_note": "令和6年5月1日施行の改定後の全国標準額(甲種7,200円/丙種4,200円)。",
+    "retrieved_at": "2026-07-26"
+  },
+  "official_stats": {
+    "unit": "全国集計(乙種第6類, 消防試験研究センター発表)",
+    "series": [
+      { "year": "令和7年度", "applicants": 10921, "examinees": 10402, "passers": 7032, "pass_rate": 67.6, "source_url": "https://www.shoubo-shiken.or.jp/result/7/", "retrieved_at": "2026-07-26" },
+      { "year": "令和6年度", "applicants": 11246, "examinees": 10746, "passers": 7220, "pass_rate": 67.2, "source_url": "https://www.shoubo-shiken.or.jp/result/6/", "retrieved_at": "2026-07-26" },
+      { "year": "令和5年度", "applicants": 11110, "examinees": 10635, "passers": 7359, "pass_rate": 69.2, "source_url": "https://www.shoubo-shiken.or.jp/result/5/", "retrieved_at": "2026-07-26" },
+      { "year": "令和4年度", "applicants": 12192, "examinees": 11739, "passers": 8216, "pass_rate": 70.0, "source_url": "https://www.shoubo-shiken.or.jp/result/r04/", "retrieved_at": "2026-07-26" },
+      { "year": "令和3年度", "applicants": 13874, "examinees": 13370, "passers": 9452, "pass_rate": 70.7, "source_url": "https://www.shoubo-shiken.or.jp/result/r03/", "retrieved_at": "2026-07-26" }
+    ],
+    "source_url": "https://www.shoubo-shiken.or.jp/result/",
+    "retrieved_at": "2026-07-26",
+    "notes": "年度ページの「甲種/乙種(1〜6類・乙種計)/丙種/合計」クロス集計表から第6類の列を抽出した。この表は自動抽出で行がずれた実績があるため、各年度で乙種第4類の既知値が一致することを読み取り位置の検算に使い、5年度すべてで一致を確認している。あわせて全年度で合格者数÷受験者数が公表合格率と小数第1位まで一致することを検算済み。消防設備士の乙種第6類とは別の試験なので混同しないこと。",
+    "unit_labels": {
+      "applicants": "申請者数(申込者数)",
+      "examinees": "受験者数(実際に受験した人数)",
+      "passers": "合格者数",
+      "pass_rate": "合格率(%)"
+    },
+    "public_note": "公式の集計表から乙種第6類の列を抜き出したものです。合格率が乙種第4類より高いのは、科目免除を受けて受験する既取得者が多いためと考えられますが、実施団体は免除者と非免除者を分けた合格率を公表していません。"
+  },
+  "related": [
+    { "slug": "kikenbutsu-otsu4", "reason": "乙種で最も受験者が多い類。第4類の免状があると、第6類は科目免除で10問・35分になる" },
+    { "slug": "kikenbutsu-otsu5", "reason": "同じく科目免除の対象になる乙種の類" },
+    { "slug": "kikenbutsu-kou", "reason": "乙種の免状を4種類以上持つと、甲種の受験資格を満たす" }
+  ],
+  "schedule_url": "https://shinsei.shoubo-shiken.or.jp/shoubou_ia/iajs9001.do?menjo_kbn=1",
+  "schedule_url_note": "このURLは試験日程の一覧表ではなく検索フォーム画面。都道府県を選んで日程を照会する形式である点に注意。",
+  "verification": {
+    "collected_by": "researcher(一次ソースのみ)+ PM(Fable)",
+    "verified_by": "未実施",
+    "verified_at": null,
+    "result": "🔴 独立検証が未実施。統計は5年度分を取得し、乙種第4類の既知値による読み取り位置の検算と、合格者数÷受験者数の検算を全年度で通している。未検証の中心は科目免除の記述。"
+  },
+  "notes": "確認できなかった項目: (1) 実施頻度の「年◯回」という全国共通の数値。(2) 試験日から合格発表までの標準日数。(3) 科目免除を受けた受験者と受けていない受験者を分けた合格率は公表されていない。いずれも推測で埋めていない。",
+  "public_note": "数値は「乙種第6類」単独の集計です。名前がよく似た「消防設備士 乙種第6類」は別の試験です。「申請者」は申し込んだ人数、「受験者」は当日実際に受験した人数を指します。"
+}

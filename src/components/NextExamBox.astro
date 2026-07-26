@@ -1,0 +1,229 @@
+---
+/**
+ * 次回試験の日程と申込締切。
+ *
+ * **なぜ締切を主役にするか**: 当初このデータは「試験日」と「申込は7月1日から開始」しか
+ * 持っておらず、しかもどこにも表示していなかった。開始日だけを見せると、
+ * 9月に読んだ人には締切が過ぎていることが伝わらない。
+ * 資格試験で読者が最も損をするのは、落ちることではなく**締切を知らずに1年待つこと**である。
+ *
+ * **なぜ残り日数をビルド時に焼かないか**: このサイトは静的生成なので、
+ * ビルド時に「あと84日」と書くとデプロイの翌日から嘘になる。
+ * 日付そのものはHTMLに置き(JSが無くても読める)、
+ * 「あと◯日」「受付終了」はブラウザ側で今日と比べて付ける。
+ */
+import type { Entity } from '../lib/entities';
+import SourceLink from './SourceLink.astro';
+
+interface Props {
+  entity: Entity;
+}
+const { entity } = Astro.props;
+const next = entity.next_exam;
+
+/** 2026-10-18 → 2026年10月18日(日) */
+const WD = ['日', '月', '火', '水', '木', '金', '土'];
+function jp(iso: string): string {
+  const d = new Date(`${iso.slice(0, 10)}T00:00:00+09:00`);
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${WD[d.getDay()]})`;
+}
+/** 締切は時刻まで公表されていることがある。あるときは必ず出す(23:59と17:00では意味が違う) */
+function jpTime(iso: string): string {
+  if (iso.length <= 10) return jp(iso);
+  const d = new Date(iso);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${jp(iso)} ${hh}:${mm}`;
+}
+
+type Row = { label: string; iso: string; text: string; kind: 'deadline' | 'exam' | 'result' };
+const rows: Row[] = [];
+if (next?.application_deadline_mail)
+  rows.push({
+    label: '郵送で申し込む場合の締切',
+    iso: next.application_deadline_mail,
+    text: jpTime(next.application_deadline_mail),
+    kind: 'deadline',
+  });
+if (next?.application_deadline_internet)
+  rows.push({
+    label: 'インターネットで申し込む場合の締切',
+    iso: next.application_deadline_internet,
+    text: jpTime(next.application_deadline_internet),
+    kind: 'deadline',
+  });
+if (next) rows.push({ label: '試験日', iso: next.date, text: jp(next.date), kind: 'exam' });
+if (next?.result_date)
+  rows.push({ label: '合格発表', iso: next.result_date, text: jp(next.result_date), kind: 'result' });
+---
+
+{next && (
+  <section class="next-exam" aria-labelledby="h-next-exam">
+    <h2 id="h-next-exam">次の{entity.short_name}の日程</h2>
+
+    <dl class="rows">
+      {rows.map((r) => (
+        <div class={`row ${r.kind}`}>
+          <dt>{r.label}</dt>
+          <dd>
+            <time datetime={r.iso}>{r.text}</time>
+            <span class="rest" data-until={r.iso} data-kind={r.kind}></span>
+          </dd>
+        </div>
+      ))}
+    </dl>
+
+    {next.time && <p class="time">試験時間は{next.time}</p>}
+    {next.note && <p class="note">{next.note}</p>}
+
+    <p class="caution">
+      残り日数は、このページを開いた時点で計算しています。<br />
+      申込の受付期間・方法は年度ごとに変わります。<strong>申し込む前に必ず実施団体の案内で確認してください。</strong>
+    </p>
+
+    <SourceLink href={next.source_url} label={`${entity.authority.name} 試験日程`} accessedAt={next.retrieved_at} />
+
+    {entity.saiten && (
+      <p class="saiten-link">
+        <a href={`/shikaku/${entity.slug}/saiten/`}>
+          試験当日は、自己採点ページで自分の解答を他の受験者と比べられます
+        </a>
+      </p>
+    )}
+  </section>
+)}
+
+{/*
+  次回試験日を持たない資格。
+  **黙って枠ごと消さない。**初見レビューで「宅建だけ日程の枠があり、
+  危険物には無い理由が分からない」という指摘が出た。
+  日程が無いのは手抜きではなく、その試験が全国一斉ではないからである。
+  それを書かないと、読者には「情報が足りないページ」に見える。
+*/}
+{!next && entity.schedule_url && (
+  <section class="next-exam no-date" aria-labelledby="h-next-exam">
+    <h2 id="h-next-exam">次の{entity.short_name}の日程</h2>
+    <p class="reason">
+      この試験には全国共通の試験日がありません。<strong>受験する場所ごとに日程が決まります。</strong>
+      そのため、このページには次回の日付を載せていません。
+    </p>
+    <p class="reason">
+      下のリンク先は日程の一覧表ではなく、検索する画面です。受験したい都道府県を選ぶと日程が出ます。
+    </p>
+    {/*
+      schedule_url_note は「このURLは一覧表ではなく検索フォーム」という開発側のメモであり、
+      文体が読者向けではない(「〜である点に注意」)。内部メモを読者に見せないこと。
+      伝えるべき中身は上の1文に書き直して吸収している。
+    */}
+    <p class="go">
+      <a href={entity.schedule_url} rel="noopener" target="_blank">
+        {entity.authority.name}のページで日程を調べる
+      </a>
+    </p>
+  </section>
+)}
+
+<style>
+  .next-exam {
+    margin-block: var(--space-6);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+  .rows {
+    margin: var(--space-3) 0 0;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-3);
+    align-items: baseline;
+    padding-block: var(--space-2);
+    border-top: 1px solid var(--color-border-subtle, var(--color-border));
+  }
+  .row:first-child {
+    border-top: 0;
+  }
+  .row dt {
+    flex: 0 0 auto;
+    min-width: 14em;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+  .row dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .row.exam dd time {
+    font-weight: 700;
+  }
+  /* 残り日数はJSが付ける。付かなければ何も出ないので、日付だけで成立する */
+  .rest {
+    margin-left: 0.6em;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+  .rest[data-state='soon'] {
+    color: var(--color-warning-text, #9a3412);
+    font-weight: 700;
+  }
+  .rest[data-state='closed'] {
+    color: var(--color-text-muted);
+  }
+  .time,
+  .note,
+  .caution {
+    margin-top: var(--space-3);
+    font-size: var(--text-sm);
+    line-height: 1.8;
+  }
+  .caution {
+    color: var(--color-text-muted);
+  }
+  .saiten-link {
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+  }
+  .reason {
+    margin-top: var(--space-3);
+    line-height: 1.9;
+  }
+  .go {
+    margin-top: var(--space-4);
+  }
+  @media (max-width: 30rem) {
+    .row {
+      display: block;
+    }
+    .row dt {
+      min-width: 0;
+    }
+  }
+</style>
+
+<script>
+  // 残り日数は「今日」に依存するので、ビルド時ではなく閲覧時に計算する。
+  // 静的サイトなので、ビルド時に焼くとデプロイの翌日から嘘になる。
+  const DAY = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  document.querySelectorAll<HTMLElement>('.rest[data-until]').forEach((el) => {
+    const iso = el.dataset.until;
+    const kind = el.dataset.kind;
+    if (!iso) return;
+    // 日付だけの値は日本時間の0時ではなく、その日の終わりまでを有効とみなす
+    const target = iso.length <= 10 ? Date.parse(`${iso}T23:59:59+09:00`) : Date.parse(iso);
+    if (Number.isNaN(target)) return;
+
+    const days = Math.ceil((target - now) / DAY);
+    if (days < 0) {
+      el.textContent = kind === 'deadline' ? '受付は終了しています' : '終了';
+      el.dataset.state = 'closed';
+      return;
+    }
+    el.textContent = days === 0 ? '今日まで' : `あと${days}日`;
+    if (kind === 'deadline' && days <= 14) el.dataset.state = 'soon';
+  });
+</script>

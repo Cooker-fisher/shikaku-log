@@ -681,10 +681,11 @@ function checkMigrations() {
     return;
   }
   const files = readdirSync(dir).filter((f) => f.endsWith('.sql'));
+  const seededSlugs = new Set();
   for (const file of files) {
     const sql = readFileSync(join(dir, file), 'utf8');
     // INSERT INTO entities (...) VALUES ('<type>', ... の第1値を見る
-    for (const m of sql.matchAll(/INSERT\s+INTO\s+entities[\s\S]{0,200}?VALUES\s*\(\s*'([^']+)'/gi)) {
+    for (const m of sql.matchAll(/INSERT\s+INTO\s+entities[\s\S]{0,200}?VALUES\s*\(\s*'([^']+)'\s*,\s*'([^']+)'/gi)) {
       if (!KNOWN_ENTITY_TYPES.includes(m[1])) {
         error(
           'migration',
@@ -693,9 +694,44 @@ function checkMigrations() {
             'このままDBを作り直すと、ページは表示されるのに投稿だけ404になる',
         );
       }
+      seededSlugs.add(m[2]);
     }
   }
-  finishCheck('migration', 'マイグレーション(entity type の整合)', files.length);
+
+  // 公開中の資格が全てマイグレーションに載っているか。
+  //
+  // **なぜ必要か**: 2026-07-26、衛生管理者2件を追加したとき、本番D1には
+  // wrangler で直接INSERTしたが**マイグレーションに書き忘れた**。ページは本番で
+  // 正常に見えるので誰も気づかない。だがDBを作り直した瞬間に、
+  // そのページの投稿だけが404を返すようになる。
+  // 0003 に「本番を手で直したときは必ずマイグレーションにも入れる」と書いた1時間後に、
+  // 同じことをやっていた。**手順書は守られない。機械で落とす。**
+  const entityDir = join(ROOT, 'data', 'entities');
+  let published = 0;
+  if (existsSync(entityDir)) {
+    for (const file of readdirSync(entityDir).filter((f) => f.endsWith('.json'))) {
+      let json;
+      try {
+        // BOM付きで保存されることがあるので剥がす
+        json = JSON.parse(readFileSync(join(entityDir, file), 'utf8').replace(/^﻿/, ''));
+      } catch (e) {
+        error('migration', `data/entities/${file}`, `JSONとして読めない: ${e.message}`);
+        continue;
+      }
+      if (json.draft) continue; // 下書きはページも作られないのでシード不要
+      published += 1;
+      if (!seededSlugs.has(json.slug)) {
+        error(
+          'migration',
+          `data/entities/${file}`,
+          `slug "${json.slug}" を投入する INSERT が migrations/ に無い。` +
+            '本番DBに手で入れただけの状態だと、DBを作り直したときにこの資格の投稿だけ404になる',
+        );
+      }
+    }
+  }
+
+  finishCheck('migration', 'マイグレーション(entity type とシードの網羅)', files.length + published);
 }
 
 // ---------------------------------------------------------------------------

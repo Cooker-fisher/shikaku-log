@@ -17,6 +17,7 @@ import StructuredData from '../../components/StructuredData.astro';
 import StudyPaceTool from '../../components/StudyPaceTool.astro';
 import ReportForm from '../../components/ReportForm.astro';
 import RecentReports from '../../components/RecentReports.astro';
+import NextExamBox from '../../components/NextExamBox.astro';
 import CourseCta from '../../components/CourseCta.astro';
 import { getSnapshot } from '../../lib/reportSummary';
 import {
@@ -48,6 +49,13 @@ const trend = primary ? passRateTrend(primary.stats) : null;
 
 const num = new Intl.NumberFormat('ja-JP');
 
+/**
+ * 合格率は必ず小数第1位まで出す。
+ * 34.0 をそのまま出すと「34%」になり、同じ列の「35.2%」と桁が揃わない。
+ * 桁が不揃いだと、読み手には数値の精度が違うように見える。
+ */
+const pct = (v: number) => `${v.toFixed(1)}%`;
+
 /** 合格率の幅。「例年どのくらいか」を1行で答えるために使う */
 const rates = primary
   ? primary.stats.series.map((s) => s.pass_rate).filter((r): r is number => typeof r === 'number')
@@ -57,7 +65,7 @@ const rateMax = rates.length ? Math.max(...rates) : null;
 
 const title = `${entity.name}の合格率・受験者数データ`;
 const description = latest
-  ? `${entity.name}の公式統計。${seriesLabel(latest)}の受験者数は${num.format(latest.examinees ?? 0)}人、合格率は${latest.pass_rate}%。直近5年の推移と試験制度を実施団体の公表資料からまとめています。`
+  ? `${entity.name}の公式統計。${seriesLabel(latest)}の受験者数は${num.format(latest.examinees ?? 0)}人、合格率は${(latest.pass_rate ?? 0).toFixed(1)}%。直近5年の推移と試験制度を実施団体の公表資料からまとめています。`
   : `${entity.name}の試験制度と公式統計をまとめています。`;
 
 /**
@@ -127,7 +135,7 @@ const canonical = new URL(Astro.url.pathname, origin).href;
           </div>
           <div class="tile official">
             <span class="tile-label">合格率</span>
-            <span class="tile-value">{latest.pass_rate}<span class="unit">%</span></span>
+            <span class="tile-value">{latest.pass_rate !== null ? latest.pass_rate.toFixed(1) : '—'}<span class="unit">%</span></span>
             <span class="tile-sub">
               {trend && trend.diff !== 0
                 ? `直近5期平均より${trend.diff > 0 ? '+' : ''}${trend.diff}pt`
@@ -151,6 +159,8 @@ const canonical = new URL(Astro.url.pathname, origin).href;
         </div>
       </section>
     )}
+
+    <NextExamBox entity={entity} />
 
     <StudyPaceTool entityName={entity.short_name} snapshot={snapshot} />
 
@@ -193,7 +203,7 @@ const canonical = new URL(Astro.url.pathname, origin).href;
                   <td class="n">{s.applicants !== null ? num.format(s.applicants) : '—'}</td>
                   <td class="n">{s.examinees !== null ? num.format(s.examinees) : '—'}</td>
                   <td class="n">{s.passers !== null ? num.format(s.passers) : '—'}</td>
-                  <td class="n strong">{s.pass_rate !== null ? `${s.pass_rate}%` : '—'}</td>
+                  <td class="n strong">{s.pass_rate !== null ? pct(s.pass_rate) : '—'}</td>
                 </tr>
               ))}
             </tbody>
