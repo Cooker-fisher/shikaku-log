@@ -29,6 +29,8 @@ const {
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
 const fullTitle = Astro.url.pathname === '/' ? title : `${title} | ${SITE_NAME}`;
+/** SNS共有カード用の画像。**絶対URLでなければSNS側が解決できない** */
+const ogImage = new URL('/og.png', Astro.site ?? Astro.url.origin).href;
 ---
 
 <!doctype html>
@@ -45,6 +47,15 @@ const fullTitle = Astro.url.pathname === '/' ? title : `${title} | ${SITE_NAME}`
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content={SITE_NAME} />
+    {/*
+      og:image が無いまま twitter:card=summary_large_image を指定していた(〜2026-07-26)。
+      画像必須のカード形式で画像が無いと、SNS共有時に空白のカードになる。
+      指定しないより悪い状態を2日間放置していた。
+    */}
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${SITE_NAME} — 資格の受験者数・合格率を出典つきでまとめるデータベース`} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="color-scheme" content="light dark" />
     <slot name="head" />

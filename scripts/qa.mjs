@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 /**
  * 公開前の自動QA。`npm run qa` で実行する。
  *
@@ -623,6 +623,48 @@ function checkPlaceholders(pages) {
 }
 
 /**
+ * SNS共有カードの整合(2026-07-26 新設)
+ *
+ * **なぜ必要か**: `twitter:card=summary_large_image` を指定しながら
+ * `og:image` が1つも無い状態で2日間公開していた。
+ * 画像必須のカード形式で画像が無いと共有時に空白カードになり、**何も指定しないより悪い**。
+ * タスク上は「OG画像を追加」が完了扱いだったが、実装されていなかった。
+ *
+ * **「完了と記録したこと」と「実際に出力されていること」がずれる。**
+ * 自己申告を信じず、成果物を見る。
+ *
+ * あわせて公開前の言い回しが残っていないかも見る
+ * (「連絡先は公開時までに用意する」がAboutに公開後も残っていた)。
+ */
+function checkSocialCard(pages) {
+  const PRELAUNCH = [
+    /公開時までに/, /公開までに(用意|準備)/, /準備中(です|。)/, /近日公開/, /(仮|ダミー)のURL/,
+  ];
+  for (const page of pages) {
+    const where = page.route;
+    if (isNoindex(page)) continue;
+
+    const card = page.doc.querySelector('meta[name="twitter:card"]')?.getAttribute('content') ?? '';
+    const image = page.doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ?? '';
+    if (card === 'summary_large_image' && !image) {
+      error('social', where, 'twitter:card=summary_large_image なのに og:image が無い。共有すると空白のカードになる');
+    }
+    if (image && !/^https?:\/\//.test(image)) {
+      error('social', where, `og:image が絶対URLでない: ${image}。SNSは相対URLを解決しない`);
+    }
+    if (!page.doc.querySelector('meta[property="og:title"]')) {
+      error('social', where, 'og:title が無い');
+    }
+
+    for (const re of PRELAUNCH) {
+      const m = page.mainText.match(re);
+      if (m) error('social', where, `公開前の言い回しが残っている「${m[0]}」。サイトは既に公開されている`);
+    }
+  }
+  finishCheck('social', 'SNS共有カード・公開前の言い回し', pages.length);
+}
+
+/**
  * マイグレーションSQLが投入する entities.type が、投稿APIの照合値と一致しているか。
  *
  * **なぜ必要か**: 2026-07-25、シードは 'qualification' なのにAPIは 'certification' を
@@ -663,7 +705,7 @@ function checkMigrations() {
 /** src/lib/entities.ts の KNOWN_ENTITY_TYPES と functions/api/report.ts の SCHEMAS に対応 */
 const KNOWN_ENTITY_TYPES = ['certification'];
 
-const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'migration'];
+const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'social', 'migration'];
 
 function report() {
   const errors = findings.filter((f) => f.severity === 'error');
@@ -738,6 +780,7 @@ async function main() {
   checkThin(pages);
   checkPhrases(pages);
   checkPlaceholders(pages);
+  checkSocialCard(pages);
   checkMigrations();
 
   process.exit(report());

@@ -12,7 +12,34 @@ interface Props {
 const { href, label, accessedAt } = Astro.props;
 ---
 
-<p class="sample-size" data-source-link>
+<p class="src" data-source-link>
   出典:<a href={href} rel="noopener" target="_blank">{label}</a>
-  {accessedAt && <span> (参照 {accessedAt})</span>}
+  {accessedAt && <span class="at">(参照 {accessedAt})</span>}
 </p>
+
+<style>
+  /*
+   * **横スクロールを起こさないための指定。**
+   * 2026-07-26、390px幅で本文が477pxになりページ全体が横スクロールしていた。
+   * 原因はこの行。ラベル(長い機関名)と「(参照 日付)」が折り返さず、
+   * 1行が画面幅を超えて伸びていた。統計テーブルは overflow-x:auto で
+   * 正しくスクロールしており無罪だった。
+   *
+   * 公開から2日間この状態で、qa も smoke も検出していない
+   * (どちらもHTMLと応答しか見ておらず、レイアウトを見ていなかった)。
+   */
+  .src {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+    /* 折り返しの許可。長いラベルやURLでも画面幅を超えさせない */
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  /* 「(参照 2026-07-25)」を単語の途中で切らせない。ただし行としては折り返す */
+  .at {
+    display: inline-block;
+    white-space: nowrap;
+    margin-left: 0.3em;
+  }
+</style>
