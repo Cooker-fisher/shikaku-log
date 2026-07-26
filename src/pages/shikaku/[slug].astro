@@ -16,6 +16,7 @@ import PassingScoreTable from '../../components/PassingScoreTable.astro';
 import StructuredData from '../../components/StructuredData.astro';
 import StudyPaceTool from '../../components/StudyPaceTool.astro';
 import ReportForm from '../../components/ReportForm.astro';
+import RecentReports from '../../components/RecentReports.astro';
 import CourseCta from '../../components/CourseCta.astro';
 import { getSnapshot } from '../../lib/reportSummary';
 import {
@@ -222,6 +223,12 @@ const canonical = new URL(Astro.url.pathname, origin).href;
     )}
 
     <CourseCta entitySlug={entity.slug} entityName={entity.short_name} snapshot={snapshot} />
+
+    {/*
+      個別の合格報告は**1件目から**出す。統計値(中央値・分布)は20件まで出さない。
+      この2つを混同して個別の報告まで隠していたのが、投稿が集まらない設計の原因だった。
+    */}
+    <RecentReports snapshot={snapshot} entityShortName={entity.short_name} />
 
     <ReportForm entitySlug={entity.slug} entityName={entity.short_name} />
 

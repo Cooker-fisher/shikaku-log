@@ -21,11 +21,38 @@ export interface StudyHoursSummary {
   bins?: Array<{ from: number; to: number | null; count: number }>;
 }
 
+/**
+ * 個々の合格報告(1件目から表示する)。
+ *
+ * **統計値の閾値(n<20)をこれに適用してはならない。**
+ * 中央値やパーセンタイルは1件増えるだけで動くので20件まで出さない。
+ * だが「2025年合格・独学・80時間」という**1人の記録は集計値ではない**ので、
+ * 1件目から出しても読者に誤った基準を渡すことにはならない。
+ *
+ * 当初この2つを区別せず、個別の報告まで20件まで隠していた。
+ * 結果として**最初の19人に「投稿しても何も起きない」と伝える設計**になっていた。
+ * 慎重さではなく、単なる設計ミスだった(2026-07-26 修正)。
+ *
+ * 掲載するのは status='published' のものだけ。個人が特定できる情報は保存しない。
+ */
+export interface PublishedReport {
+  /** 表示用の連番。個人を追跡できるIDは出さない */
+  no: number;
+  studyHours: number;
+  attempts: number;
+  passedYear: number;
+  /** 任意の自由記述(モデレーション済み)。無ければ省略 */
+  note?: string;
+  material?: string;
+}
+
 export interface ReportSnapshot {
   slug: string;
   updatedAt: string;
   totalReports: number;
   studyHours: StudyHoursSummary;
+  /** 直近の公開済み報告。**n<20 でも表示する** */
+  recent?: PublishedReport[];
 }
 
 const modules = import.meta.glob<ReportSnapshot>('../../data/metrics/*.json', {
@@ -45,6 +72,7 @@ export function emptySnapshot(slug: string): ReportSnapshot {
     updatedAt: '',
     totalReports: 0,
     studyHours: { status: 'collecting', sampleSize: 0 },
+    recent: [],
   };
 }
 

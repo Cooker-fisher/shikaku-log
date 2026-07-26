@@ -181,8 +181,24 @@ th.num {
 }
 .site-nav {
   display: flex;
-  gap: var(--space-4);
+  gap: var(--space-2);
   font-size: var(--fs-sm);
+}
+
+/*
+ * タップ目標の下限(2026-07-26)
+ *
+ * 390px幅で実測したところ、24リンク中22が高さ44px未満だった。
+ * 指で押せない導線は、無いのと同じである。
+ * 見た目の高さは変えず、パディングで当たり判定だけ広げる。
+ */
+.site-nav a,
+.site-footer a,
+.site-header__brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--space-2);
 }
 
 main {

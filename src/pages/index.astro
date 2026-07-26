@@ -19,56 +19,23 @@ const description =
 ---
 
 <BaseLayout title={title} description={description}>
+  {/*
+    2026-07-26 全面改稿。
+    それまでのトップは「掲載する3つの層」「数字の扱い方」という**運営方針の説明**が主役で、
+    資格一覧はページ最下部、投稿導線に至っては1つも無かった。
+    投稿してもらうサイトなのに、最重要の行動が画面に存在していなかった。
+
+    方針の説明は削らない(誠実さはこのサイトの資産である)。主役から降ろすだけにする。
+  */}
   <div class="prose stack">
     <h1>資格の数字を、出典つきで1ページに</h1>
 
-    <p>
-      受験者数や合格率は各実施団体のPDFに散らばっていて、年度をまたいだ推移を見るだけでも
-      何枚も開く必要がある。{SITE_NAME}は、その数字を資格ごとに1ページへ集約する。
-      掲載する数値には必ず公式発表のURLを添える。
+    <p class="lede">
+      受験者数・合格率・試験日程を、実施団体の公表資料から資格ごとに集約している。
+      掲載する数値には必ず公式発表のURLと取得日を添える。
     </p>
 
-    <h2>掲載する3つの層</h2>
-
-    <ul class="card-grid">
-      <li class="card">
-        <h3>公式統計</h3>
-        <p>
-          受験申込者数・受験者数・合格者数・合格率の年次推移。出典は実施団体の公表資料に限る。
-          まとめサイトを根拠にしない。
-        </p>
-      </li>
-      <li class="card">
-        <h3>試験日程</h3>
-        <p>
-          申込期間・試験日・合格発表日。公表され次第反映し、未公表の項目は「未公表」と書く。
-          推測で埋めない。
-        </p>
-      </li>
-      <li class="card">
-        <h3>合格報告の集計</h3>
-        <p>
-          合格者の自己申告による勉強時間の分布と使用教材の件数。公的統計ではないことを
-          各ページに明記する。
-        </p>
-      </li>
-    </ul>
-
-    <h2>数字の扱い方</h2>
-
-    <p>
-      投稿データの集計は、有効回答が<span class="num">{MIN_SAMPLE_SIZE}</span>件に達するまで
-      中央値も分布も順位も表示しない。数件しかない状態の中央値は、投稿が1件増えるだけで大きく動く。
-      その数字を見せることは、読む人に誤った基準を渡すことになる。
-      閾値の判定はテンプレートではなく集計ロジック側で強制していて、表示側が独自に緩めることはできない。
-    </p>
-
-    <p>
-      公式統計についても同じ姿勢を取る。公表されていない年度は空欄にし、
-      「おそらくこの程度」という補間はしない。
-    </p>
-
-    <h2>掲載中の資格</h2>
+    <h2 id="shikaku">資格を選ぶ</h2>
 
     <ul class="shikaku-list">
       {cards.map(({ entity, latest }) => (
@@ -93,12 +60,61 @@ const description =
               </div>
             </dl>
           )}
+          <p class="shikaku-actions">
+            <a class="btn btn-primary" href={`/shikaku/${entity.slug}/#report`}>
+              合格報告を送る
+            </a>
+            <a class="btn btn-quiet" href={`/shikaku/${entity.slug}/`}>データを見る</a>
+          </p>
         </li>
       ))}
     </ul>
 
+    <p class="note">
+      掲載する資格は順次増やしている。実施団体の公表資料で数値を確認できたものだけを載せている。
+    </p>
+
+    <section class="invite" aria-labelledby="h-invite">
+      <h2 id="h-invite">合格した人へ</h2>
+      <p>
+        勉強時間・受験回数・使った教材を送ってほしい。入力は<strong>3項目・30秒</strong>で終わる。
+        名前もメールアドレスも要らない。
+      </p>
+      <p>
+        これから受ける人が知りたいのは「実際どれくらいやったか」で、
+        それは公式発表には載っていない。<strong>合格した人しか持っていない情報</strong>である。
+      </p>
+      <p class="note">
+        送られたデータは<strong>自己申告に基づく</strong>もので、公的な統計ではない。
+        掲載時は件数を必ず併記し、公式統計とは別の枠で表示する。
+      </p>
+      <p class="invite-actions">
+        {cards.map(({ entity }) => (
+          <a class="btn btn-primary" href={`/shikaku/${entity.slug}/#report`}>
+            {entity.short_name}の合格報告を送る
+          </a>
+        ))}
+      </p>
+    </section>
+
+    <h2>数字の扱い方</h2>
+
     <p>
-      掲載する資格は順次増やす。受験者数の多いものから、実施団体の公表資料で数値を確認できたものだけを載せている。
+      投稿データの集計は、有効回答が<span class="num">{MIN_SAMPLE_SIZE}</span>件に達するまで
+      中央値も分布も順位も表示しない。数件しかない状態の中央値は、投稿が1件増えるだけで大きく動く。
+      その数字を見せることは、読む人に誤った基準を渡すことになる。
+      閾値の判定は集計ロジック側で強制していて、表示側が独自に緩めることはできない。
+    </p>
+
+    <p>
+      ただし<strong>個々の合格報告は1件目から掲載する</strong>。
+      「何時間で受かったか」という1人の記録は、集計値ではないので誤解を生まない。
+      統計として出せる数と、人の記録として出せる数は別に扱う。
+    </p>
+
+    <p>
+      公式統計についても同じ姿勢を取る。公表されていない年度は空欄にし、
+      「おそらくこの程度」という補間はしない。
       掲載方針の詳細は<a href="/about/">このサイトについて</a>に書いている。
     </p>
   </div>
@@ -161,5 +177,67 @@ const description =
     font-weight: var(--fw-normal);
     font-size: var(--fs-sm);
     color: var(--color-text-muted);
+  }
+
+  .lede {
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+  }
+  .note {
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+  }
+
+  /*
+   * タップ目標は最低44px。スマホで押せない導線は無いのと同じ。
+   * 2026-07-26の実測では24リンク中22が44px未満だった。
+   */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-md);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
+    border: 1px solid var(--color-primary);
+  }
+  .btn-quiet {
+    background: transparent;
+    color: var(--color-link);
+    border: 1px solid var(--color-border-strong);
+  }
+  .shikaku-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: var(--space-4) 0 0;
+  }
+
+  .invite {
+    margin-top: var(--space-7);
+    padding: var(--space-5) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-userdata);
+    border-radius: var(--radius-md);
+    background: var(--color-userdata-bg);
+  }
+  .invite h2 {
+    margin-top: 0;
+  }
+  .invite p {
+    line-height: var(--lh-normal);
+  }
+  .invite-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: 0;
   }
 </style>
