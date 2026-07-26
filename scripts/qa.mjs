@@ -734,6 +734,58 @@ function checkMigrations() {
   finishCheck('migration', 'マイグレーション(entity type とシードの網羅)', files.length + published);
 }
 
+/**
+ * 週次スナップショットを取っているか。
+ *
+ * **なぜQAで見るか**: 計画では週次でKPIを記録することになっていたが、
+ * 公開2日目の時点で `metrics/` は0件だった。記録を拒んだのではなく、
+ * 手作業だったので毎回後回しになっただけである。
+ * **急いでいるとき、手で実行する工程は必ず飛ばされる。**
+ * qa と smoke だけが守られてきたのは、`npm run` の中にあって飛ばせないからだった。
+ * だから記録の有無もここで見る。
+ *
+ * 数字が悪いことは止めない。**測っていないことを止める。**
+ */
+function checkMetrics() {
+  const dir = join(ROOT, '..', 'metrics');
+  const files = existsSync(dir) ? readdirSync(dir).filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort() : [];
+
+  if (files.length === 0) {
+    warn('metrics', 'metrics/', '週次スナップショットが1件も無い。`npm run metrics` を実行すること');
+    finishCheck('metrics', '週次スナップショット', 0);
+    return;
+  }
+
+  const newest = files[files.length - 1];
+  const days = Math.floor((Date.now() - Date.parse(`${newest.slice(0, 10)}T00:00:00+09:00`)) / 86_400_000);
+  if (days > 14) {
+    error('metrics', `metrics/${newest}`, `最後の記録から${days}日経過している。\`npm run metrics\` を実行すること`);
+  } else if (days > 7) {
+    warn('metrics', `metrics/${newest}`, `最後の記録から${days}日経過している。週次で記録すること`);
+  }
+
+  // 手で入れる数字(Search Console・ASP)が空のまま放置されていないか。
+  // 自動で取れる数字だけ記録して「測っている」ことにするのを防ぐ。
+  let snap;
+  try {
+    snap = JSON.parse(readFileSync(join(dir, newest), 'utf8'));
+  } catch (e) {
+    error('metrics', `metrics/${newest}`, `JSONとして読めない: ${e.message}`);
+    finishCheck('metrics', '週次スナップショット', files.length);
+    return;
+  }
+  const manual = snap.manual ?? {};
+  const filled = Object.values(manual).filter((v) => v !== null && v !== undefined).length;
+  if (filled === 0) {
+    const msg =
+      'Search Console と ASP の数字が未記入。機械で取れる数字だけでは「測っている」ことにならない';
+    if (days > 14) error('metrics', `metrics/${newest}`, msg);
+    else warn('metrics', `metrics/${newest}`, msg);
+  }
+
+  finishCheck('metrics', '週次スナップショット', files.length);
+}
+
 // ---------------------------------------------------------------------------
 // 実行
 // ---------------------------------------------------------------------------
@@ -741,7 +793,7 @@ function checkMigrations() {
 /** src/lib/entities.ts の KNOWN_ENTITY_TYPES と functions/api/report.ts の SCHEMAS に対応 */
 const KNOWN_ENTITY_TYPES = ['certification'];
 
-const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'social', 'migration'];
+const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'social', 'migration', 'metrics'];
 
 function report() {
   const errors = findings.filter((f) => f.severity === 'error');
@@ -818,6 +870,7 @@ async function main() {
   checkPlaceholders(pages);
   checkSocialCard(pages);
   checkMigrations();
+  checkMetrics();
 
   process.exit(report());
 }

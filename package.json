@@ -15,7 +15,8 @@
     "db:migrate:local": "wrangler d1 migrations apply shikakulog --local",
     "db:migrate": "wrangler d1 migrations apply shikakulog --remote",
     "smoke": "node scripts/smoke.mjs",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "metrics": "node scripts/metrics.mjs"
   },
   "dependencies": {
     "astro": "^5.0.0"

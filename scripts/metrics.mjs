@@ -1,0 +1,145 @@
+#!/usr/bin/env node
+/**
+ * 週次スナップショットを `metrics/` に記録する。`npm run metrics` で実行する。
+ *
+ * **なぜ作ったか**: 計画では週次でKPIを記録することになっていたが、
+ * 公開から2日で `metrics/` は**0件**だった。記録する気が無かったのではなく、
+ * 「手で書く作業」だったので毎回後回しになった。
+ * qa と smoke だけが守られていたのは、それが `npm run` の中にあって飛ばせないからである。
+ * だから記録も同じ場所に置く。
+ *
+ * **ゼロもゼロとして書く。**空欄にしない。ゼロが並ぶこと自体がデータである。
+ *
+ * 使い方:
+ *   npm run metrics            自動で取れる数字だけ記録(D1にも接続する)
+ *   npm run metrics -- --local D1に接続しない(オフライン時)
+ *
+ * 手で入れる数字(Search Console)は `null` のまま残り、
+ * `npm run qa` が「何週間 null のままか」を数えて警告する。
+ * 埋め忘れが自動で表面化する形にしてある。
+ */
+import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const REPO = join(ROOT, '..');
+const OUT_DIR = join(REPO, 'metrics');
+const OFFLINE = process.argv.includes('--local');
+
+const today = new Date().toISOString().slice(0, 10);
+
+/** data/entities から公開中の資格を読む */
+function entities() {
+  const dir = join(ROOT, 'data', 'entities');
+  return readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => JSON.parse(readFileSync(join(dir, f), 'utf8').replace(/^﻿/, '')))
+    .filter((e) => !e.draft);
+}
+
+/** 最新年度の受験者数。系列の持ち方が資格によって違うので拾えるものを拾う */
+function latestExaminees(e) {
+  const blocks = Object.keys(e)
+    .filter((k) => k.startsWith('official_stats'))
+    .map((k) => e[k])
+    .filter((b) => b && Array.isArray(b.series) && b.series.length);
+  let max = 0;
+  for (const b of blocks) {
+    const v = b.series[0]?.examinees;
+    if (typeof v === 'number' && v > max) max = v;
+  }
+  return max;
+}
+
+/** D1 を1回のクエリで叩く。失敗しても記録は続ける(数字が無いことを null で残す) */
+function d1(sql) {
+  if (OFFLINE) return null;
+  try {
+    // SQLに空白が入るので、シェルに渡す1本の文字列として組み立てる(引数配列だと分割される)
+    const out = execSync(
+      `npx wrangler d1 execute shikakulog --remote --json --command "${sql.replace(/"/g, '\\"')}"`,
+      { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 120_000 },
+    );
+    const start = out.indexOf('[');
+    if (start < 0) return null;
+    return JSON.parse(out.slice(start))[0]?.results ?? null;
+  } catch (err) {
+    console.error(`  ! D1に接続できなかった: ${String(err).slice(0, 120)}`);
+    return null;
+  }
+}
+
+const list = entities();
+const dist = join(ROOT, 'dist');
+const pageCount = existsSync(dist)
+  ? countHtml(dist)
+  : null;
+
+function countHtml(dir) {
+  let n = 0;
+  for (const ent of readdirSync(dir, { withFileTypes: true })) {
+    if (ent.isDirectory()) n += countHtml(join(dir, ent.name));
+    else if (ent.name.endsWith('.html')) n += 1;
+  }
+  return n;
+}
+
+const reportRows = d1(
+  "SELECT status, COUNT(*) AS n FROM reports GROUP BY status",
+);
+const entityRows = d1('SELECT COUNT(*) AS n FROM entities');
+const saitenRows = d1('SELECT exam_key, submissions FROM saiten_tally');
+
+const byStatus = Object.fromEntries((reportRows ?? []).map((r) => [r.status, r.n]));
+
+const snapshot = {
+  date: today,
+  /** 機械で取れる数字。null は「取れなかった」であって「ゼロ」ではない */
+  auto: {
+    published_pages: pageCount,
+    qualification_pages: list.length,
+    /** 掲載資格の最新年度受験者数の合計。市場規模の代理指標 */
+    covered_examinees: list.reduce((s, e) => s + latestExaminees(e), 0),
+    entities_in_d1: entityRows?.[0]?.n ?? null,
+    reports_total: reportRows ? Object.values(byStatus).reduce((a, b) => a + b, 0) : null,
+    reports_published: reportRows ? (byStatus.published ?? 0) : null,
+    reports_pending: reportRows ? (byStatus.pending ?? 0) : null,
+    saiten_submissions: saitenRows ? saitenRows.reduce((s, r) => s + (r.submissions ?? 0), 0) : null,
+  },
+  /**
+   * 手で入れる数字。**Search Console と ASP の管理画面は機械から読めない。**
+   * null のまま放置されると `npm run qa` が警告する。
+   */
+  manual: {
+    gsc_indexed: null,
+    gsc_impressions_7d: null,
+    gsc_clicks_7d: null,
+    gsc_avg_position: null,
+    gsc_top_queries: null,
+    affiliate_clicks: null,
+    revenue_yen: null,
+  },
+  note: '',
+};
+
+if (!existsSync(OUT_DIR)) mkdirSync(OUT_DIR, { recursive: true });
+const file = join(OUT_DIR, `${today}.json`);
+writeFileSync(file, JSON.stringify(snapshot, null, 2) + '\n', 'utf8');
+
+const a = snapshot.auto;
+console.log('');
+console.log(`  週次スナップショット: metrics/${today}.json`);
+console.log('  ' + '-'.repeat(58));
+console.log(`  公開ページ数          ${a.published_pages ?? '取得不可(先に npm run build)'}`);
+console.log(`  資格ページ数          ${a.qualification_pages}`);
+console.log(`  掲載資格の受験者合計  ${a.covered_examinees.toLocaleString('ja-JP')} 人`);
+console.log(`  D1の資格件数          ${a.entities_in_d1 ?? '取得不可'}`);
+console.log(`  合格報告(累計/公開)   ${a.reports_total ?? '—'} / ${a.reports_published ?? '—'}`);
+console.log(`  自己採点の送信        ${a.saiten_submissions ?? '—'}`);
+console.log('  ' + '-'.repeat(58));
+console.log('  🔴 手で入れる数字が未記入です。Search Console と ASP を開いて');
+console.log(`     metrics/${today}.json の "manual" を埋めてください。`);
+console.log('     埋めないまま2週間経つと npm run qa が ERROR で止まります。');
+console.log('');
