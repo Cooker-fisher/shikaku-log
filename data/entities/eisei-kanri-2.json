@@ -1,0 +1,72 @@
+{
+  "type": "certification",
+  "slug": "eisei-kanri-2",
+  "name": "第二種衛生管理者",
+  "short_name": "第二種衛生管理者",
+  "category": "労働安全衛生",
+  "authority": {
+    "name": "公益財団法人 安全衛生技術試験協会",
+    "url": "https://www.exam.or.jp/"
+  },
+  "exam": {
+    "eligibility": "第一種衛生管理者と同じ要件。学歴に応じた労働衛生の実務経験が必要で、大学卒業後1年以上、高等学校卒業後3年以上、または10年以上の実務経験などの要件がある。受験には事業者が発行する事業者証明書の添付が必要。",
+    "fee_yen": 8800,
+    "format": "学科試験のみ。第二種衛生管理者は「労働衛生(有害業務に係るものを除く)」「関係法令(有害業務に係るものを除く)」「労働生理」の3科目から各10問・100点が出題される。第一種と違い、有害業務に関する科目が無い。",
+    "questions": 30,
+    "duration_minutes": 180,
+    "passing_criteria": "科目ごとの得点が40%以上で、かつその合計が60%以上であること。1科目でも40%を下回ると、合計が60%を超えていても不合格になる。",
+    "frequency": "全国7つの安全衛生技術センター(北海道・東北・関東・中部・近畿・中国四国・九州)と東京・大阪の試験場で、月1〜2回程度実施される。年1回の一斉試験ではなく、受験地ごとに日程が異なる。",
+    "result_announcement": "合格発表の時期・方法は実施団体のサイトに一律の記載がなく、確認できなかった。試験日程は受験地ごとに設定されるため、詳細は受験するセンターの案内で確認する必要がある。",
+    "source_urls": {
+      "eligibility": "https://www.exam.or.jp/introduction/h_shokai502/",
+      "fee_yen": "https://www.exam.or.jp/h_tesuryo/",
+      "format": "https://www.exam.or.jp/introduction/h_shokai502/",
+      "questions": "https://www.exam.or.jp/introduction/h_shokai502/",
+      "duration_minutes": "https://www.exam.or.jp/introduction/h_shokai502/",
+      "passing_criteria": "https://www.exam.or.jp/introduction/h_shokai502/",
+      "frequency": "https://www.exam.or.jp/schedule/h_nittei502/"
+    },
+    "subjects": [
+      "労働衛生(有害業務に係るものを除く) 10問・100点",
+      "関係法令(有害業務に係るものを除く) 10問・100点",
+      "労働生理 10問・100点"
+    ],
+    "duration_note": "3時間。科目免除者は2時間15分。",
+    "retrieved_at": "2026-07-26"
+  },
+  "official_stats": {
+    "unit": "全国集計(安全衛生技術試験協会発表)",
+    "series": [
+      {
+        "year": "令和7年度",
+        "applicants": null,
+        "examinees": 40653,
+        "passers": 19796,
+        "pass_rate": 48.7,
+        "source_url": "https://www.exam.or.jp/h_gokakuritsu/",
+        "retrieved_at": "2026-07-26"
+      }
+    ],
+    "source_url": "https://www.exam.or.jp/h_gokakuritsu/",
+    "retrieved_at": "2026-07-26",
+    "notes": "実施団体の統計ページから令和7年度の値を取得した。申込者数は同ページに掲載が無いため null としている。過去年度の系列は未取得で、次回の更新時に追加する。合格者数÷受験者数=48.69%で公表値48.7%と小数第1位まで一致することを検算済み。",
+    "unit_labels": {
+      "applicants": "申込者数(未公表)",
+      "examinees": "受験者数",
+      "passers": "合格者数",
+      "pass_rate": "合格率(%)"
+    },
+    "public_note": "実施団体が公表している全国集計です。申込者数は公表されていないため掲載していません。"
+  },
+  "related": [
+    { "slug": "eisei-kanri-1", "reason": "すべての業種で選任できる上位区分。有害業務の科目が加わり、出題は44問になる" }
+  ],
+  "verification": {
+    "collected_by": "PM(Fable)",
+    "verified_by": "未実施",
+    "verified_at": null,
+    "result": "🔴 独立検証が未実施。特に (1) 受験資格の要約 (2) 統計が令和7年度の1年分のみ (3) 合格発表の時期が未確認。"
+  },
+  "notes": "確認できなかった項目: 合格発表の時期・方法。実施団体のサイトに一律の記載がなく、受験地ごとに異なるためと考えられる。推測で埋めていない。",
+  "public_note": "数値はすべて実施団体である安全衛生技術試験協会の公表資料に基づきます。受験には実務経験などの要件があるため、申込前に必ず公式の受験資格をご確認ください。"
+}
