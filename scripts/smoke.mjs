@@ -18,6 +18,10 @@
  *   npm run smoke -- https://xxx       任意のURLを検査
  */
 
+import { readdirSync, readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 const BASE = (process.argv[2] ?? 'https://shikaku-log.com').replace(/\/$/, '');
 
 const UA = 'Mozilla/5.0 (compatible; shikakulog-smoke/1.0)';
@@ -42,21 +46,48 @@ async function fetchStatus(path, opts = {}) {
   }
 }
 
+/**
+ * 公開対象の資格を data/entities/*.json から読む。
+ *
+ * **なぜ列挙をやめたか**: 当初この検査は資格2件をURLで直書きしていた。
+ * 2026-07-26に資格を9件追加したとき、**検査項目は2件のまま増えなかった。**
+ * 追加した7件が本番で404でも「全22項目が通過」と表示される状態だった
+ * (実際、デプロイ直後の本番で3ページが404を返していたが、この検査は素通りした)。
+ * 検査対象を人が書き足す設計は、必ず書き足し忘れる。正のデータから引く。
+ */
+function publishedSlugs() {
+  const dir = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'entities');
+  return readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => JSON.parse(readFileSync(join(dir, f), 'utf8').replace(/^﻿/, '')))
+    .filter((e) => !e.draft)
+    .map((e) => ({ slug: e.slug, saiten: Boolean(e.saiten) }));
+}
+
 /** 1. 主要ページが 200 を返すか */
 async function checkPages() {
+  const entities = publishedSlugs();
   const paths = [
     '/',
     '/about/',
     '/privacy/',
     '/contact/',
-    '/shikaku/kikenbutsu-otsu4/',
-    '/shikaku/boki-3kyu/',
+    ...entities.map((e) => `/shikaku/${e.slug}/`),
+    ...entities.filter((e) => e.saiten).map((e) => `/shikaku/${e.slug}/saiten/`),
     '/sitemap.xml',
     '/robots.txt',
   ];
   for (const p of paths) {
     const { status } = await fetchStatus(p);
     record(status === 200, `200を返す: ${p}`, `status=${status}`);
+  }
+
+  // sitemap に全資格が載っているか。ページが200でも sitemap から漏れると検索に出ない
+  const { res } = await fetchStatus('/sitemap.xml');
+  if (res) {
+    const xml = await res.text();
+    const missing = entities.filter((e) => !xml.includes(`/shikaku/${e.slug}/`)).map((e) => e.slug);
+    record(missing.length === 0, 'sitemapに全資格が載っている', missing.length ? `欠落: ${missing.join(', ')}` : `${entities.length}件`);
   }
 }
 
