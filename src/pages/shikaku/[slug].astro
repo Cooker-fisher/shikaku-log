@@ -72,14 +72,27 @@ const description = latest
  * 出典一覧。生URLの羅列は読者にとって何のページか分からないのでラベルを付ける。
  * 同じURLが複数項目の根拠になっている場合はラベルをまとめる。
  */
+/**
+ * 出典一覧に出す項目名。
+ *
+ * **未定義のキーを足すと、英語のキー名がそのまま読者に見える。**
+ * 実際 `exemption` を追加したとき、出典一覧に「exemption」と表示されていた
+ * ([CLAUDE.md](../../../../CLAUDE.md) 3-b: 造語・専門用語を対外文言に出さない)。
+ * `source_urls` にキーを足すときは、必ずここにも日本語名を足すこと。
+ */
 const FIELD_LABELS: Record<string, string> = {
   eligibility: '受験資格',
   fee_yen: '受験手数料',
+  fee_yen_cbt: '受験手数料(ネット試験)',
   format: '試験の形式',
   questions: '問題数',
+  subjects: '試験科目',
   duration_minutes: '試験時間',
   passing_criteria: '合格基準',
+  exemption: '科目免除',
+  frequency: '実施頻度',
   result_announcement: '合格発表',
+  license_requirement: '免許交付の要件',
 };
 
 const sourceMap = new Map<string, string[]>();
@@ -146,7 +159,14 @@ const canonical = new URL(Astro.url.pathname, origin).href;
             <div class="tile official">
               <span class="tile-label">受験手数料</span>
               <span class="tile-value">{num.format(entity.exam.fee_yen)}<span class="unit">円</span></span>
-              <span class="tile-sub">{entity.exam.fee_note ? '改定あり(下記参照)' : '公式発表'}</span>
+              {/*
+                fee_note があれば一律「改定あり」と出していたが、注記の中身は改定とは限らない。
+                消防設備士は「消費税は非課税」という注記で、改定の話ではないのに
+                「改定あり(下記参照)」と表示されていた。中身を見て出し分ける。
+              */}
+              <span class="tile-sub">
+                {entity.exam.fee_note?.includes('改定') ? '改定あり(下記参照)' : entity.exam.fee_note ? '注記あり(下記参照)' : '公式発表'}
+              </span>
             </div>
           )}
           {entity.exam.duration_minutes !== null && (
@@ -268,6 +288,50 @@ const canonical = new URL(Astro.url.pathname, origin).href;
           <SourceLink href={sourceFor(entity, 'passing_criteria')!} label="合格基準(公式)" accessedAt={entity.exam.retrieved_at} />
         )}
       </div>
+
+      {/*
+        科目免除。**出典だけ載せて本文を出していなかった。**
+        危険物乙4を持つ人が乙5・乙6を10問35分で受けられる、といった
+        最も実用的な情報が読者に届いていなかった(出典一覧にだけ現れていた)。
+      */}
+      {entity.exam.exemption && (
+        <div class="q">
+          <h3>免除される科目はありますか</h3>
+          <p>{entity.exam.exemption}</p>
+          {sourceFor(entity, 'exemption') && (
+            <SourceLink href={sourceFor(entity, 'exemption')!} label="科目免除(公式)" accessedAt={entity.exam.retrieved_at} />
+          )}
+        </div>
+      )}
+
+      {/*
+        試験に受かっても免許が交付されない資格がある(二級ボイラー技士)。
+        受験を決める前に知る必要がある情報なので、独立した問いとして出す。
+      */}
+      {entity.exam.license_requirement && (
+        <div class="q">
+          <h3>合格すれば免許はもらえますか</h3>
+          <p>{entity.exam.license_requirement}</p>
+          {entity.exam.license_requirement_note && (
+            <p class="aside"><span class="hint">{entity.exam.license_requirement_note}</span></p>
+          )}
+          {sourceFor(entity, 'license_requirement') && (
+            <SourceLink href={sourceFor(entity, 'license_requirement')!} label="免許交付の要件(公式)" accessedAt={entity.exam.retrieved_at} />
+          )}
+        </div>
+      )}
+
+      {entity.exam.subjects && entity.exam.subjects.length > 0 && (
+        <div class="q">
+          <h3>どんな科目が出ますか</h3>
+          <ul class="subjects">
+            {entity.exam.subjects.map((s) => <li>{s}</li>)}
+          </ul>
+          {sourceFor(entity, 'subjects') && (
+            <SourceLink href={sourceFor(entity, 'subjects')!} label="試験科目(公式)" accessedAt={entity.exam.retrieved_at} />
+          )}
+        </div>
+      )}
 
       <div class="q">
         <h3>いつ受験できますか</h3>

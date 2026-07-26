@@ -15,16 +15,18 @@
     "questions": 25,
     "duration_minutes": 75,
     "passing_criteria": "甲種、乙種及び丙種とも、試験科目ごとの成績がそれぞれ60%以上の方を合格とする(試験科目の一部免除を受けた受験者はその科目を除く)。",
+    "exemption": "消防団員として5年以上勤務し、かつ消防学校の教育訓練のうち基礎教育または警防科を修了した場合、「燃焼及び消火に関する基礎知識」が全部免除される。",
     "frequency": "都道府県ごと(消防試験研究センター各支部・中央試験センター)に実施されており、実施回数は都道府県により異なる。公式サイト・FAQでも「都道府県ごとに行われており、年度途中で試験日程等の変更もある」とされるのみで、全国共通の「年◯回」という単一の数値は公表されていない。詳細は試験日程[全国一覧]または受験予定の都道府県支部で個別に確認する必要がある。",
-    "result_announcement": "支部別に合格者の受験番号を公示するとともに、受験者には郵便ハガキで合否の結果を直接通知する。試験日から発表までの標準日数は公式サイトに一律の記載がなく、試験ごと・支部ごとに発表予定日が個別に定められる。",
+    "result_announcement": "支部別に合格者の受験番号を公示するとともに、合格者は消防試験研究センターのホームページにも掲示される。あわせて受験者には郵便ハガキで合否の結果が直接通知される。試験日から発表までの標準日数は公式サイトに一律の記載がなく、試験ごと・支部ごとに発表予定日が個別に定められる。",
     "source_urls": {
       "eligibility": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/qualified.html",
-      "fee_yen": "https://www.shoubo-shiken.or.jp/news/pdf_files/R0605kaisei.pdf",
-      "format": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/subject.html",
+      "fee_yen": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
+      "format": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
       "questions": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/subject.html",
       "duration_minutes": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
       "passing_criteria": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
-      "result_announcement": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html"
+      "result_announcement": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
+      "exemption": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/subject.html"
     },
     "subjects": [
       "危険物に関する法令 10問",
@@ -37,11 +39,51 @@
   "official_stats": {
     "unit": "全国集計(丙種, 消防試験研究センター発表)",
     "series": [
-      { "year": "令和7年度", "applicants": 21472, "examinees": 19969, "passers": 9593, "pass_rate": 48.0, "source_url": "https://www.shoubo-shiken.or.jp/result/7/", "retrieved_at": "2026-07-26" },
-      { "year": "令和6年度", "applicants": 22062, "examinees": 20687, "passers": 10199, "pass_rate": 49.3, "source_url": "https://www.shoubo-shiken.or.jp/result/6/", "retrieved_at": "2026-07-26" },
-      { "year": "令和5年度", "applicants": 22527, "examinees": 21042, "passers": 10188, "pass_rate": 48.4, "source_url": "https://www.shoubo-shiken.or.jp/result/5/", "retrieved_at": "2026-07-26" },
-      { "year": "令和4年度", "applicants": 23553, "examinees": 22044, "passers": 11252, "pass_rate": 51.0, "source_url": "https://www.shoubo-shiken.or.jp/result/r04/", "retrieved_at": "2026-07-26" },
-      { "year": "令和3年度", "applicants": 25768, "examinees": 24220, "passers": 12442, "pass_rate": 51.4, "source_url": "https://www.shoubo-shiken.or.jp/result/r03/", "retrieved_at": "2026-07-26" }
+      {
+        "year": "令和7年度",
+        "applicants": 21472,
+        "examinees": 19969,
+        "passers": 9593,
+        "pass_rate": 48.0,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/7/",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和6年度",
+        "applicants": 22062,
+        "examinees": 20687,
+        "passers": 10199,
+        "pass_rate": 49.3,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/6/",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和5年度",
+        "applicants": 22527,
+        "examinees": 21042,
+        "passers": 10188,
+        "pass_rate": 48.4,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/5/",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和4年度",
+        "applicants": 23553,
+        "examinees": 22044,
+        "passers": 11252,
+        "pass_rate": 51.0,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/r04/",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和3年度",
+        "applicants": 25768,
+        "examinees": 24220,
+        "passers": 12442,
+        "pass_rate": 51.4,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/r03/",
+        "retrieved_at": "2026-07-26"
+      }
     ],
     "source_url": "https://www.shoubo-shiken.or.jp/result/",
     "retrieved_at": "2026-07-26",
@@ -55,17 +97,23 @@
     "public_note": "公式の集計表から丙種の列を抜き出したものです。甲種・乙種は含みません。"
   },
   "related": [
-    { "slug": "kikenbutsu-otsu4", "reason": "丙種と扱える危険物が一部重なる乙種の類。受験者数は危険物取扱者の中で最多" },
-    { "slug": "kikenbutsu-kou", "reason": "全ての類の危険物を扱える上位区分。受験資格の制限がある" }
+    {
+      "slug": "kikenbutsu-otsu4",
+      "reason": "丙種と扱える危険物が一部重なる乙種の類。受験者数は危険物取扱者の中で最多"
+    },
+    {
+      "slug": "kikenbutsu-kou",
+      "reason": "全ての類の危険物を扱える上位区分。受験資格の制限がある"
+    }
   ],
   "schedule_url": "https://shinsei.shoubo-shiken.or.jp/shoubou_ia/iajs9001.do?menjo_kbn=1",
   "schedule_url_note": "このURLは試験日程の一覧表ではなく検索フォーム画面。都道府県を選んで日程を照会する形式である点に注意。",
   "verification": {
     "collected_by": "researcher(一次ソースのみ)+ PM(Fable)",
-    "verified_by": "未実施",
-    "verified_at": null,
-    "result": "🔴 独立検証が未実施。統計は5年度分を取得し、乙種第4類の既知値による読み取り位置の検算と、合格者数÷受験者数の検算を全年度で通している。未検証の中心は出題形式(四肢択一)の記載であり、一次ソースで再確認すること。"
+    "verified_by": "fact-checker(独立に一次ソースを再取得)+ PM が指摘箇所を再確認",
+    "verified_at": "2026-07-26",
+    "result": "fact-checker が独立に一次ソースを再取得し、差し戻しとなった。統計値は全件一致していたが、記述側で修正した点は次のとおり。(1) 出題形式の出典が科目ページを指していたが、そのページに出題形式の記載が無かった(掟1-b違反)。試験の方法ページへ差し替えた。(2) 受験手数料の出典がPDFだったが、テキスト抽出できず照合不能だったため、検証可能な公式ページへ差し替えた。(3) 合格発表の記述から、ホームページ掲示についての記載が欠落していた。 (4) 「丙種に科目免除があるか特定できなかった」は誤りで、自ら出典に挙げていたページに記載があった(消防団員5年以上かつ消防学校の基礎教育または警防科の修了)。科目免除の項目を追加した。"
   },
-  "notes": "確認できなかった項目: (1) 丙種に科目免除の制度があるかどうか。公式の科目免除表には乙種についての記載しかなく、丙種について明記したページを特定できなかった。(2) 実施頻度の「年◯回」という全国共通の数値。(3) 試験日から合格発表までの標準日数。いずれも推測で埋めていない。",
+  "notes": "当初「丙種に科目免除があるか特定できなかった」と記載していたが、これは誤りだった。自ら出典に挙げていた科目免除のページに記載があり、独立検証で発見して修正した。確認できなかった項目: (1) 実施頻度の「年◯回」という全国共通の数値。(2) 試験日から合格発表までの標準日数。いずれも推測で埋めていない。",
   "public_note": "数値は「丙種」単独の集計です。甲種・乙種は含みません。「受験者」は当日実際に受験した人数を指します。"
 }

@@ -735,6 +735,74 @@ function checkMigrations() {
 }
 
 /**
+ * 出典の張り方を検査する(掟 3-1b の機械化)。
+ *
+ * **なぜ必要か**: 「出典と記述が対応していない」は 2026-07-25 / 07-26 に**3回**起きた。
+ *   1回目: 危険物乙4の合格発表の説明が、引用元ページに存在しなかった
+ *   2回目: 衛生管理者で「確認できなかった」と書いた内容が、自分が引用済みのページにあった
+ *   3回目: 危険物5件で出題形式の出典が subject.html を指していたが、そのページに記載が無かった
+ * プロジェクトの規則は「同じ分類が3回出たら対策そのものを作り直す」である。
+ *
+ * **限界を正直に書く**: 「そのページにその記述があるか」は機械では判定できない
+ * (ページを取得して読解する必要があり、それはfact-checkerの仕事である)。
+ * ここで落とせるのは**構造的な誤りだけ**:
+ *   - 出典はあるのに本文がどこにも出ない項目(読者は根拠だけ見せられて中身を見られない)
+ *   - 1つのURLで多くの項目をまとめて根拠づけている(掟 3-1b が名指しで禁じている形)
+ *   - 出典一覧に日本語名が無く、英語のキー名がそのまま読者に出る項目
+ */
+function checkSources() {
+  const dir = join(ROOT, 'data', 'entities');
+  if (!existsSync(dir)) {
+    finishCheck('sources', '出典の張り方(項目ごとの分離)', 0);
+    return;
+  }
+  // src/pages/shikaku/[slug].astro の FIELD_LABELS と対応させること。
+  // ここに無いキーを source_urls に足すと、出典一覧に英語のキー名が表示される
+  const LABELLED = new Set([
+    'eligibility', 'fee_yen', 'fee_yen_cbt', 'format', 'questions', 'subjects',
+    'duration_minutes', 'passing_criteria', 'exemption', 'frequency',
+    'result_announcement', 'license_requirement',
+  ]);
+  const files = readdirSync(dir).filter((f) => f.endsWith('.json'));
+  let checked = 0;
+  for (const file of files) {
+    let e;
+    try {
+      e = JSON.parse(readFileSync(join(dir, file), 'utf8').replace(/^﻿/, ''));
+    } catch {
+      continue; // JSONの不正は checkMigrations が報告する
+    }
+    if (e.draft) continue;
+    const su = e.exam?.source_urls;
+    if (!su) continue;
+    checked += 1;
+    const where = `data/entities/${file}`;
+
+    const byUrl = new Map();
+    for (const [field, url] of Object.entries(su)) {
+      if (!LABELLED.has(field)) {
+        error('sources', where, `source_urls の "${field}" に対応する日本語名が無い。出典一覧に "${field}" と英語のまま表示される`);
+      }
+      if (e.exam[field] === undefined && field !== 'fee_yen_cbt') {
+        error('sources', where, `source_urls に "${field}" の出典があるが、exam に "${field}" 本体が無い。読者は根拠だけ見せられて中身を読めない`);
+      }
+      byUrl.set(url, [...(byUrl.get(url) ?? []), field]);
+    }
+    for (const [url, fields] of byUrl) {
+      if (fields.length >= 4) {
+        warn(
+          'sources',
+          where,
+          `1つのURLで${fields.length}項目(${fields.join('/')})をまとめて根拠づけている。` +
+            '掟3-1b は項目ごとに出典を分けることを求めている。本当に全部そのページに載っているか確認すること',
+        );
+      }
+    }
+  }
+  finishCheck('sources', '出典の張り方(項目ごとの分離)', checked);
+}
+
+/**
  * 週次スナップショットを取っているか。
  *
  * **なぜQAで見るか**: 計画では週次でKPIを記録することになっていたが、
@@ -793,7 +861,7 @@ function checkMetrics() {
 /** src/lib/entities.ts の KNOWN_ENTITY_TYPES と functions/api/report.ts の SCHEMAS に対応 */
 const KNOWN_ENTITY_TYPES = ['certification'];
 
-const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'social', 'migration', 'metrics'];
+const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'social', 'sources', 'migration', 'metrics'];
 
 function report() {
   const errors = findings.filter((f) => f.severity === 'error');
@@ -869,6 +937,7 @@ async function main() {
   checkPhrases(pages);
   checkPlaceholders(pages);
   checkSocialCard(pages);
+  checkSources();
   checkMigrations();
   checkMetrics();
 

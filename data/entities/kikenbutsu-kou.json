@@ -9,18 +9,18 @@
     "url": "https://www.shoubo-shiken.or.jp/"
   },
   "exam": {
-    "eligibility": "乙種・丙種と違い、甲種だけは受験資格が定められている。代表的なものは「大学等において化学に関する学科等を修めて卒業した者」「大学等において化学に関する授業科目を15単位以上修得した者」。このほか、乙種免状の取得後に2年以上の実務経験がある者、乙種免状を4種類以上持っている者、化学を専攻して修士・博士の学位を得た者などが定められている。",
+    "eligibility": "乙種・丙種と違い、甲種だけは受験資格が定められている。代表的なものは「大学等において化学に関する学科等を修めて卒業した者」「大学等において化学に関する授業科目を15単位以上修得した者」「乙種危険物取扱者免状の交付を受けた後、危険物製造所等における危険物取扱いの実務経験が2年以上の者」。このほか、乙種免状を4種類以上持つ場合も受験できるが、単に4種類あればよいのではなく「第1類又は第6類」「第2類又は第4類」「第3類」「第5類」の4つのグループそれぞれから1つ以上を取得している必要がある。このほかにも、化学を専攻して修士・博士の学位を得た者などの類型が定められている。",
     "fee_yen": 7200,
     "format": "マーク・カードを使う筆記試験(五肢択一式)。実技試験なし。試験科目は「危険物に関する法令」「物理学及び化学」「危険物の性質並びにその火災予防及び消火の方法」の3科目。乙種の科目名が「基礎的な物理学及び基礎的な化学」であるのに対し、甲種は「基礎的な」が付かない。",
     "questions": 45,
     "duration_minutes": 150,
     "passing_criteria": "甲種、乙種及び丙種とも、試験科目ごとの成績がそれぞれ60%以上の方を合格とする(試験科目の一部免除を受けた受験者はその科目を除く)。",
     "frequency": "都道府県ごと(消防試験研究センター各支部・中央試験センター)に実施されており、実施回数は都道府県により異なる。公式サイト・FAQでも「都道府県ごとに行われており、年度途中で試験日程等の変更もある」とされるのみで、全国共通の「年◯回」という単一の数値は公表されていない。詳細は試験日程[全国一覧]または受験予定の都道府県支部で個別に確認する必要がある。",
-    "result_announcement": "支部別に合格者の受験番号を公示するとともに、受験者には郵便ハガキで合否の結果を直接通知する。試験日から発表までの標準日数は公式サイトに一律の記載がなく、試験ごと・支部ごとに発表予定日が個別に定められる。",
+    "result_announcement": "支部別に合格者の受験番号を公示するとともに、合格者は消防試験研究センターのホームページにも掲示される。あわせて受験者には郵便ハガキで合否の結果が直接通知される。試験日から発表までの標準日数は公式サイトに一律の記載がなく、試験ごと・支部ごとに発表予定日が個別に定められる。",
     "source_urls": {
       "eligibility": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/qualified.html",
-      "fee_yen": "https://www.shoubo-shiken.or.jp/news/pdf_files/R0605kaisei.pdf",
-      "format": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/subject.html",
+      "fee_yen": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
+      "format": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
       "questions": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/subject.html",
       "duration_minutes": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
       "passing_criteria": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
@@ -37,11 +37,51 @@
   "official_stats": {
     "unit": "全国集計(甲種, 消防試験研究センター発表)",
     "series": [
-      { "year": "令和7年度", "applicants": 24550, "examinees": 20296, "passers": 6900, "pass_rate": 34.0, "source_url": "https://www.shoubo-shiken.or.jp/result/7/", "retrieved_at": "2026-07-26" },
-      { "year": "令和6年度", "applicants": 25218, "examinees": 21257, "passers": 7484, "pass_rate": 35.2, "source_url": "https://www.shoubo-shiken.or.jp/result/6/", "retrieved_at": "2026-07-26" },
-      { "year": "令和5年度", "applicants": 24719, "examinees": 20963, "passers": 6652, "pass_rate": 31.7, "source_url": "https://www.shoubo-shiken.or.jp/result/5/", "retrieved_at": "2026-07-26" },
-      { "year": "令和4年度", "applicants": 26085, "examinees": 22278, "passers": 8196, "pass_rate": 36.8, "source_url": "https://www.shoubo-shiken.or.jp/result/r04/", "retrieved_at": "2026-07-26" },
-      { "year": "令和3年度", "applicants": 26774, "examinees": 22835, "passers": 9050, "pass_rate": 39.6, "source_url": "https://www.shoubo-shiken.or.jp/result/r03/", "retrieved_at": "2026-07-26" }
+      {
+        "year": "令和7年度",
+        "applicants": 24550,
+        "examinees": 20296,
+        "passers": 6900,
+        "pass_rate": 34.0,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/7/",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和6年度",
+        "applicants": 25218,
+        "examinees": 21257,
+        "passers": 7484,
+        "pass_rate": 35.2,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/6/",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和5年度",
+        "applicants": 24719,
+        "examinees": 20963,
+        "passers": 6652,
+        "pass_rate": 31.7,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/5/",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和4年度",
+        "applicants": 26085,
+        "examinees": 22278,
+        "passers": 8196,
+        "pass_rate": 36.8,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/r04/",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和3年度",
+        "applicants": 26774,
+        "examinees": 22835,
+        "passers": 9050,
+        "pass_rate": 39.6,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/r03/",
+        "retrieved_at": "2026-07-26"
+      }
     ],
     "source_url": "https://www.shoubo-shiken.or.jp/result/",
     "retrieved_at": "2026-07-26",
@@ -55,18 +95,27 @@
     "public_note": "公式の集計表から甲種の列を抜き出したものです。乙種・丙種は含みません。"
   },
   "related": [
-    { "slug": "kikenbutsu-otsu4", "reason": "受験者数が最も多い乙種の類。乙種の免状を4種類以上持つと甲種の受験資格を満たす" },
-    { "slug": "kikenbutsu-otsu5", "reason": "乙種の類のひとつ。甲種と違い受験資格の制限がない" },
-    { "slug": "kikenbutsu-hei", "reason": "取り扱える範囲が最も狭い区分。受験資格の制限がない" }
+    {
+      "slug": "kikenbutsu-otsu4",
+      "reason": "受験者数が最も多い乙種の類。乙種免状を4種類以上(類の組合せ指定あり)持つと甲種の受験資格を満たす場合がある"
+    },
+    {
+      "slug": "kikenbutsu-otsu5",
+      "reason": "乙種の類のひとつ。甲種と違い受験資格の制限がない"
+    },
+    {
+      "slug": "kikenbutsu-hei",
+      "reason": "取り扱える範囲が最も狭い区分。受験資格の制限がない"
+    }
   ],
   "schedule_url": "https://shinsei.shoubo-shiken.or.jp/shoubou_ia/iajs9001.do?menjo_kbn=1",
   "schedule_url_note": "このURLは試験日程の一覧表ではなく検索フォーム画面。都道府県を選んで日程を照会する形式である点に注意。",
   "verification": {
     "collected_by": "researcher(一次ソースのみ)+ PM(Fable)",
-    "verified_by": "未実施",
-    "verified_at": null,
-    "result": "🔴 独立検証が未実施。統計は5年度分を取得し、乙種第4類の既知値による読み取り位置の検算と、合格者数÷受験者数の検算を全年度で通している。未検証の中心は受験資格の要約(代表的な類型のみを記載しており、実際の判定は公式ページでの確認が必要)。"
+    "verified_by": "fact-checker(独立に一次ソースを再取得)+ PM が指摘箇所を再確認",
+    "verified_at": "2026-07-26",
+    "result": "fact-checker が独立に一次ソースを再取得し、差し戻しとなった。統計値は全件一致していたが、記述側で修正した点は次のとおり。(1) 出題形式の出典が科目ページを指していたが、そのページに出題形式の記載が無かった(掟1-b違反)。試験の方法ページへ差し替えた。(2) 受験手数料の出典がPDFだったが、テキスト抽出できず照合不能だったため、検証可能な公式ページへ差し替えた。(3) 合格発表の記述から、ホームページ掲示についての記載が欠落していた。 (4) 受験資格を「乙種免状を4種類以上」と書いていたが、原文には「第1類又は第6類」「第2類又は第4類」「第3類」「第5類」の組合せ指定があり、種類数だけでは満たさない。申込前の利用者が誤解する誤りだったため、関連資格の説明文も含めて修正した。"
   },
-  "notes": "確認できなかった項目: (1) 甲種に科目免除の制度があるかどうか。公式の科目免除表には乙種についての記載しかなく、甲種について明記したページを特定できなかった。(2) 実施頻度の「年◯回」という全国共通の数値(都道府県ごとに異なるとのみ記載)。(3) 試験日から合格発表までの標準日数。いずれも推測で埋めていない。",
-  "public_note": "甲種は危険物取扱者のうち唯一、受験資格が定められている区分です。申込前に必ず公式の受験資格をご確認ください。数値は「甲種」単独の集計です。"
+  "notes": "確認できなかった項目: (1) 甲種に科目免除の制度があるかどうか。公式の科目免除表には乙種と丙種についての記載しかなく、甲種について明記したページを特定できなかった。(2) 実施頻度の「年◯回」という全国共通の数値(都道府県ごとに異なるとのみ記載)。(3) 試験日から合格発表までの標準日数。いずれも推測で埋めていない。",
+  "public_note": "甲種は危険物取扱者のうち唯一、受験資格が定められている区分です。乙種免状4種類での受験資格には類の組合せ指定があり、種類数だけでは判断できません。申込前に必ず公式の受験資格をご確認ください。数値は「甲種」単独の集計です。"
 }

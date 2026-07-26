@@ -27,6 +27,19 @@ export const GET: APIRoute = ({ site }) => {
       changefreq: 'weekly',
       priority: '0.8',
     })),
+    /*
+     * 自己採点ページ。**列挙から漏れていた。**
+     * 試験当日に需要が跳ね上がるページなので、当日いきなり順位が付くことはない。
+     * 事前にインデックスされていることが前提の設計なのに、sitemapに載せていなかった。
+     * 資格ページと同じく entities から生成するので、対象が増えれば自動で載る。
+     */
+    ...entities
+      .filter((e) => e.saiten)
+      .map((e) => ({
+        loc: `${origin}/shikaku/${e.slug}/saiten/`,
+        changefreq: 'weekly',
+        priority: '0.7',
+      })),
   ];
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>

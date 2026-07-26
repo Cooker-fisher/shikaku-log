@@ -17,11 +17,11 @@
     "passing_criteria": "甲種、乙種及び丙種とも、試験科目ごとの成績がそれぞれ60%以上の方を合格とする(試験科目の一部免除を受けた受験者はその科目を除く)。",
     "exemption": "乙種のいずれかの類の免状を既に持っている場合、「危険物に関する法令」と「基礎的な物理学及び基礎的な化学」が全部免除され、「危険物の性質並びにその火災予防及び消火の方法」の10問だけになる。試験時間も35分に短縮される。乙種第4類の合格者が他の類を追加で取りに行く場合が、この免除にあたる。",
     "frequency": "都道府県ごと(消防試験研究センター各支部・中央試験センター)に実施されており、実施回数は都道府県により異なる。公式サイト・FAQでも「都道府県ごとに行われており、年度途中で試験日程等の変更もある」とされるのみで、全国共通の「年◯回」という単一の数値は公表されていない。詳細は試験日程[全国一覧]または受験予定の都道府県支部で個別に確認する必要がある。",
-    "result_announcement": "支部別に合格者の受験番号を公示するとともに、受験者には郵便ハガキで合否の結果を直接通知する。試験日から発表までの標準日数は公式サイトに一律の記載がなく、試験ごと・支部ごとに発表予定日が個別に定められる。",
+    "result_announcement": "支部別に合格者の受験番号を公示するとともに、合格者は消防試験研究センターのホームページにも掲示される。あわせて受験者には郵便ハガキで合否の結果が直接通知される。試験日から発表までの標準日数は公式サイトに一律の記載がなく、試験ごと・支部ごとに発表予定日が個別に定められる。",
     "source_urls": {
       "eligibility": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/qualified.html",
-      "fee_yen": "https://www.shoubo-shiken.or.jp/news/pdf_files/R0605kaisei.pdf",
-      "format": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/subject.html",
+      "fee_yen": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
+      "format": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
       "questions": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/subject.html",
       "duration_minutes": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
       "passing_criteria": "https://www.shoubo-shiken.or.jp/kikenbutsu/annai/way.html",
@@ -39,11 +39,51 @@
   "official_stats": {
     "unit": "全国集計(乙種第5類, 消防試験研究センター発表)",
     "series": [
-      { "year": "令和7年度", "applicants": 11629, "examinees": 10972, "passers": 6815, "pass_rate": 62.1, "source_url": "https://www.shoubo-shiken.or.jp/result/7/", "retrieved_at": "2026-07-26" },
-      { "year": "令和6年度", "applicants": 11810, "examinees": 11211, "passers": 7153, "pass_rate": 63.8, "source_url": "https://www.shoubo-shiken.or.jp/result/6/", "retrieved_at": "2026-07-26" },
-      { "year": "令和5年度", "applicants": 11601, "examinees": 11027, "passers": 7538, "pass_rate": 68.4, "source_url": "https://www.shoubo-shiken.or.jp/result/5/", "retrieved_at": "2026-07-26" },
-      { "year": "令和4年度", "applicants": 12443, "examinees": 11930, "passers": 8476, "pass_rate": 71.0, "source_url": "https://www.shoubo-shiken.or.jp/result/r04/", "retrieved_at": "2026-07-26" },
-      { "year": "令和3年度", "applicants": 13578, "examinees": 12977, "passers": 9218, "pass_rate": 71.0, "source_url": "https://www.shoubo-shiken.or.jp/result/r03/", "retrieved_at": "2026-07-26" }
+      {
+        "year": "令和7年度",
+        "applicants": 11629,
+        "examinees": 10972,
+        "passers": 6815,
+        "pass_rate": 62.1,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/7/",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和6年度",
+        "applicants": 11810,
+        "examinees": 11211,
+        "passers": 7153,
+        "pass_rate": 63.8,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/6/",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和5年度",
+        "applicants": 11601,
+        "examinees": 11027,
+        "passers": 7538,
+        "pass_rate": 68.4,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/5/",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和4年度",
+        "applicants": 12443,
+        "examinees": 11930,
+        "passers": 8476,
+        "pass_rate": 71.0,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/r04/",
+        "retrieved_at": "2026-07-26"
+      },
+      {
+        "year": "令和3年度",
+        "applicants": 13578,
+        "examinees": 12977,
+        "passers": 9218,
+        "pass_rate": 71.0,
+        "source_url": "https://www.shoubo-shiken.or.jp/result/r03/",
+        "retrieved_at": "2026-07-26"
+      }
     ],
     "source_url": "https://www.shoubo-shiken.or.jp/result/",
     "retrieved_at": "2026-07-26",
@@ -57,17 +97,26 @@
     "public_note": "公式の集計表から乙種第5類の列を抜き出したものです。乙種全体や他の類は含みません。合格率が乙種第4類より高いのは、科目免除を受けて受験する既取得者が多いためと考えられますが、実施団体は免除者と非免除者を分けた合格率を公表していません。"
   },
   "related": [
-    { "slug": "kikenbutsu-otsu4", "reason": "乙種で最も受験者が多い類。第4類の免状があると、第5類は科目免除で10問・35分になる" },
-    { "slug": "kikenbutsu-otsu6", "reason": "同じく科目免除の対象になる乙種の類。合格率は乙種の中で最も高い" },
-    { "slug": "kikenbutsu-kou", "reason": "乙種の免状を4種類以上持つと、甲種の受験資格を満たす" }
+    {
+      "slug": "kikenbutsu-otsu4",
+      "reason": "乙種で最も受験者が多い類。第4類の免状があると、第5類は科目免除で10問・35分になる"
+    },
+    {
+      "slug": "kikenbutsu-otsu6",
+      "reason": "同じく科目免除の対象になる乙種の類。合格率は乙種の中で最も高い"
+    },
+    {
+      "slug": "kikenbutsu-kou",
+      "reason": "乙種免状を4種類以上(類の組合せ指定あり)持つと、甲種の受験資格を満たす場合がある"
+    }
   ],
   "schedule_url": "https://shinsei.shoubo-shiken.or.jp/shoubou_ia/iajs9001.do?menjo_kbn=1",
   "schedule_url_note": "このURLは試験日程の一覧表ではなく検索フォーム画面。都道府県を選んで日程を照会する形式である点に注意。",
   "verification": {
     "collected_by": "researcher(一次ソースのみ)+ PM(Fable)",
-    "verified_by": "未実施",
-    "verified_at": null,
-    "result": "🔴 独立検証が未実施。統計は5年度分を取得し、乙種第4類の既知値による読み取り位置の検算と、合格者数÷受験者数の検算を全年度で通している。未検証の中心は科目免除の記述。"
+    "verified_by": "fact-checker(独立に一次ソースを再取得)+ PM が指摘箇所を再確認",
+    "verified_at": "2026-07-26",
+    "result": "fact-checker が独立に一次ソースを再取得し、差し戻しとなった。統計値は全件一致していたが、記述側で修正した点は次のとおり。(1) 出題形式の出典が科目ページを指していたが、そのページに出題形式の記載が無かった(掟1-b違反)。試験の方法ページへ差し替えた。(2) 受験手数料の出典がPDFだったが、テキスト抽出できず照合不能だったため、検証可能な公式ページへ差し替えた。(3) 合格発表の記述から、ホームページ掲示についての記載が欠落していた。 (4) 甲種の受験資格に触れた関連資格の説明文に、類の組合せ指定の記載が欠けていた。"
   },
   "notes": "確認できなかった項目: (1) 実施頻度の「年◯回」という全国共通の数値(都道府県ごとに異なるとのみ記載)。(2) 試験日から合格発表までの標準日数。(3) 科目免除を受けた受験者と受けていない受験者を分けた合格率は公表されていない。いずれも推測で埋めていない。",
   "public_note": "数値は「乙種第5類」単独の集計です。「申請者」は申し込んだ人数、「受験者」は当日実際に受験した人数を指します。"

@@ -1,0 +1,85 @@
+{
+  "type": "certification",
+  "slug": "boki-2kyu",
+  "name": "日商簿記検定 2級",
+  "short_name": "簿記2級",
+  "category": "事務・会計",
+  "authority": {
+    "name": "日本商工会議所",
+    "url": "https://www.kentei.ne.jp/bookkeeping"
+  },
+  "exam": {
+    "eligibility": "受験資格の制限なし。公式Q&Aで「商工会議所の検定試験では、学歴、年齢、性別、国籍は一切問いません」「どの級から受験していただいても構いません」と明記されている。3級に合格していなくても2級を受験できる。",
+    "fee_yen": 5500,
+    "format": "試験科目は商業簿記と工業簿記(原価計算を含む)の2つ。3級は商業簿記のみで、工業簿記が加わるのが2級との最大の違いになる。大問5題以内、試験時間90分。統一試験(ペーパー)とネット試験(CBT)は出題範囲・難易度・合格基準とも同一で、合格すれば同等の資格となる。",
+    "questions": null,
+    "duration_minutes": 90,
+    "passing_criteria": "70%以上",
+    "frequency": "統一試験(ペーパー)は年3回(6月・11月・翌年2月)実施。ネット試験(CBT)は通年実施だが、統一試験の前後に全国一律の施行休止期間がある(2026年度は4月1〜13日・6月8〜17日・11月9〜18日・2027年2月22日〜3月3日)。",
+    "result_announcement": "統一試験: 合格発表の期日・方法・証書の受け渡し方法は施行する商工会議所によって異なり、申込時に確認が必要(公式サイトに全国一律の日数の記載なし)。ネット試験: 試験終了後、即時に自動採点され合否が発表される。合格者はその場で二次元コードを受け取り、デジタル合格証を取得できる。",
+    "source_urls": {
+      "eligibility": "https://www.kentei.ne.jp/qa",
+      "fee_yen": "https://www.kentei.ne.jp/calendar_2026",
+      "fee_yen_cbt": "https://cbt-s.com/examinee/examination/jcci.html",
+      "format": "https://www.kentei.ne.jp/bookkeeping/class2/exam",
+      "duration_minutes": "https://www.kentei.ne.jp/bookkeeping/class2/exam",
+      "passing_criteria": "https://www.kentei.ne.jp/bookkeeping/class2/exam",
+      "frequency": "https://www.kentei.ne.jp/calendar_2026",
+      "result_announcement": "https://www.kentei.ne.jp/examination_method"
+    },
+    "fee_note": "統一試験は5,500円(税込)。ネット試験は受験料5,500円に事務手数料550円が加わり、合計6,050円(税込)になる。事務手数料は実施団体ではなく、ネット試験の運営を受託しているCBT-Solutionsの公式ページに記載がある。",
+    "questions_note": "公式には「5題以内」と書かれており、問題数は固定されていない。そのため数値では記載していない。",
+    "retrieved_at": "2026-07-26"
+  },
+  "official_stats_unified": {
+    "unit": "統一試験(ペーパー)・全国集計・2級",
+    "series": [
+      { "session": "第173回", "date": "2026-06-14", "applicants": 5724, "examinees": 4821, "passers": 728, "pass_rate": 15.1, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" },
+      { "session": "第172回", "date": "2026-02-22", "applicants": 7115, "examinees": 6038, "passers": 911, "pass_rate": 15.1, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" },
+      { "session": "第171回", "date": "2025-11-16", "applicants": 7512, "examinees": 6332, "passers": 1492, "pass_rate": 23.6, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" },
+      { "session": "第170回", "date": "2025-06-08", "applicants": 6560, "examinees": 5383, "passers": 1193, "pass_rate": 22.2, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" },
+      { "session": "第169回", "date": "2025-02-23", "applicants": 8606, "examinees": 7118, "passers": 1486, "pass_rate": 20.9, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" }
+    ],
+    "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data",
+    "retrieved_at": "2026-07-26",
+    "notes": "原文の表記は「受験者数(申込者数)」と「実受験者数」。ここでは前者を applicants、後者を examinees として記録した。第173回(2026年6月14日)が直近回。全5回について合格者数÷実受験者数が公表合格率と小数第1位まで一致することを検算済み。直近2回(第172回・第173回)の合格率15.1%は、その前の3回(20.9〜23.6%)より低い。実施団体は理由を公表していないため、ここでも理由は記載しない。",
+    "unit_labels": {
+      "applicants": "申込者数",
+      "examinees": "実受験者数(当日実際に受験した人数)",
+      "passers": "合格者数",
+      "pass_rate": "合格率(%)"
+    },
+    "public_note": "統一試験(ペーパー)の集計です。ネット試験は別に集計されているため、下の表に分けて掲載しています。"
+  },
+  "official_stats_cbt": {
+    "unit": "ネット試験(CBT)・全国集計・2級・年度単位",
+    "series": [
+      { "period": "2025年4月〜2026年3月", "applicants": null, "examinees": 141072, "passers": 46351, "pass_rate": 32.9, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" },
+      { "period": "2024年4月〜2025年3月", "applicants": null, "examinees": 124429, "passers": 44359, "pass_rate": 35.7, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" },
+      { "period": "2023年4月〜2024年3月", "applicants": null, "examinees": 119036, "passers": 41912, "pass_rate": 35.2, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" },
+      { "period": "2022年4月〜2023年3月", "applicants": null, "examinees": 105289, "passers": 39076, "pass_rate": 37.1, "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data", "retrieved_at": "2026-07-26" }
+    ],
+    "source_url": "https://www.kentei.ne.jp/bookkeeping/candidate-data",
+    "retrieved_at": "2026-07-26",
+    "notes": "ネット試験は「受験者数」のみが公表されており、統一試験のような「申込者数/実受験者数」の区別はない(applicants は null)。集計は年度単位(4月〜翌3月)で、回次の概念はない。全4年度について合格者数÷受験者数が公表合格率と小数第1位まで一致することを検算済み。受験者数は統一試験の約29倍あり、2級の受験は実質的にネット試験が主流になっている。",
+    "unit_labels": {
+      "applicants": "申込者数(未公表)",
+      "examinees": "受験者数",
+      "passers": "合格者数",
+      "pass_rate": "合格率(%)"
+    },
+    "public_note": "ネット試験(CBT)の集計です。統一試験と出題範囲・合格基準は同じですが、合格率は別々に公表されています。"
+  },
+  "related": [
+    { "slug": "boki-3kyu", "reason": "商業簿記のみの下位級。2級では工業簿記が加わり、試験時間も60分から90分になる" }
+  ],
+  "schedule_url": "https://www.kentei.ne.jp/calendar_2026",
+  "verification": {
+    "collected_by": "researcher(一次ソースのみ)+ PM(Fable)",
+    "verified_by": "未実施",
+    "verified_at": null,
+    "result": "🔴 独立検証が未実施。統計9系列は合格者数÷受験者数の検算を全件通している。未検証の中心は (1) ネット試験の事務手数料550円の出典が実施団体ではなく運営受託先(CBT-Solutions)である点 (2) 施行休止期間の日付。"
+  },
+  "notes": "確認できなかった項目: (1) 商業簿記と工業簿記それぞれの配点比率。公式の試験科目ページに記載が無い。(2) 統一試験の合格発表までの全国一律の標準日数。商工会議所ごとに異なるため公表されていない。(3) ネット試験の申込者数。公表は受験者数のみ。いずれも推測で埋めていない。",
+  "public_note": "統一試験(ペーパー)とネット試験(CBT)は出題範囲・合格基準が同じで、合格すれば同等の資格になります。ただし合格率は別々に公表されているため、このページでも分けて掲載しています。"
+}

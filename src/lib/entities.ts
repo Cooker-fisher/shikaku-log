@@ -85,6 +85,17 @@ export interface Entity {
     source_urls?: Record<string, string>;
     source_url?: string;
     fee_note?: string;
+    /** 試験科目と各科目の問題数 */
+    subjects?: string[];
+    /** 科目免除の条件。既に別の免状を持つ人向け */
+    exemption?: string;
+    /**
+     * 試験に合格しただけでは免許が交付されない資格がある(二級ボイラー技士など)。
+     * **受験を決める前に知る必要がある情報**なので、独立した項目として持つ。
+     */
+    license_requirement?: string;
+    license_requirement_note?: string;
+    duration_note?: string;
     retrieved_at: string;
   };
   official_stats?: OfficialStats;
