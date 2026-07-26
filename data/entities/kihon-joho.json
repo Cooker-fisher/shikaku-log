@@ -1,0 +1,73 @@
+{
+  "type": "certification",
+  "slug": "kihon-joho",
+  "name": "基本情報技術者試験",
+  "short_name": "基本情報",
+  "category": "IT・情報",
+  "draft": true,
+  "draft_reason": "fact-checker の独立検証が未了。検証を通ってから公開する(writer→fact-checker→公開の順を守る)。",
+  "authority": {
+    "name": "独立行政法人 情報処理推進機構(IPA)",
+    "url": "https://www.ipa.go.jp/shiken/kubun/fe.html"
+  },
+  "exam": {
+    "eligibility": "受験資格を定めた記載は、IPAの試験要綱・公式サイトで確認できなかった。年齢や学歴の制限を課す記述も見当たらない。「誰でも受験できる」という明文が無いため、ここでは断定していない。",
+    "fee_yen": 7500,
+    "format": "CBT(コンピュータを使った試験)。科目Aと科目Bの2部構成で、科目Aは知識を問う四肢択一の60問、科目Bはプログラミングなどの技能を問う多肢選択の20問。採点は素点ではなくIRT(項目応答理論。解答の正誤パターンから統計的に評価点を算出する方式)による。",
+    "questions": 80,
+    "duration_minutes": 190,
+    "passing_criteria": "科目A・科目Bそれぞれ1,000点満点中、評価点600点以上であること。両方の科目で基準を満たす必要があり、片方だけ高得点でも合格にならない。",
+    "frequency": "CBT方式で年間を通じて随時実施される。身体の不自由などでCBTを利用できない人向けに、年2回(前期4月・後期10月)のペーパー方式の特別措置試験がある。",
+    "result_announcement": "受験した月の翌月に発表される(令和8年度の例では5月受験分が6月22日の正午)。IPAのサイトに合格者の受験番号が掲示され、受験者マイページでも確認できる。掲示は実施月から半年間で終了する。",
+    "source_urls": {
+      "eligibility": "https://www.ipa.go.jp/shiken/kubun/fe.html",
+      "fee_yen": "https://www.ipa.go.jp/shiken/2021/jukenryou20210716.html",
+      "format": "https://www.ipa.go.jp/shiken/syllabus/rcu1hd00000141gq-att/youkou_ver5_6.pdf",
+      "questions": "https://www.ipa.go.jp/shiken/syllabus/rcu1hd00000141gq-att/youkou_ver5_6.pdf",
+      "duration_minutes": "https://www.ipa.go.jp/shiken/syllabus/rcu1hd00000141gq-att/youkou_ver5_6.pdf",
+      "passing_criteria": "https://www.ipa.go.jp/shiken/syllabus/rcu1hd00000141gq-att/youkou_ver5_6.pdf",
+      "frequency": "https://www.ipa.go.jp/shiken/mousikomi/cbt_sg_fe.html",
+      "result_announcement": "https://www.ipa.go.jp/shiken/mousikomi/cbt_sg_fe.html"
+    },
+    "subjects": [
+      "科目A(知識) 60問・90分",
+      "科目B(技能) 20問・100分"
+    ],
+    "duration_note": "科目A 90分+科目B 100分の合計190分。",
+    "fee_note": "2022年4月実施の試験から、5,700円が7,500円に改定された。",
+    "questions_note": "科目A 60問と科目B 20問の合計を questions としている。2科目は別々に受験時間が区切られる。",
+    "retrieved_at": "2026-07-26"
+  },
+  "official_stats": {
+    "unit": "全国集計(年度単位・IPA発表)",
+    "series": [
+      { "year": "令和7年度", "applicants": 172217, "examinees": 147186, "passers": 56370, "pass_rate": 38.3, "source_url": "https://www.ipa.go.jp/shiken/reports/hjuojm000000ll0f-att/suii_hyo.pdf", "retrieved_at": "2026-07-26" },
+      { "year": "令和6年度", "applicants": 157259, "examinees": 133732, "passers": 54501, "pass_rate": 40.8, "source_url": "https://www.ipa.go.jp/shiken/reports/hjuojm000000ll0f-att/suii_hyo.pdf", "retrieved_at": "2026-07-26" },
+      { "year": "令和5年度", "applicants": 140774, "examinees": 121611, "passers": 57278, "pass_rate": 47.1, "source_url": "https://www.ipa.go.jp/shiken/reports/hjuojm000000ll0f-att/suii_hyo.pdf", "retrieved_at": "2026-07-26" },
+      { "year": "令和4年度(旧制度)", "applicants": 117624, "examinees": 101620, "passers": 38033, "pass_rate": 37.4, "source_url": "https://www.ipa.go.jp/shiken/reports/hjuojm000000ll0f-att/suii_hyo.pdf", "retrieved_at": "2026-07-26" },
+      { "year": "令和3年度(旧制度)", "applicants": 97577, "examinees": 85428, "passers": 34734, "pass_rate": 40.7, "source_url": "https://www.ipa.go.jp/shiken/reports/hjuojm000000ll0f-att/suii_hyo.pdf", "retrieved_at": "2026-07-26" }
+    ],
+    "source_url": "https://www.ipa.go.jp/shiken/reports/hjuojm000000ll0f-att/suii_hyo.pdf",
+    "retrieved_at": "2026-07-26",
+    "notes": "IPAの推移表(令和8年4月21日現在)から取得した。2023年4月(令和5年度)に科目A/B・IRT採点へ全面変更されており、令和4年度以前とは採点方式が異なる。連続した推移として比較できないため、年度名に(旧制度)を付けて区別している。全5年度で合格者数÷受験者数が公表合格率と一致することを検算済み。",
+    "unit_labels": {
+      "applicants": "応募者数",
+      "examinees": "受験者数(実際に受験した人数)",
+      "passers": "合格者数",
+      "pass_rate": "合格率(%)"
+    },
+    "public_note": "2023年4月に試験制度が大きく変わりました(科目A/B化・採点方式の変更)。令和4年度以前の合格率は採点方式が異なるため、そのまま比較はできません。"
+  },
+  "related": [
+    { "slug": "it-passport", "reason": "同じIPAが実施する入門級の試験。基本情報はその上位に位置づけられる" }
+  ],
+  "schedule_url": "https://www.ipa.go.jp/shiken/mousikomi/cbt_sg_fe.html",
+  "verification": {
+    "collected_by": "researcher(一次ソースのみ)+ PM(Fable)",
+    "verified_by": "未実施",
+    "verified_at": null,
+    "result": "🔴 独立検証が未実施のため draft のまま。統計5年度分は検算済み。未検証の中心は (1) 受験資格の「記載が確認できなかった」という記述自体 (2) 科目Bの出題形式の要約 (3) 制度変更の説明。"
+  },
+  "notes": "確認できなかった項目: (1) 受験資格。試験要綱に受験資格の章が無く、「制限なし」の明文も見つからなかった。制限を課す記述も無い。断定を避けて「確認できなかった」と記載している。(2) 合格発表の「翌月22日」が全月共通の規則かどうか。公表されている個別月の日付例から一般化はしていない。",
+  "public_note": "数値はすべてIPAの公表資料に基づきます。合格には科目A・科目Bの両方で1,000点満点中600点以上が必要です。"
+}
