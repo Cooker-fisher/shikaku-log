@@ -1,0 +1,443 @@
+---
+/**
+ * 勉強中の人が書き込み、返信で議論する欄。
+ *
+ * **なぜ合格報告と別に置くか(ADR-016)**
+ * 「危険物乙4 勉強時間」を検索するのは**受験前の人**であり、合格者ではない。
+ * 合格報告のフォームしか無かったとき、入口(検索)と出口(投稿)で対象者が
+ * 一致しておらず、PVをいくら積んでも投稿の分母が増えない構造だった。
+ *
+ * **なぜ自由記入だけにしないか**
+ * 5ch の資格板を実測したところ、書き込みの約45%は雑談だった。
+ * 「何を書いてもいい」欄を置くと、生まれるものの半分は検索で来た人の役に立たない。
+ * 起点を「いまの状況 + 詰まっていること」に固定すると、書かれる内容が変わる。
+ * **モデレーションで削るのではなく、フォームの形で決める。**
+ *
+ * **なぜ実行時に取りに行くか**
+ * 合格報告はビルド時のスナップショットを埋め込んでいるが、同じ作りだと
+ * 書き込んでも次のデプロイまで画面に出ない。「投稿しても何も起きない」は
+ * 最初の数人を必ず失う。ここだけは /api/posts から実行時に読む。
+ *
+ * 0件でもページは成立する。空欄を並べず、何を書けばいいかだけを示す。
+ */
+interface Props {
+  entitySlug: string;
+  entityShortName: string;
+}
+const { entitySlug, entityShortName } = Astro.props;
+---
+
+<section class="board" aria-labelledby="h-board" data-slug={entitySlug}>
+  <h2 id="h-board">{entityShortName}を勉強している人の書き込み</h2>
+
+  <p class="lede">
+    いま詰まっていることや、進み具合を書き残せます。登録は要りません。
+    返信もできるので、分かる人が答えられます。
+  </p>
+
+  <!-- 一覧。JSが動く前は「読み込み中」を出さない(0件と区別がつかないため) -->
+  <div class="list" data-role="list" hidden></div>
+
+  <p class="empty" data-role="empty" hidden>
+    まだ書き込みはありません。<strong>最初の1件になれます。</strong>
+  </p>
+
+  <p class="failed" data-role="failed" hidden>
+    書き込みを読み込めませんでした。時間をおいて再読み込みしてください。
+  </p>
+
+  <form class="composer" data-role="composer" novalidate>
+    <fieldset class="tags">
+      <legend>いまの状況</legend>
+      <label><input type="radio" name="status_tag" value="before" /><span>これから始める</span></label>
+      <label><input type="radio" name="status_tag" value="studying" checked /><span>勉強中</span></label>
+      <label><input type="radio" name="status_tag" value="taken" /><span>受験済み</span></label>
+    </fieldset>
+
+    <label class="field">
+      <span class="label">詰まっていること・いまの進み具合</span>
+      <textarea name="body" rows="3" maxlength="400" required
+        placeholder="例)法令の指定数量でいつも間違えます。表を丸暗記するしかないでしょうか"></textarea>
+      <span class="counter" data-role="counter">0 / 400</span>
+    </label>
+
+    <label class="field name">
+      <span class="label">名前(任意)</span>
+      <input type="text" name="handle" maxlength="16" placeholder="名無し" autocomplete="off" />
+    </label>
+
+    <!-- ボットだけが埋める。CSSで隠す -->
+    <div class="hp" aria-hidden="true">
+      <label>website<input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
+    </div>
+
+    <div class="actions">
+      <button type="submit">書き込む</button>
+      <p class="note">
+        試験問題そのものは書けません(実施団体に著作権があります)。
+        URL・連絡先も投稿できません。
+        <a href="/rules/">投稿のルール</a>
+      </p>
+    </div>
+
+    <p class="result" data-role="result" role="status" hidden></p>
+  </form>
+</section>
+
+<script>
+  /*
+   * 表示は全て textContent で行う。**innerHTML は使わない。**
+   * 投稿は他人が書いた文字列であり、1箇所でも生のHTMLとして入れると
+   * そこがそのままXSSの入口になる。
+   */
+  const section = document.querySelector<HTMLElement>('.board[data-slug]');
+  if (section) {
+    const slug = section.dataset.slug!;
+    const listEl = section.querySelector<HTMLElement>('[data-role="list"]')!;
+    const emptyEl = section.querySelector<HTMLElement>('[data-role="empty"]')!;
+    const failedEl = section.querySelector<HTMLElement>('[data-role="failed"]')!;
+    const form = section.querySelector<HTMLFormElement>('[data-role="composer"]')!;
+    const resultEl = section.querySelector<HTMLElement>('[data-role="result"]')!;
+    const counterEl = section.querySelector<HTMLElement>('[data-role="counter"]')!;
+    const bodyEl = form.elements.namedItem('body') as HTMLTextAreaElement;
+    const loadedAt = Date.now();
+
+    const show = (el: HTMLElement, on: boolean) => {
+      el.hidden = !on;
+    };
+
+    /** 「3分前」「昨日」。秒までは出さない(投稿者の行動時刻を細かく晒さない) */
+    function ago(iso: string): string {
+      const diff = (Date.now() - Date.parse(iso)) / 1000;
+      if (!Number.isFinite(diff)) return '';
+      if (diff < 60) return 'たった今';
+      if (diff < 3600) return `${Math.floor(diff / 60)}分前`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}時間前`;
+      if (diff < 86400 * 7) return `${Math.floor(diff / 86400)}日前`;
+      return iso.slice(0, 10);
+    }
+
+    interface Post {
+      id: number;
+      handle: string | null;
+      body: string;
+      statusLabel: string | null;
+      createdAt: string;
+      replies?: Post[];
+    }
+
+    function renderPost(post: Post, isReply: boolean): HTMLElement {
+      const article = document.createElement('article');
+      article.className = isReply ? 'post reply' : 'post';
+
+      const head = document.createElement('p');
+      head.className = 'meta';
+      const name = document.createElement('span');
+      name.className = 'who';
+      name.textContent = post.handle ?? '名無し';
+      head.append(name);
+      if (post.statusLabel) {
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.textContent = post.statusLabel;
+        head.append(tag);
+      }
+      const time = document.createElement('time');
+      time.dateTime = post.createdAt;
+      time.textContent = ago(post.createdAt);
+      head.append(time);
+
+      const body = document.createElement('p');
+      body.className = 'body';
+      body.textContent = post.body;
+
+      article.append(head, body);
+
+      if (!isReply) {
+        const replies = document.createElement('div');
+        replies.className = 'replies';
+        for (const r of post.replies ?? []) replies.append(renderPost(r, true));
+        article.append(replies);
+        article.append(buildReplyForm(post.id, replies));
+      }
+      return article;
+    }
+
+    function buildReplyForm(parentId: number, mount: HTMLElement): HTMLElement {
+      const wrap = document.createElement('details');
+      wrap.className = 'reply-form';
+      const summary = document.createElement('summary');
+      summary.textContent = '返信する';
+      const f = document.createElement('form');
+      const ta = document.createElement('textarea');
+      ta.rows = 2;
+      ta.maxLength = 400;
+      ta.required = true;
+      ta.placeholder = '分かることがあれば書いてください';
+      const btn = document.createElement('button');
+      btn.type = 'submit';
+      btn.textContent = '返信';
+      const msg = document.createElement('p');
+      msg.className = 'result';
+      msg.setAttribute('role', 'status');
+      f.append(ta, btn, msg);
+      wrap.append(summary, f);
+
+      f.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        btn.disabled = true;
+        const res = await send({
+          entity_slug: slug,
+          kind: 'reply',
+          parent_id: parentId,
+          body: ta.value,
+          form_loaded_at: loadedAt,
+        });
+        msg.textContent = res.message;
+        if (res.ok && res.post) {
+          mount.append(renderPost(res.post, true));
+          ta.value = '';
+        }
+        btn.disabled = false;
+      });
+      return wrap;
+    }
+
+    async function send(payload: Record<string, unknown>): Promise<{
+      ok: boolean;
+      message: string;
+      post?: Post;
+    }> {
+      try {
+        const r = await fetch('/api/post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await r.json();
+        if (!r.ok || !data.ok) {
+          return { ok: false, message: data.message ?? '書き込めませんでした' };
+        }
+        if (data.status === 'pending') return { ok: false, message: data.message };
+        return { ok: true, message: '書き込みました', post: data.post };
+      } catch {
+        return { ok: false, message: '通信できませんでした。時間をおいて試してください' };
+      }
+    }
+
+    async function load() {
+      try {
+        const r = await fetch(`/api/posts?slug=${encodeURIComponent(slug)}`);
+        const data = await r.json();
+        if (!r.ok || !data.ok) throw new Error('failed');
+        listEl.replaceChildren(...data.threads.map((t: Post) => renderPost(t, false)));
+        show(listEl, data.threads.length > 0);
+        show(emptyEl, data.threads.length === 0);
+      } catch {
+        show(failedEl, true);
+      }
+    }
+
+    bodyEl.addEventListener('input', () => {
+      counterEl.textContent = `${[...bodyEl.value].length} / 400`;
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector('button[type=submit]') as HTMLButtonElement;
+      btn.disabled = true;
+      const data = new FormData(form);
+      const res = await send({
+        entity_slug: slug,
+        kind: 'thread',
+        status_tag: data.get('status_tag'),
+        handle: data.get('handle'),
+        body: data.get('body'),
+        website: data.get('website'),
+        form_loaded_at: loadedAt,
+      });
+      resultEl.textContent = res.message;
+      show(resultEl, true);
+      if (res.ok && res.post) {
+        listEl.prepend(renderPost(res.post, false));
+        show(listEl, true);
+        show(emptyEl, false);
+        bodyEl.value = '';
+        counterEl.textContent = '0 / 400';
+      }
+      btn.disabled = false;
+    });
+
+    load();
+  }
+</script>
+
+<style>
+  .board {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-5) var(--space-4);
+  }
+  .lede {
+    margin: 0 0 var(--space-4);
+    line-height: var(--lh-normal);
+  }
+  .list {
+    display: grid;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+  .empty,
+  .failed {
+    margin: 0 0 var(--space-5);
+    padding: var(--space-4);
+    background: var(--color-notice-bg);
+    border-radius: var(--radius-sm);
+    line-height: var(--lh-normal);
+  }
+  .board :global(.post) {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3) var(--space-4);
+  }
+  .board :global(.post.reply) {
+    border: 0;
+    border-left: 3px solid var(--color-border);
+    border-radius: 0;
+    margin-top: var(--space-3);
+    padding: var(--space-2) 0 var(--space-2) var(--space-4);
+  }
+  .board :global(.meta) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-3);
+    margin: 0 0 var(--space-2);
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+  .board :global(.who) {
+    font-weight: var(--fw-bold);
+    color: var(--color-text);
+  }
+  .board :global(.tag) {
+    padding: 0 var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+  }
+  .board :global(.body) {
+    margin: 0;
+    line-height: var(--lh-normal);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .board :global(.replies) {
+    margin-top: var(--space-2);
+  }
+  .board :global(.reply-form) {
+    margin-top: var(--space-3);
+    font-size: var(--fs-xs);
+  }
+  .board :global(.reply-form summary) {
+    cursor: pointer;
+    color: var(--color-text-muted);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  .board :global(.reply-form textarea) {
+    width: 100%;
+    margin: var(--space-2) 0;
+    font: inherit;
+    padding: var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+  .composer {
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--space-4);
+  }
+  .tags {
+    border: 0;
+    padding: 0;
+    margin: 0 0 var(--space-3);
+  }
+  .tags legend {
+    padding: 0;
+    margin-bottom: var(--space-2);
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+  .tags label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-right: var(--space-4);
+    min-height: 44px;
+    cursor: pointer;
+  }
+  .field {
+    display: block;
+    margin-bottom: var(--space-3);
+  }
+  .field .label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+  .field textarea,
+  .field input {
+    width: 100%;
+    font: inherit;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+  .field.name input {
+    max-width: 14rem;
+  }
+  .counter {
+    display: block;
+    margin-top: var(--space-1);
+    text-align: right;
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+  .hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .actions button {
+    min-height: 44px;
+    padding: 0 var(--space-5);
+    font: inherit;
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+  .note {
+    margin: 0;
+    flex: 1 1 16rem;
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+  }
+  .result {
+    margin: var(--space-3) 0 0;
+    padding: var(--space-3);
+    background: var(--color-notice-bg);
+    border-radius: var(--radius-sm);
+    line-height: var(--lh-normal);
+  }
+</style>

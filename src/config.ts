@@ -35,6 +35,7 @@ export const NAV_LINKS: ReadonlyArray<{ href: string; label: string }> = [
 export const FOOTER_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: '/', label: 'トップ' },
   { href: '/about/', label: 'このサイトについて' },
+  { href: '/rules/', label: '投稿のルール' },
   { href: '/privacy/', label: 'プライバシーポリシー' },
   { href: '/contact/', label: 'お問い合わせ' },
 ];

@@ -16,6 +16,7 @@ import PassingScoreTable from '../../components/PassingScoreTable.astro';
 import StructuredData from '../../components/StructuredData.astro';
 import StudyPaceTool from '../../components/StudyPaceTool.astro';
 import ReportForm from '../../components/ReportForm.astro';
+import StudyBoard from '../../components/StudyBoard.astro';
 import RecentReports from '../../components/RecentReports.astro';
 import NextExamBox from '../../components/NextExamBox.astro';
 import TextbookList from '../../components/TextbookList.astro';
@@ -210,6 +211,19 @@ const canonical = new URL(Astro.url.pathname, origin).href;
     )}
 
     <NextExamBox entity={entity} />
+
+    {/*
+      **学習ペースツールより手前**に置く。
+
+      投稿CTAがページ先頭から約3,700px下にあり、検索で来た人はそこまで届いていなかった(B-029)。
+      ペースツールの直後に置いたときは 2,801px で、まだ深かった(375px幅で実測)。
+      ペースツール自身が 1,252px あるため、その手前に出すと 1,549px まで上がる。
+
+      読む順としても「試験日はいつか → 他の人は何に詰まっているか → 自分は間に合うか」
+      でつながる。ここに来るのは受験前・勉強中の人であり(ADR-016)、
+      その人に最初に渡すべきものを上に置く。
+    */}
+    <StudyBoard entitySlug={entity.slug} entityShortName={entity.short_name} />
 
     <StudyPaceTool entityName={entity.short_name} snapshot={snapshot} />
 

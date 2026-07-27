@@ -1,0 +1,162 @@
+---
+/**
+ * 投稿のルール。
+ *
+ * **なぜ必要か**: 自由に書き込める欄を置く以上、
+ *  ①何を書いてよいか ②何が消されるか ③消してほしいときどうするか
+ * の3つを、書き込む前に読める場所に置いておく必要がある。
+ * 後から「そんなつもりではなかった」となる余地を残さないため。
+ *
+ * ここに書いてある判定は、実装(src/lib/moderation.ts)と一致していなければならない。
+ * 文章だけ直して実装を直さない、という食い違いが最も危ない。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { CONTACT_FORM_URL, SITE_NAME } from '../config';
+
+const title = '投稿のルール';
+const description = `${SITE_NAME}の資格ページにある書き込み欄のルールです。登録なしで書けること、URLや試験問題の再現など投稿できないもの、公開の判定方法、削除や発信者情報の開示を依頼する窓口をまとめています。`;
+---
+
+<BaseLayout title={title} description={description}>
+  <article class="page">
+    <nav class="crumbs" aria-label="パンくず">
+      <a href="/">ホーム</a> <span aria-hidden="true">/</span>
+      <span aria-current="page">投稿のルール</span>
+    </nav>
+
+    <h1>投稿のルール</h1>
+
+    <p>
+      資格ページの「勉強している人の書き込み」欄について、
+      書けること・書けないこと・削除の依頼方法をまとめています。
+      書き込む前に目を通してください。
+    </p>
+
+    <h2>登録は要りません</h2>
+    <p>
+      アカウントの登録はありません。名前は任意で、空欄なら「名無し」と表示されます。
+      メールアドレスなどの連絡先は取得しません。
+    </p>
+    <p>
+      迷惑投稿を止めるため、接続元IPアドレスとブラウザの種類は
+      <strong>元に戻せない形に変換した文字列(ハッシュ値)</strong>として記録します。
+      元のIPアドレスは保存しません。用途は連続投稿の制限と、荒らしへの対処だけです。
+    </p>
+
+    <h2>書けること</h2>
+    <ul>
+      <li>いま詰まっていること、分からない論点</li>
+      <li>勉強の進み具合、使っている勉強法</li>
+      <li>受験した感想(難易度の印象、時間配分など)</li>
+      <li>他の人の書き込みへの返信</li>
+    </ul>
+
+    <h2>投稿できないもの(送信した時点で弾かれます)</h2>
+    <ul>
+      <li><strong>URL・メールアドレス・電話番号・メッセンジャーのID</strong></li>
+      <li>勧誘、情報商材、紹介コードの類</li>
+      <li>他人を傷つける表現、脅迫</li>
+      <li>個人情報(自分のものであっても書かないでください)</li>
+      <li>同じ文字の羅列など、内容を読み取れないもの</li>
+    </ul>
+    <p class="note">
+      これらは保存されず、その場で理由が表示されます。
+      該当箇所を消して書き直せば投稿できます。
+    </p>
+
+    <h2>すぐには公開されないもの</h2>
+    <p>
+      <strong>試験問題そのものの再現</strong>は公開できません。
+      試験問題には実施団体の著作権があり、記憶に基づく再現であっても
+      複製とみなされる場合があるためです。
+      選択肢が並んでいる書き込みは自動で保留され、確認してから扱いを決めます。
+    </p>
+    <p class="note">
+      「法令が難しかった」「計算問題が多かった」のような<strong>感想は書けます。</strong>
+      止まるのは問題文や選択肢そのものを書き写した場合です。
+    </p>
+
+    <h2>公開のしかた</h2>
+    <p>
+      上のいずれにも当たらない書き込みは、<strong>その場で公開されます。</strong>
+      判定は自動で行っており、投稿ごとに人が読んでいるわけではありません。
+      公開後に問題が見つかったものは、こちらの判断で削除します。
+    </p>
+
+    <h2>削除してほしいとき</h2>
+    <p>
+      自分の書き込みを消したいとき、
+      あるいは他の人の書き込みに問題があると感じたときは、
+      <a href={CONTACT_FORM_URL} rel="noopener" target="_blank">お問い合わせフォーム</a>
+      から連絡してください。
+    </p>
+    <p>
+      連絡の際は<strong>どの資格のページか</strong>と<strong>いつ頃の書き込みか</strong>を
+      添えてください。書き込みには公開の識別番号を付けていないため、
+      これが無いと対象を特定できません。
+    </p>
+    <p class="note">
+      権利侵害を理由とする削除の申し出、および発信者情報の開示請求についても
+      同じ窓口で受け付けます。内容を確認したうえで対応します。
+    </p>
+
+    <h2>書き込みの扱い</h2>
+    <ul>
+      <li>書き込みは公開されます。取り消したいときは上記の窓口から連絡してください</li>
+      <li>投稿された内容を、統計や記事の中で引用することがあります</li>
+      <li>このサイトの運営者は、書き込みの内容の正確性を保証しません</li>
+      <li>
+        資格試験の制度や日程については、必ず
+        <strong>実施団体の公式発表</strong>を確認してください。
+        書き込みの内容を根拠に手続きを進めないでください
+      </li>
+    </ul>
+
+    <p class="updated">最終更新: 2026年7月27日</p>
+  </article>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: var(--space-4);
+  }
+  .crumbs {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-4);
+  }
+  h1 {
+    margin-bottom: var(--space-5);
+  }
+  h2 {
+    margin-top: var(--space-6);
+    margin-bottom: var(--space-3);
+  }
+  p,
+  li {
+    line-height: var(--lh-normal);
+  }
+  p {
+    margin: 0 0 var(--space-3);
+  }
+  ul {
+    margin: 0 0 var(--space-3);
+    padding-left: 1.25rem;
+  }
+  li {
+    margin-bottom: var(--space-2);
+  }
+  .note {
+    padding: var(--space-3);
+    background: var(--color-notice-bg);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+  }
+  .updated {
+    margin-top: var(--space-6);
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+</style>
