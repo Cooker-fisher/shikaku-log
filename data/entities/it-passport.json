@@ -19,7 +19,7 @@
     "result_announcement": "受験した月の翌月下旬に、サイトへ受験番号が掲載される(例: 5月に受験した場合は6月22日正午に発表予定)。合格者の受験番号は官報にも公示され、合格証書は発表の翌月に簡易書留で郵送される。",
     "source_urls": {
       "eligibility": "https://www3.jitec.ipa.go.jp/JitesCbt/html/reference/faq.html",
-      "fee_yen": "https://www.ipa.go.jp/shiken/mousikomi/schedule.html",
+      "fee_yen": "https://www3.jitec.ipa.go.jp/JitesCbt/html/examination/exam_summary.html",
       "format": "https://www.ipa.go.jp/shiken/kubun/ip.html",
       "questions": "https://www.ipa.go.jp/shiken/kubun/ip.html",
       "duration_minutes": "https://www.ipa.go.jp/shiken/kubun/ip.html",
@@ -33,8 +33,8 @@
       "マネジメント系 20問程度",
       "テクノロジ系 45問程度"
     ],
-    "fee_note": "2022年4月実施の試験から、5,700円が7,500円に改定された。",
-    "retrieved_at": "2026-07-26"
+    "fee_note": "ITパスポート試験の受験要領に「7,500円(消費税込み)」と明記されている。2022年4月実施の試験から、5,700円が7,500円に改定された。",
+    "retrieved_at": "2026-07-27"
   },
   "official_stats": {
     "unit": "全国集計(年度単位・IPA発表)",
@@ -107,8 +107,15 @@
     "collected_by": "researcher(一次ソースのみ)+ PM(Fable)",
     "verified_by": "未実施",
     "verified_at": null,
-    "result": "🔴 独立検証は未実施(検証エージェントがオーナー操作で停止されたため。勝手に再実行しない)。PMによる要点の再照合のみ実施済み(2026-07-26): 受験手数料7,500円(消費税込み)と通年CBT実施の記述が公式ページと一致することを確認した。統計5年度分は収集時に検算済み。全項目の独立検証は次回の検証バッチに載せる。"
+    "result": "🔴 独立検証は未実施(検証エージェントがオーナー操作で停止されたため。勝手に再実行しない)。PMによる要点の再照合のみ実施済み(2026-07-26): 受験手数料7,500円(消費税込み)と通年CBT実施の記述が公式ページと一致することを確認した。統計5年度分は収集時に検算済み。2026-07-27に「無い」と断定していた2件を再検証し、うち1件(税込表記)を事実に置き換えた。全項目の独立検証は次回の検証バッチに載せる。"
   },
-  "notes": "確認できなかった項目: (1) 試験日から合格発表日までの日数を定めた一般ルール。公式には個別月の発表日(翌月22日前後)が示されるのみで、「何日後」という明文の規定を見つけられなかった。(2) 受験手数料をITパスポート単独で「税込」と明記した文。情報処理技術者試験全体について消費税込みとする記述はある。いずれも推測で埋めていない。",
-  "public_note": "合格には、総合点だけでなく3分野それぞれで300点以上を取る必要があります。総合点が合格ラインを超えていても、1分野でも下回ると不合格になります。"
+  "notes": "確認できなかった項目: 試験日から合格発表日までの日数を定めた一般ルール。公式には個別月の発表日が表で示されるのみで、「何日後」という規定は見つけられなかった(探した範囲は negative_claims に記録している)。受験手数料については、2026-07-27の再検証でITパスポート試験の受験要領に「7,500円(消費税込み)」と明記されているのを確認したため、旧記述(ITパスポート単独で税込と明記した文が無い)を事実へ置き換えた。",
+  "public_note": "合格には、総合点だけでなく3分野それぞれで300点以上を取る必要があります。総合点が合格ラインを超えていても、1分野でも下回ると不合格になります。",
+  "negative_claims": [
+    {
+      "claim": "試験日(受験日)から合格発表日までの日数を定めた一般ルール",
+      "searched": "ITパスポート試験公式サイトの合格発表ページ(https://www3.jitec.ipa.go.jp/JitesCbt/html/openinfo/pass.html)は受験年月ごとの合格発表日・合格証書発送日・官報公示日の表と「合格発表時刻は正午の予定」のみ。FAQ(https://www3.jitec.ipa.go.jp/JitesCbt/html/reference/faq.html)は「合格者の発表は月ごとに行い」「合格発表日、合格証書発送日は、決まり次第、ホームページに掲載します」とあり、日数の規定を置いていない。受験要領(https://www3.jitec.ipa.go.jp/JitesCbt/html/examination/exam_summary.html)は「合格発表の翌月、合格証書を簡易書留で郵送します」、受験申込みページ(https://www3.jitec.ipa.go.jp/JitesCbt/html/application/applies.html)は「合格証書の発送時期は、受験月の翌々月中旬です」で、いずれも証書側の時期。CBT方式の説明ページと実施者・業務委託先ページ(https://www3.jitec.ipa.go.jp/JitesCbt/html/reference/sponsoretc.html)も確認し、委託先(株式会社日立ソリューションズ・クリエイト、プロメトリック株式会社)が試験日程の一般規則を示すページは持っていなかった",
+      "at": "2026-07-27"
+    }
+  ]
 }

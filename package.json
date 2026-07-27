@@ -16,7 +16,8 @@
     "db:migrate": "wrangler d1 migrations apply shikakulog --remote",
     "smoke": "node scripts/smoke.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "metrics": "node scripts/metrics.mjs"
+    "metrics": "node scripts/metrics.mjs",
+    "deploy": "wrangler pages deploy dist --project-name=shikakulog --branch=main --commit-dirty=true"
   },
   "dependencies": {
     "astro": "^5.0.0"

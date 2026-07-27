@@ -885,6 +885,93 @@ function checkMetrics() {
 }
 
 /**
+ * 「無い」と書いた箇所に、何を探したかの記録が付いているかを見る。
+ *
+ * **この誤りは5回起きている。**すべて「探し方が足りなかっただけ」だった:
+ *   1. 衛生管理者の合格発表を「確認できなかった」→ 自分が引用済みのページに書いてあった
+ *   2. 「ビルメン・設備管理の求人は0件」→ 検索欄に前の語が連結していた
+ *   3. 「危険物甲種・乙5・乙6は換金できない」→ 1社だけ見て業界を結論した
+ *   4. 「きんざいのCBT統計は公式に存在しない」→ 期間別の結果ページが実在した
+ *   5. 「FP3級の申込者数は公表されていない」→ **公式表に受検申請者数の列があった**
+ *
+ * 5回目は `claim-check` スキルを作った**後**に起きている。
+ * スキルは呼ばなければ効かない。CLAUDE.md と同じで、助言は守られない。
+ * だから機械で止める: **「無い」と書くなら `negative_claims` に何を探したかを残す。**
+ *
+ * 機械は「本当に無いか」を判定できない。判定できるのは
+ * **「探した記録が残っているか」**だけであり、それで十分である。
+ * 5件はいずれも、探した範囲を書いていれば書いた本人が気づけた。
+ */
+const NEGATIVE_PHRASES = [
+  '公表されていない',
+  '公表されておらず',
+  '公開されていない',
+  '確認できなかった',
+  '確認できていない',
+  '存在しない',
+  '記載が無い',
+  '記載がない',
+];
+
+function checkNegativeClaims() {
+  const dir = join(ROOT, 'data', 'entities');
+  const files = existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.json')) : [];
+
+  for (const file of files) {
+    const where = `data/entities/${file}`;
+    let entity;
+    try {
+      entity = JSON.parse(readFileSync(join(dir, file), 'utf8').replace(/^﻿/, ''));
+    } catch {
+      continue; // JSONとして読めない件は checkSources 側が報告する
+    }
+
+    /* 記録そのものに含まれる語で自分を検出しないよう、先に切り離す */
+    const records = Array.isArray(entity.negative_claims) ? entity.negative_claims : null;
+    const { negative_claims: _omit, ...rest } = entity;
+    const text = JSON.stringify(rest);
+
+    let hits = 0;
+    for (const p of NEGATIVE_PHRASES) hits += text.split(p).length - 1;
+    if (hits === 0) continue;
+
+    if (!records || records.length === 0) {
+      error(
+        'claims',
+        where,
+        `「無い」と断定している記述が${hits}件あるが、negative_claims が無い。` +
+          `何をどこまで探したかを併記すること(この形の誤りは5回起きている)`,
+      );
+      continue;
+    }
+
+    for (const [i, r] of records.entries()) {
+      if (!r?.claim) error('claims', where, `negative_claims[${i}] に claim が無い`);
+      const searched = String(r?.searched ?? '');
+      if (searched.length < 15) {
+        error(
+          'claims',
+          where,
+          `negative_claims[${i}](${r?.claim ?? '?'})の searched が${searched.length}字。` +
+            `「どのページのどこまでを見て無いと判断したか」が分かる長さで書くこと`,
+        );
+      }
+    }
+
+    if (records.length < hits) {
+      warn(
+        'claims',
+        where,
+        `「無い」の記述が${hits}件に対し negative_claims は${records.length}件。` +
+          `記録されていない断定が残っている可能性がある`,
+      );
+    }
+  }
+
+  finishCheck('claims', '「無い」の断定に探した記録があるか', files.length);
+}
+
+/**
  * 予測台帳の検査。**「出した物が効いたか」を測っているかを見る唯一の検査である。**
  *
  * ここまでの検査(seo/legal/sources/...)は全て「出す物が正しいか」しか見ていない。
@@ -980,7 +1067,7 @@ function checkPredictions() {
 /** src/lib/entities.ts の KNOWN_ENTITY_TYPES と functions/api/report.ts の SCHEMAS に対応 */
 const KNOWN_ENTITY_TYPES = ['certification'];
 
-const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'social', 'sources', 'migration', 'metrics', 'predictions'];
+const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'social', 'sources', 'claims', 'migration', 'metrics', 'predictions'];
 
 function report() {
   const errors = findings.filter((f) => f.severity === 'error');
@@ -1076,6 +1163,7 @@ async function main() {
   checkPlaceholders(pages);
   checkSocialCard(pages);
   checkSources();
+  checkNegativeClaims();
   checkMigrations();
   checkMetrics();
   checkPredictions();
