@@ -854,6 +854,95 @@ function checkMetrics() {
   finishCheck('metrics', '週次スナップショット', files.length);
 }
 
+/**
+ * 予測台帳の検査。**「出した物が効いたか」を測っているかを見る唯一の検査である。**
+ *
+ * ここまでの検査(seo/legal/sources/...)は全て「出す物が正しいか」しか見ていない。
+ * その結果、13投稿を機械検査と初見レビュー2回に通して出し、**表示回数1** で
+ * 気づくまで誰も止められなかった。正しさの検査をいくら足しても、届いたかは分からない。
+ *
+ * 3つを強制する:
+ *   1. 判定日を過ぎたのに実測が空 → ERROR。予測を書きっぱなしにできない
+ *   2. 「届いた量」の予測項目が無いセット → ERROR。P-004 の学びの機械化。
+ *      表示回数を予測項目に入れていなかったため、配信ゼロに気づく仕組みが無かった
+ *   3. 最後の予測から14日以上 → ERROR。予測を書く習慣そのものを飛ばせなくする
+ */
+function checkPredictions() {
+  const path = join(ROOT, '..', 'retro', 'predictions.json');
+  if (!existsSync(path)) {
+    error('predictions', 'retro/predictions.json', '予測台帳が無い。掟7「予測を先に書く」の正データである');
+    finishCheck('predictions', '予測と実測の照合', 0);
+    return;
+  }
+
+  let ledger;
+  try {
+    ledger = JSON.parse(readFileSync(path, 'utf8').replace(/^﻿/, ''));
+  } catch (e) {
+    error('predictions', 'retro/predictions.json', `JSONとして読めない: ${e.message}`);
+    finishCheck('predictions', '予測と実測の照合', 0);
+    return;
+  }
+
+  const list = ledger.predictions ?? [];
+  const reachWords = ledger.reachKeywords ?? [];
+  const today = Date.now();
+  const daysSince = (iso) => Math.floor((today - Date.parse(`${iso}T00:00:00+09:00`)) / 86_400_000);
+
+  let newest = -Infinity;
+
+  for (const p of list) {
+    const where = `retro/predictions.json (${p.id})`;
+
+    if (!p.dueDate) {
+      error('predictions', where, '判定日(dueDate)が無い。いつ答え合わせするか決めていない予測は検証されない');
+      continue;
+    }
+    if (p.recorded) newest = Math.max(newest, Date.parse(p.recorded));
+
+    // 1. 判定日を過ぎたのに実測が空
+    const overdue = daysSince(p.dueDate);
+    const unmeasured = (p.items ?? []).filter((it) => it.actual === null || it.actual === undefined);
+    if (!p.closed && overdue >= 0 && unmeasured.length > 0) {
+      error(
+        'predictions',
+        where,
+        `判定日 ${p.dueDate} を${overdue}日過ぎたが、${unmeasured.length}/${p.items.length}項目が未実測。` +
+          `実測を入れて verdict を付けること(取れないなら理由を actual に書く)`,
+      );
+    } else if (!p.closed && overdue >= -7 && unmeasured.length > 0) {
+      warn('predictions', where, `判定日 ${p.dueDate} まであと${-overdue}日。${unmeasured.length}項目が未実測`);
+    }
+
+    // 2. 「届いた量」の項目があるか
+    const hasReach = (p.items ?? []).some((it) => reachWords.some((w) => String(it.label).includes(w)));
+    if (!hasReach) {
+      error(
+        'predictions',
+        where,
+        `「届いた量」(${reachWords.slice(0, 4).join('・')}など)の予測項目が無い。` +
+          `P-004 の学び: 表示回数を予測項目に入れていなかったため配信ゼロに気づけなかった`,
+      );
+    }
+  }
+
+  // 3. 予測を書く習慣そのもの
+  const limit = ledger.maxDaysWithoutNewPrediction ?? 14;
+  if (Number.isFinite(newest)) {
+    const gap = Math.floor((today - newest) / 86_400_000);
+    if (gap > limit) {
+      error(
+        'predictions',
+        'retro/predictions.json',
+        `最後に予測を書いてから${gap}日経過している(上限${limit}日)。` +
+          `施策を打つ前に予測を書くこと。後から書いたものは予測ではない`,
+      );
+    }
+  }
+
+  finishCheck('predictions', '予測と実測の照合', list.length);
+}
+
 // ---------------------------------------------------------------------------
 // 実行
 // ---------------------------------------------------------------------------
@@ -861,7 +950,7 @@ function checkMetrics() {
 /** src/lib/entities.ts の KNOWN_ENTITY_TYPES と functions/api/report.ts の SCHEMAS に対応 */
 const KNOWN_ENTITY_TYPES = ['certification'];
 
-const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'social', 'sources', 'migration', 'metrics'];
+const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'social', 'sources', 'migration', 'metrics', 'predictions'];
 
 function report() {
   const errors = findings.filter((f) => f.severity === 'error');
@@ -959,6 +1048,7 @@ async function main() {
   checkSources();
   checkMigrations();
   checkMetrics();
+  checkPredictions();
 
   process.exit(report());
 }
