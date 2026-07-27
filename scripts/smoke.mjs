@@ -46,6 +46,16 @@ async function fetchStatus(path, opts = {}) {
   }
 }
 
+/** 本文まで要る検査用。fetchStatus は status しか返さないため別に用意する */
+async function fetchText(path) {
+  try {
+    const res = await fetch(`${BASE}${path}`, { headers: { 'User-Agent': UA } });
+    return { status: res.status, text: await res.text() };
+  } catch (err) {
+    return { status: 0, text: '', error: String(err) };
+  }
+}
+
 /**
  * 公開対象の資格を data/entities/*.json から読む。
  *
@@ -72,6 +82,7 @@ async function checkPages() {
     '/about/',
     '/privacy/',
     '/contact/',
+    '/rules/',
     ...entities.map((e) => `/shikaku/${e.slug}/`),
     ...entities.filter((e) => e.saiten).map((e) => `/shikaku/${e.slug}/saiten/`),
     '/sitemap.xml',
@@ -202,6 +213,40 @@ async function checkVerification() {
   }
 }
 
+/**
+ * 書き込み欄が全ての資格ページに出ているか、読み出しAPIが応答するか。
+ *
+ * **なぜ検査するか**: 掲示板はビルド時ではなく実行時にD1から読む。
+ * 静的HTMLが正しくても、Functionが落ちていれば「まだ書き込みはありません」と
+ * 出続ける。**壊れていることに気づけない形の障害**なので機械で見る。
+ * 検査対象は data/entities/*.json から生成するので、資格を足せば検査も増える。
+ */
+async function checkBoard() {
+  const entities = publishedSlugs();
+  let missing = [];
+  for (const e of entities) {
+    const res = await fetchText(`/shikaku/${e.slug}/`);
+    if (!res.text.includes('を勉強している人の書き込み')) missing.push(e.slug);
+  }
+  record(
+    missing.length === 0,
+    '書き込み欄が全ての資格ページにある',
+    missing.length ? `欠落: ${missing.join(', ')}` : `${entities.length}件`,
+  );
+
+  const api = await fetchText(`/api/posts?slug=${entities[0]?.slug ?? 'kikenbutsu-otsu4'}`);
+  let ok = false;
+  let detail = `status=${api.status}`;
+  try {
+    const data = JSON.parse(api.text || '{}');
+    ok = api.status === 200 && data.ok === true && Array.isArray(data.threads);
+    detail = ok ? `公開中 ${data.threadCount} 件` : detail;
+  } catch {
+    detail = 'JSONとして読めない';
+  }
+  record(ok, '書き込みの読み出しAPIが応答する', detail);
+}
+
 async function main() {
   console.log(`\n  スモークテスト: ${BASE}\n  ${'-'.repeat(58)}`);
   await checkPages();
@@ -209,6 +254,7 @@ async function main() {
   await checkStaticContent();
   await checkApi();
   await checkSaitenApi();
+  await checkBoard();
   await checkVerification();
 
   const failed = results.filter((r) => !r.ok);
