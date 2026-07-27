@@ -16,6 +16,17 @@ export interface ModerationVerdict {
   reason?: string;
   /** どのルールに当たったか(review_note に残す。個人情報は入れない) */
   rule?: string;
+  /**
+   * 自由文の投稿をどう扱うか。
+   *   ok     … そのまま公開してよい
+   *   hold   … 公開せず pending にする(灰色。人が見るまで出さない)
+   *   reject … 保存もしない
+   *
+   * **なぜ3段階が要るか**: 自由投稿を全件人手で見る設計は、投稿が増えた瞬間に破綻する。
+   * かといって全件自動公開にすると、灰色のものがそのまま出る。
+   * 「明確に黒だけ落とし、灰色は止め、白は出す」の3つに分けるのが唯一続く形である。
+   */
+  severity?: 'ok' | 'hold' | 'reject';
 }
 
 interface Rule {
@@ -95,7 +106,56 @@ const PII_RULES: Rule[] = [
   },
 ];
 
+/**
+ * 試験問題の転載(著作権侵害)。
+ *
+ * 資格試験の問題文は実施団体に著作権がある。「思い出し」であっても、
+ * 選択肢まで揃った再現は複製とみなされうる。**うちが訴えられる側になる。**
+ * 5ch の資格板では試験直後にこの種の書き込みが集中するため、必ず止める。
+ *
+ * 灰色なので reject ではなく hold(人が見るまで出さない)に倒す。
+ * 「どの分野が出た」「法令が難しかった」のような**感想は通す**。
+ */
+const EXAM_LEAK_RULES: Rule[] = [
+  {
+    name: 'choices',
+    // ①②③④ / 1. 2. 3. 4. のような選択肢が3つ以上並ぶ
+    pattern: /([①-⑳]\s*\S+.*){3,}|((^|\s)[1-5][.．)）]\s*\S+.*){3,}/m,
+    reason: '試験問題の再現とみなされる形式が含まれている',
+  },
+  {
+    name: 'answer_key',
+    pattern: /(正解は|答えは|解答は)\s*[①-⑳1-5]|問\s*\d+\s*[のは]\s*(答|正解)/,
+    reason: '試験問題の再現とみなされる形式が含まれている',
+  },
+];
+
 const ALL_RULES: Rule[] = [...LINK_RULES, ...SOLICITATION_RULES, ...ABUSE_RULES, ...PII_RULES];
+
+/**
+ * 明確に黒(保存もしない)。灰色は hold に回す。
+ *
+ * 外部誘導(url / email / phone / messenger_id)を hold ではなく reject にしているのは、
+ * **投稿者にその場で理由を返せるから**である。hold にすると投稿者は
+ * 「出したつもりで永久に出ない」状態になり、URLを消して出し直す機会も無い。
+ *
+ * 逆に試験問題の再現は hold に倒す。誤検知したとき(勉強する分野を番号付きで
+ * 並べただけ、など)に消してしまうと、善意の投稿を失う。
+ */
+const REJECT_RULE_NAMES = new Set([
+  'url',
+  'email',
+  'phone',
+  'messenger_id',
+  'threat',
+  'slur',
+  'adult_or_gamble',
+  'get_rich',
+  'referral',
+  'card',
+  'my_number',
+  'spam_shape',
+]);
 
 /** 同じ文字の異常な繰り返し(荒らし) */
 function isSpammyShape(text: string): boolean {
@@ -131,3 +191,36 @@ export function moderateText(text: string): ModerationVerdict {
 /** validateReport に渡す用 */
 export const moderator = (text: string): { blocked: boolean; reason?: string } =>
   moderateText(text);
+
+/**
+ * 自由文の投稿(thread / reply)を、公開・保留・拒否のどれにするか決める。
+ *
+ * **LLMを一切通さない。**投稿1件ごとにモデルを呼ぶ設計は、
+ * 投稿が増えるほど費用が増え、増えてほしいものを増やせなくなる。
+ * ここで判定できないものは hold にして、人が見るまで公開しない。
+ */
+export function classifyPost(text: string): ModerationVerdict {
+  const body = text.trim();
+
+  if (body.length < 10) {
+    return { blocked: true, severity: 'reject', rule: 'too_short', reason: '10文字以上で書いてください' };
+  }
+  if ([...body].length > 400) {
+    return { blocked: true, severity: 'reject', rule: 'too_long', reason: '400文字までで書いてください' };
+  }
+
+  const base = moderateText(body);
+  if (base.blocked) {
+    const severity = REJECT_RULE_NAMES.has(base.rule ?? '') ? 'reject' : 'hold';
+    return { ...base, severity };
+  }
+
+  const folded = foldForMatch(body);
+  for (const rule of EXAM_LEAK_RULES) {
+    if (rule.pattern.test(body) || rule.pattern.test(folded)) {
+      return { blocked: true, severity: 'hold', reason: rule.reason, rule: rule.name };
+    }
+  }
+
+  return { blocked: false, severity: 'ok' };
+}
