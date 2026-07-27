@@ -37,8 +37,10 @@ const dataset = primary
   ? {
       '@context': 'https://schema.org',
       '@type': 'Dataset',
-      name: `${entity.name} 受験者数・合格率の推移`,
-      description: `${entity.authority.name}が公表した${entity.name}の受験者数・合格者数・合格率。${primary.stats.series.map((s) => seriesLabel(s)).join('、')}の${primary.stats.series.length}期分。`,
+      // ブロックが複数ある試験では、Dataset が先頭ブロックだけを指すことを名前に出す。
+      // 本文のタイル・見出しと同じラベルを使う(本文と構造化データを一致させる)。
+      name: `${entity.name}${blocks.length > 1 ? `(${primary.label})` : ''} 受験者数・合格率の推移`,
+      description: `${entity.authority.name}が公表した${entity.name}${blocks.length > 1 ? `の${primary.label}` : ''}の受験者数・合格者数・合格率。${primary.stats.series.map((s) => seriesLabel(s)).join('、')}の${primary.stats.series.length}期分。`,
       url: canonical,
       isAccessibleForFree: true,
       creator: { '@type': 'Organization', name: entity.authority.name, url: entity.authority.url },

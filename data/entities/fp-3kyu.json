@@ -1,0 +1,283 @@
+{
+  "type": "certification",
+  "slug": "fp-3kyu",
+  "draft": true,
+  "draft_reason": "きんざいの統計ブロックが未追加。修正後の本文の再照合も未了。2つとも済ませてから draft を外す。",
+  "name": "FP技能検定 3級",
+  "short_name": "FP3級",
+  "category": "金融・保険",
+  "authority": {
+    "name": "日本FP協会",
+    "url": "https://www.jafp.or.jp/"
+  },
+  "authority_note": "この検定は日本FP協会と金融財政事情研究会(きんざい)の2団体が並行して実施しており、どちらで受検しても得られる資格は同じ国家検定です。ただし実技試験の内容は団体ごとに違い、合格率も別々に集計されています。試験のしくみの説明と受験手数料は、日本FP協会で受検する場合のものです。",
+  "exam": {
+    "eligibility": "FP業務に従事している人、またはこれから従事しようとしている人が対象。学歴や実務経験による制限はなく、これから学ぼうとしている人も受検できる。",
+    "fee_yen": 8000,
+    "format": "学科試験と実技試験に分かれており、両方に合格すると3級技能士になる。どちらか一方だけの受検もできる。日本FP協会の学科は60問90分、実技(資産設計提案業務)は20問60分で、いずれも多肢選択式。",
+    "questions": null,
+    "duration_minutes": null,
+    "passing_criteria": "学科は60点満点中36点以上。実技(資産設計提案業務)は100点満点中60点以上。いずれも6割が基準になる。",
+    "frequency": "CBT(コンピュータ試験)方式で、休止期間を除き、テストセンターの空いている日時から選んで受検できる。休止期間の日程は試験日程のページで公表されている。",
+    "result_announcement": "受検日の翌月中旬に合格発表がある。合格発表日の10時から、運営を受託しているCBTソリューションズの受検者ページで試験結果と合格番号を確認できる。合格者には合格発表日に合格証書が普通郵便で発送される。",
+    "source_urls": {
+      "eligibility": "https://www.jafp.or.jp/exam/outline/3fp.shtml",
+      "fee_yen": "https://www.jafp.or.jp/exam/outline/3fp.shtml",
+      "format": "https://www.jafp.or.jp/exam/outline/3fp.shtml",
+      "passing_criteria": "https://www.jafp.or.jp/exam/outline/3fp.shtml",
+      "frequency": "https://www.jafp.or.jp/exam/schedule/",
+      "result_announcement": "https://www.jafp.or.jp/exam/outline/3fp.shtml"
+    },
+    "fee_note": "学科と実技を同時に受検する場合が8,000円で、学科のみ・実技のみはそれぞれ4,000円。きんざいで受検する場合も金額は同じ。",
+    "questions_note": "学科60問・実技20問というように学科と実技で問題数が違うため、1つの数値では記載していない。",
+    "duration_note": "学科90分・実技60分。学科と実技で試験時間が違うため、1つの数値では記載していない。",
+    "retrieved_at": "2026-07-26"
+  },
+  "official_stats_blocks": [
+    {
+      "key": "gakka",
+      "label": "学科",
+      "stats": {
+        "unit": "日本FP協会・CBT・学科試験・期間ごとの集計",
+        "series": [
+          {
+            "period": "2025年10月〜2026年2月",
+            "applicants": null,
+            "examinees": 42641,
+            "passers": 36926,
+            "pass_rate": 86.6,
+            "source_url": "https://www.jafp.or.jp/exam/syutoku/",
+            "retrieved_at": "2026-07-26"
+          },
+          {
+            "period": "2025年4月〜9月",
+            "applicants": null,
+            "examinees": 43335,
+            "passers": 37403,
+            "pass_rate": 86.31,
+            "source_url": "https://www.jafp.or.jp/exam/syutoku/",
+            "retrieved_at": "2026-07-26"
+          },
+          {
+            "period": "2024年10月〜2025年2月",
+            "applicants": null,
+            "examinees": 37774,
+            "passers": 32274,
+            "pass_rate": 85.44,
+            "source_url": "https://www.jafp.or.jp/exam/syutoku/",
+            "retrieved_at": "2026-07-26"
+          }
+        ],
+        "source_url": "https://www.jafp.or.jp/exam/syutoku/",
+        "retrieved_at": "2026-07-26",
+        "notes": "CBTは回次ではなく期間で集計されている。期間の長さは一定ではない(直近期は5ヶ月)。申込者数は公表されておらず、受検者数のみ(applicants は null)。全3期について合格者数÷受検者数が公表合格率と一致することを検算済み(丸め差は最大0.01pt)。",
+        "unit_labels": {
+          "applicants": "申込者数(未公表)",
+          "examinees": "受検者数",
+          "passers": "合格者数",
+          "pass_rate": "合格率(%)"
+        },
+        "public_note": "日本FP協会で受検した人の学科試験の集計です。実技試験は別の表に分けています。学科と実技を合わせた合格率は公表されていません。"
+      }
+    },
+    {
+      "key": "jitsugi",
+      "label": "実技(資産設計提案業務)",
+      "stats": {
+        "unit": "日本FP協会・CBT・実技試験(資産設計提案業務)・期間ごとの集計",
+        "series": [
+          {
+            "period": "2025年10月〜2026年2月",
+            "applicants": null,
+            "examinees": 42409,
+            "passers": 35997,
+            "pass_rate": 84.88,
+            "source_url": "https://www.jafp.or.jp/exam/syutoku/",
+            "retrieved_at": "2026-07-26"
+          },
+          {
+            "period": "2025年4月〜9月",
+            "applicants": null,
+            "examinees": 42970,
+            "passers": 36687,
+            "pass_rate": 85.38,
+            "source_url": "https://www.jafp.or.jp/exam/syutoku/",
+            "retrieved_at": "2026-07-26"
+          },
+          {
+            "period": "2024年10月〜2025年2月",
+            "applicants": null,
+            "examinees": 37078,
+            "passers": 31729,
+            "pass_rate": 85.57,
+            "source_url": "https://www.jafp.or.jp/exam/syutoku/",
+            "retrieved_at": "2026-07-26"
+          }
+        ],
+        "source_url": "https://www.jafp.or.jp/exam/syutoku/",
+        "retrieved_at": "2026-07-26",
+        "notes": "日本FP協会の実技は「資産設計提案業務」の1種類のみ。きんざいは「個人資産相談業務」など複数の業務から選ぶ形で試験の中身が別物なので、同じ表に混ぜていない。全3期について合格者数÷受検者数が公表合格率と一致することを検算済み。",
+        "unit_labels": {
+          "applicants": "申込者数(未公表)",
+          "examinees": "受検者数",
+          "passers": "合格者数",
+          "pass_rate": "合格率(%)"
+        },
+        "public_note": "日本FP協会で受検した人の実技試験(資産設計提案業務)の集計です。きんざいの実技は出題形式が違う別の試験なので、この表には含めていません。"
+      }
+    },
+    {
+      "key": "kinzai-gakka",
+      "label": "きんざいの学科",
+      "stats": {
+        "unit": "きんざい・CBT・学科試験・期間ごとの集計",
+        "series": [
+          {
+            "period": "2025年10月〜2026年2月",
+            "applicants": null,
+            "examinees": 19510,
+            "passers": 10530,
+            "pass_rate": 53.97,
+            "source_url": "https://www.kinzai.or.jp/fp/49741.html",
+            "retrieved_at": "2026-07-27"
+          },
+          {
+            "period": "2025年4月〜9月",
+            "applicants": null,
+            "examinees": 21399,
+            "passers": 10317,
+            "pass_rate": 48.21,
+            "source_url": "https://www.kinzai.or.jp/fp/news-fp/48783.html",
+            "retrieved_at": "2026-07-27"
+          },
+          {
+            "period": "2024年10月〜2025年2月",
+            "applicants": null,
+            "examinees": 18285,
+            "passers": 9071,
+            "pass_rate": 49.61,
+            "source_url": "https://www.kinzai.or.jp/%E6%9C%AA%E5%88%86%E9%A1%9E/47014.html",
+            "retrieved_at": "2026-07-27"
+          }
+        ],
+        "source_url": "https://www.kinzai.or.jp/ginou/fp/result-fp",
+        "retrieved_at": "2026-07-27",
+        "notes": "全3期について合格者数÷受検者数が公表合格率と一致することを検算済み。学科は日本FP協会と同じ60問90分だが、合格率は日本FP協会の80%台に対してこちらは50%前後で、30pt以上の差がある。**この差の理由は両団体とも公表していないため、ここでも書かない。**受検者層の違い(きんざいは金融機関の団体受検が多いと言われるが未確認)なのか問題の違いなのかは、公表資料からは判断できない。2024年10月〜2025年2月の出典URLはきんざいのサイトで「未分類」配下に置かれており、パスに日本語が入る。移動しやすいのでリンク切れ監視の対象にすること。",
+        "unit_labels": {
+          "applicants": "申込者数(未公表)",
+          "examinees": "受検者数",
+          "passers": "合格者数",
+          "pass_rate": "合格率(%)"
+        },
+        "public_note": "きんざいで受検した人の学科試験の集計です。学科の試験時間と問題数は日本FP協会と同じですが、合格率は別に集計されています。"
+      }
+    },
+    {
+      "key": "kinzai-kojin",
+      "label": "きんざいの実技(個人資産相談業務)",
+      "stats": {
+        "unit": "きんざい・CBT・実技試験(個人資産相談業務)・期間ごとの集計",
+        "series": [
+          {
+            "period": "2025年10月〜2026年2月",
+            "applicants": null,
+            "examinees": 6195,
+            "passers": 4065,
+            "pass_rate": 65.61,
+            "source_url": "https://www.kinzai.or.jp/fp/49741.html",
+            "retrieved_at": "2026-07-27"
+          },
+          {
+            "period": "2025年4月〜9月",
+            "applicants": null,
+            "examinees": 5471,
+            "passers": 3561,
+            "pass_rate": 65.09,
+            "source_url": "https://www.kinzai.or.jp/fp/news-fp/48783.html",
+            "retrieved_at": "2026-07-27"
+          },
+          {
+            "period": "2024年10月〜2025年2月",
+            "applicants": null,
+            "examinees": 5771,
+            "passers": 3751,
+            "pass_rate": 65.0,
+            "source_url": "https://www.kinzai.or.jp/%E6%9C%AA%E5%88%86%E9%A1%9E/47014.html",
+            "retrieved_at": "2026-07-27"
+          }
+        ],
+        "source_url": "https://www.kinzai.or.jp/ginou/fp/result-fp",
+        "retrieved_at": "2026-07-27",
+        "notes": "きんざいの実技は受検時にどの業務で受けるかを選ぶ。業務ごとに合格率が違うので、合算せず業務ごとに表を分けている。検算: 2期は公表合格率と一致。2025年10月〜2026年2月のみ自己計算65.62%に対し公表65.61%で0.01ptの差があり、端数処理の違いとみられる。**公表値をそのまま載せている。**",
+        "unit_labels": {
+          "applicants": "申込者数(未公表)",
+          "examinees": "受検者数",
+          "passers": "合格者数",
+          "pass_rate": "合格率(%)"
+        },
+        "public_note": "きんざいの実技試験のうち「個人資産相談業務」を選んだ人の集計です。"
+      }
+    },
+    {
+      "key": "kinzai-hoken",
+      "label": "きんざいの実技(保険顧客資産相談業務)",
+      "stats": {
+        "unit": "きんざい・CBT・実技試験(保険顧客資産相談業務)・期間ごとの集計",
+        "series": [
+          {
+            "period": "2025年10月〜2026年2月",
+            "applicants": null,
+            "examinees": 12719,
+            "passers": 6093,
+            "pass_rate": 47.9,
+            "source_url": "https://www.kinzai.or.jp/fp/49741.html",
+            "retrieved_at": "2026-07-27"
+          },
+          {
+            "period": "2025年4月〜9月",
+            "applicants": null,
+            "examinees": 14632,
+            "passers": 6445,
+            "pass_rate": 44.05,
+            "source_url": "https://www.kinzai.or.jp/fp/news-fp/48783.html",
+            "retrieved_at": "2026-07-27"
+          },
+          {
+            "period": "2024年10月〜2025年2月",
+            "applicants": null,
+            "examinees": 10992,
+            "passers": 5140,
+            "pass_rate": 46.76,
+            "source_url": "https://www.kinzai.or.jp/%E6%9C%AA%E5%88%86%E9%A1%9E/47014.html",
+            "retrieved_at": "2026-07-27"
+          }
+        ],
+        "source_url": "https://www.kinzai.or.jp/ginou/fp/result-fp",
+        "retrieved_at": "2026-07-27",
+        "notes": "全3期について合格者数÷受検者数が公表合格率と一致することを検算済み。同じきんざいの実技でも、個人資産相談業務が3期とも65%前後なのに対しこちらは44〜48%で、20pt前後低い。どちらを選ぶかで数字が変わるという事実は受検前に知る価値がある。**ただし理由は公表されていないため書かない。**",
+        "unit_labels": {
+          "applicants": "申込者数(未公表)",
+          "examinees": "受検者数",
+          "passers": "合格者数",
+          "pass_rate": "合格率(%)"
+        },
+        "public_note": "きんざいの実技試験のうち「保険顧客資産相談業務」を選んだ人の集計です。同じきんざいの実技でも、選んだ業務によって合格率は違います。"
+      }
+    }
+  ],
+  "related": [
+    {
+      "slug": "fp-2kyu",
+      "reason": "上位級。3級に合格すると2級の受検資格が得られる"
+    }
+  ],
+  "schedule_url": "https://www.jafp.or.jp/exam/syutoku/",
+  "verification": {
+    "collected_by": "researcher(一次ソースのみ・2026-07-26)",
+    "verified_by": "fact-checker(2026-07-27・1回目)",
+    "verified_at": "2026-07-27",
+    "result": "🟡 1回目の照合で6件の不一致を検出し修正済み。統計は全6系列(学科・実技×3期)が公式表と一致・検算も一致。ただし修正後の本文は未照合であり、きんざいの統計ブロック追加も未了のため draft のまま。**draft を外す前にもう一度 fact-checker を通すこと。**"
+  },
+  "notes": "確認できなかった項目: 申込者数。両団体ともCBTについては受検者数のみを公表している。 / 🔴 訂正記録: 当初この項目に「きんざいのCBT集計は公式に存在しない」と書いていたが誤りだった。きんざいは期間別のCBT試験結果を https://www.kinzai.or.jp/ginou/fp/result-fp で公表している。1団体の1ページを見て「無い」と結論した、同じ形の4回目の誤り。",
+  "public_note": "合格率は日本FP協会ときんざいで別々に集計されており、両団体を合算した公式の合格率は公表されていません。このページでも合算値は作っていません。学科と実技、さらにきんざいの実技は業務ごとに集計が分かれているため、表を5つに分けています。同じ国家検定でも、どこでどの業務を選んで受けるかによって公表されている合格率は違います。"
+}

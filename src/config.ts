@@ -62,8 +62,82 @@ export interface CourseLink {
   note?: string;
 }
 
+/**
+ * SAT株式会社(A8)の商品リンク。2026-07-27 に提携。
+ *
+ * **ASPの管理画面で見た数字(EPC・確定率・確定件数・プログラムID)をここに書かない。**
+ * `site/` は公開リポジトリである前提(掟4)。これらは広告主ごとの非公開実績であり、
+ * 第三者に開示してよい性質のものではない。判断の根拠は
+ * `research/affiliates/kyujin.md`(非公開側)に置く。
+ * ここに書いてよいのは、公開HTMLに出ないと機能しない計測ID(a8mat)だけである。
+ *
+ * **飛び先は資格ごとの講座ページにしている。**A8の「商品リンク」機能で
+ * `a8ejpredirect` に飛び先を入れると、a8mat は同じまま飛び先だけ変えられる。
+ * 総合トップに落とすより、読んでいる資格の講座に直接着く方が読者の手数が少ない。
+ *
+ * 広告主の掲載条件(守らないと提携解除):
+ *  - 飛び先は `https://www.sat-co.info` 内に限る
+ *  - **サイト内の人物画像を使わない**(このサイトは画像を出していないので該当なし)
+ *  - 広告と分かる表示が必須 → CourseCta のPR表記と BaseLayout の hasAffiliate で担保
+ *
+ * **丙種(kikenbutsu-hei)には置いていない。**SATの危険物講座は
+ * 乙種第4類・乙種第1/2/3/5/6類・甲種を扱っており、丙種の講座が無い。
+ * 扱っていない資格のページに講座リンクを置くと、読者は関係ない講座に飛ばされる。
+ */
+const SAT_A8MAT = '4B8ACS+6BFLV6+5TRO+BW0YB';
+const satLink = (path: string) =>
+  `https://px.a8.net/svt/ejp?a8mat=${SAT_A8MAT}&a8ejpredirect=${encodeURIComponent(`https://www.sat-co.info${path}`)}`;
+
+/**
+ * リンク文言に**必ず会社名を「◯◯株式会社」の形で入れる。**
+ *
+ * 当初「SATの危険物取扱者講座」と書いていたところ、初見レビューで
+ * 「SATが何なのか分からないままクリックさせられる」と指摘された。
+ * 読者はこの会社を知らない前提で書く。
+ *
+ * ただし**「大手」「合格者◯万人」のような信頼性の主張は書かない。**
+ * 一次ソースで裏が取れないうえ、広告枠でそれを書けば掟3-9(誇大表現の禁止)に触れる。
+ * 書いてよいのは「どこの会社の、何の講座で、どの区分に対応しているか」という事実だけ。
+ */
+const SAT_KIKENBUTSU: CourseLink = {
+  name: 'SAT株式会社の危険物取扱者講座',
+  url: satLink('/ec/kikenbutu'),
+  note: '動画(eラーニング)とDVDから選べる通信講座。乙種第4類・甲種・乙種第1/2/3/5/6類に対応',
+};
+
 export const COURSE_LINKS: Record<string, CourseLink[]> = {
-  // 'kikenbutsu-otsu4': [{ name: '...', url: '...' }],
+  'kikenbutsu-otsu4': [SAT_KIKENBUTSU],
+  'kikenbutsu-kou': [SAT_KIKENBUTSU],
+  'kikenbutsu-otsu5': [SAT_KIKENBUTSU],
+  'kikenbutsu-otsu6': [SAT_KIKENBUTSU],
+  'shoubou-setsubi-otsu6': [
+    {
+      name: 'SAT株式会社の消防設備士講座',
+      url: satLink('/ec/syoubou'),
+      note: '動画(eラーニング)とDVDから選べる通信講座。乙種第6類・乙種第4類・甲種第4類に対応',
+    },
+  ],
+  'boiler-2kyu': [
+    {
+      name: 'SAT株式会社の二級ボイラー技士講座',
+      url: satLink('/ec/boiler'),
+      note: '動画(eラーニング)とDVDから選べる通信講座',
+    },
+  ],
+  'eisei-kanri-1': [
+    {
+      name: 'SAT株式会社の衛生管理者講座',
+      url: satLink('/ec/eiseikanrisya'),
+      note: '動画(eラーニング)とDVDから選べる通信講座。第一種・第二種に対応',
+    },
+  ],
+  'eisei-kanri-2': [
+    {
+      name: 'SAT株式会社の衛生管理者講座',
+      url: satLink('/ec/eiseikanrisya'),
+      note: '動画(eラーニング)とDVDから選べる通信講座。第一種・第二種に対応',
+    },
+  ],
 };
 
 export const AFFILIATE_DOMAINS: readonly string[] = [

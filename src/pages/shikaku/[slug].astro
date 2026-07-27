@@ -21,6 +21,7 @@ import NextExamBox from '../../components/NextExamBox.astro';
 import TextbookList from '../../components/TextbookList.astro';
 import { guidesFor } from '../../lib/guides';
 import CourseCta from '../../components/CourseCta.astro';
+import { COURSE_LINKS } from '../../config';
 import { getSnapshot } from '../../lib/reportSummary';
 import {
   entities,
@@ -65,9 +66,20 @@ const rates = primary
 const rateMin = rates.length ? Math.min(...rates) : null;
 const rateMax = rates.length ? Math.max(...rates) : null;
 
+/**
+ * 統計ブロックが複数ある試験では、タイルの数字がどの系列のものかを必ず添える。
+ *
+ * タイルは先頭ブロックの数字しか出さない。ラベルが無いと、簿記なら統一試験の
+ * 合格率がネット試験のものと読まれ、FPなら学科の合格率が実技にも当てはまると読まれる。
+ * **どちらも「合算した数字」は存在しない。**存在しない数字を読者に想像させないための表示。
+ */
+const primaryLabel = blocks.length > 1 ? primary?.label : undefined;
+const seriesWithLabel = (s: typeof latest) =>
+  [s ? seriesLabel(s) : '', primaryLabel].filter(Boolean).join('・');
+
 const title = `${entity.name}の合格率・受験者数データ`;
 const description = latest
-  ? `${entity.name}の公式統計。${seriesLabel(latest)}の受験者数は${num.format(latest.examinees ?? 0)}人、合格率は${(latest.pass_rate ?? 0).toFixed(1)}%。直近5年の推移と試験制度を実施団体の公表資料からまとめています。`
+  ? `${entity.name}の公式統計。${seriesWithLabel(latest)}の受験者数は${num.format(latest.examinees ?? 0)}人、合格率は${(latest.pass_rate ?? 0).toFixed(1)}%。直近5年の推移と試験制度を実施団体の公表資料からまとめています。`
   : `${entity.name}の試験制度と公式統計をまとめています。`;
 
 /**
@@ -113,11 +125,20 @@ const snapshot = getSnapshot(entity.slug);
 /** この資格を扱う比較ページ。登録しないと孤立ページになる(src/lib/guides.ts) */
 const relatedGuides = guidesFor(entity.slug);
 
+/**
+ * このページに講座リンク(広告)があるか。
+ *
+ * **CourseCta と同じ判定を使う。**片方だけ真になると、
+ * 広告があるのに冒頭のPR表記が出ない(ステマ規制違反)か、
+ * 広告が無いのにPR表記だけ出る(読者を無駄に警戒させる)状態になる。
+ */
+const hasAffiliate = (COURSE_LINKS[entity.slug] ?? []).length > 0;
+
 const origin = (Astro.site ?? new URL(Astro.url.origin)).origin;
 const canonical = new URL(Astro.url.pathname, origin).href;
 ---
 
-<BaseLayout title={title} description={description} ogType="article" hasUserData={true}>
+<BaseLayout title={title} description={description} ogType="article" hasUserData={true} hasAffiliate={hasAffiliate}>
   <StructuredData slot="head" entity={entity} canonical={canonical} origin={origin} />
   <article class="page">
     <nav class="crumbs" aria-label="パンくず">
@@ -136,6 +157,7 @@ const canonical = new URL(Astro.url.pathname, origin).href;
         <li>実施: <a href={entity.authority.url} rel="noopener">{entity.authority.name}</a></li>
         <li>{entity.category}</li>
       </ul>
+      {entity.authority_note && <p class="authority-note">{entity.authority_note}</p>}
     </header>
 
     {primary && latest && (
@@ -149,15 +171,17 @@ const canonical = new URL(Astro.url.pathname, origin).href;
           <div class="tile official">
             <span class="tile-label">受験者数</span>
             <span class="tile-value">{num.format(latest.examinees ?? 0)}<span class="unit">人</span></span>
-            <span class="tile-sub">{seriesLabel(latest)}</span>
+            <span class="tile-sub">{seriesWithLabel(latest)}</span>
           </div>
           <div class="tile official">
             <span class="tile-label">合格率</span>
             <span class="tile-value">{latest.pass_rate !== null ? latest.pass_rate.toFixed(1) : '—'}<span class="unit">%</span></span>
             <span class="tile-sub">
-              {trend && trend.diff !== 0
-                ? `直近5期平均より${trend.diff > 0 ? '+' : ''}${trend.diff}pt`
-                : seriesLabel(latest)}
+              {primaryLabel
+                ? primaryLabel
+                : trend && trend.diff !== 0
+                  ? `直近5期平均より${trend.diff > 0 ? '+' : ''}${trend.diff}pt`
+                  : seriesLabel(latest)}
             </span>
           </div>
           {entity.exam.fee_yen !== null && (
@@ -257,7 +281,7 @@ const canonical = new URL(Astro.url.pathname, origin).href;
       />
     )}
 
-    <CourseCta entitySlug={entity.slug} entityName={entity.short_name} snapshot={snapshot} />
+    <CourseCta entitySlug={entity.slug} entityName={entity.short_name} />
 
     {/*
       個別の合格報告は**1件目から**出す。統計値(中央値・分布)は20件まで出さない。
@@ -439,6 +463,16 @@ const canonical = new URL(Astro.url.pathname, origin).href;
     gap: var(--space-2) var(--space-4);
     font-size: var(--fs-xs);
     color: var(--color-text-muted);
+  }
+
+  .authority-note {
+    margin: var(--space-3) 0 0;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    background: var(--color-notice-bg);
+    border-left: 3px solid var(--color-notice-border);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   }
 
   section {

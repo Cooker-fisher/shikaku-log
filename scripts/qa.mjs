@@ -427,7 +427,11 @@ function checkLegal(pages) {
         const rel = (a.getAttribute('rel') ?? '').toLowerCase().split(/\s+/);
         // WARNではなくERRORにする。付け忘れると広告リンクが自然リンクとして扱われ、
         // 検索エンジンから手動対策を受けうる。付けるのは一瞬なので通す理由がない。
-        if (!rel.includes('sponsored') && !rel.includes('nofollow')) {
+        // sponsored を必須にする。以前は `sponsored || nofollow` のOR判定だったため、
+        // nofollow だけ付いたアフィリリンクが素通りしていた。
+        // nofollow は「このリンクを信用していない」であって「これは広告だ」ではない。
+        // Google が広告リンクに求めているのは sponsored である。
+        if (!rel.includes('sponsored')) {
           error('legal', where, `アフィリエイトリンクに rel="sponsored" が無い: ${a.getAttribute('href')}`);
         }
       }
@@ -788,6 +792,32 @@ function checkSources() {
       }
       byUrl.set(url, [...(byUrl.get(url) ?? []), field]);
     }
+    // 「無い」と書くときは「何を探したか」を併記させる。
+    //
+    // **これは4回繰り返した誤りに対する検査である**(2026-07-27に追加):
+    //  1. 衛生管理者の合格発表を「確認できなかった」→ 引用済みのページを読み切っていなかった
+    //  2. 「ビルメン・設備管理の求人は0件」→ 検索欄に前の語が連結していた
+    //  3. 「危険物の甲種・乙5・乙6は換金できない」→ ユーキャン1社だけを見て結論した
+    //  4. 「きんざいのCBT集計は公式に存在しない」→ 別の索引の下に実在した
+    //
+    // 4回とも「探し方が足りない」が「存在しない」として記録された。
+    // **人間(とAI)は探索の打ち切りを自覚できない。**だから探索範囲の明示を機械で要求する。
+    const NEGATIVE = /(確認できなかった|確認できていない|見つからなかった|発見できなかった|存在しない|公表されていない|記載が無い|記載がない)/;
+    const SEARCH_SCOPE = /(探した範囲|探した経路|探索範囲|検索した範囲|訂正記録)/;
+    const proseFields = [e.notes, e.public_note, e.exam?.notes].filter(
+      (v) => typeof v === 'string',
+    );
+    for (const prose of proseFields) {
+      if (NEGATIVE.test(prose) && !SEARCH_SCOPE.test(prose)) {
+        warn(
+          'sources',
+          where,
+          '「確認できなかった / 存在しない」と書いているが、**何をどこまで探したか**が書かれていない。' +
+            '「探した範囲: ◯◯」を併記すること(掟6-4。同じ形の誤りを4回出している)',
+        );
+      }
+    }
+
     for (const [url, fields] of byUrl) {
       if (fields.length >= 4) {
         warn(

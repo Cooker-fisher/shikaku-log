@@ -10,26 +10,30 @@
  *   中身のないページとして薄いページ判定を受ける原因にもなる
  * - PR表記は BaseLayout の hasAffiliate が担保する。ここでも近接位置に明示する
  */
-import { MIN_SAMPLE_SIZE, COURSE_LINKS, type CourseLink } from '../config';
-import type { ReportSnapshot } from '../lib/reportSummary';
+import { COURSE_LINKS, type CourseLink } from '../config';
 
 interface Props {
   entitySlug: string;
   entityName: string;
-  snapshot: ReportSnapshot;
 }
-const { entitySlug, entityName, snapshot } = Astro.props;
+const { entitySlug, entityName } = Astro.props;
 
 const links: CourseLink[] = COURSE_LINKS[entitySlug] ?? [];
 const hasLinks = links.length > 0;
 
 /**
- * 投稿データから言える事実。n が閾値未満なら件数を語らない。
- * 「◯件中◯件が通信講座」と書けるのはデータが揃ってからで、
- * それまでは講座という選択肢が存在することだけを中立に述べる。
+ * **投稿データを根拠にした文をここに置かない。**
+ *
+ * 以前ここには「合格報告◯件のうち、通信講座を主な教材に挙げた人がいます(自己申告)」
+ * という分岐があり、`snapshot.studyHours.sampleSize >= MIN_SAMPLE_SIZE` で発火する作りだった。
+ * しかし ReportSnapshot に**教材の集計は存在しない。**判定に使っていたのは学習時間の件数だけで、
+ * 「通信講座を挙げた人」は一度も数えていなかった。
+ * 投稿が20件たまった瞬間に、根拠のない事実主張が広告の直上に自動で出る状態だった
+ * (2026-07-27、最初の広告を入れる直前に reviewer が検出)。
+ *
+ * 教材の件数を語りたくなったら、**先に snapshot に教材の集計を持たせること。**
+ * 数えていない物を数えたように書くのは、広告の直上では不当表示になる。
  */
-const n = snapshot.studyHours.sampleSize;
-const canCiteData = snapshot.studyHours.status === 'ready' && n >= MIN_SAMPLE_SIZE;
 ---
 
 {hasLinks && (
@@ -43,9 +47,7 @@ const canCiteData = snapshot.studyHours.status === 'ready' && n >= MIN_SAMPLE_SI
     </p>
 
     <p class="lede">
-      {canCiteData
-        ? `${entityName}の合格報告${n}件のうち、通信講座を主な教材に挙げた人がいます(自己申告)。`
-        : `${entityName}は独学でも受験できます。教材選びや学習計画を自分で組むのが難しい場合の選択肢として、通信講座があります。`}
+      {entityName}は独学でも受験できます。教材選びや学習計画を自分で組むのが難しい場合の選択肢として、通信講座があります。
     </p>
 
     <ul class="list">
@@ -60,7 +62,8 @@ const canCiteData = snapshot.studyHours.status === 'ready' && n >= MIN_SAMPLE_SI
     </ul>
 
     <p class="disclaimer">
-      掲載順は運営者が決めたもので、成績や合格実績を比較したランキングではありません。
+      ここに出しているのは運営者が提携している講座だけで、この資格の講座をすべて並べたものではありません。
+      掲載順も運営者が決めたもので、成績や合格実績を比較したランキングではありません。
       料金や講座内容は変更されることがあるため、申し込み前に各社の最新の案内を確認してください。
     </p>
   </section>

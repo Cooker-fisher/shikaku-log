@@ -72,6 +72,14 @@ export interface Entity {
   short_name: string;
   category: string;
   authority: { name: string; url: string };
+  /**
+   * 実施団体の欄に添える注記。
+   *
+   * **実施団体が1つだと読者に誤解させてはならない試験のために持つ。**
+   * FP技能検定は日本FP協会ときんざいが同じ国家検定を並行実施しており、
+   * 団体名を1つだけ出すと「この団体で受けるもの」と読める。
+   */
+  authority_note?: string;
   exam: {
     eligibility: string;
     fee_yen: number | null;
@@ -101,6 +109,17 @@ export interface Entity {
   official_stats?: OfficialStats;
   official_stats_unified?: OfficialStats;
   official_stats_cbt?: OfficialStats;
+  /**
+   * 名前付きの統計ブロック。**系列が「統一試験/ネット試験」以外の軸で割れる試験のために持つ。**
+   *
+   * FP技能検定は学科と実技が別試験として別々に集計されており、合算した公式統計が存在しない。
+   * official_stats_unified / _cbt のような固定キーを試験ごとに増やすと、
+   * 型もテンプレートも試験の数だけ分岐が増える。ラベルをデータ側に持たせて配列で受ける。
+   *
+   * 先頭のブロックがページ上部のタイル(受験者数・合格率)の出所になる。
+   * **どの系列の数字なのかはラベルとして必ず読者に見せる**(テンプレート側で担保している)。
+   */
+  official_stats_blocks?: Array<{ key: string; label: string; stats: OfficialStats }>;
   regional_stats?: RegionalStats;
   /**
    * 自己採点ページの設定。**全受験者が同一問題を解く一斉試験にのみ持たせる。**
@@ -234,6 +253,9 @@ export function statBlocks(entity: Entity): Array<{ key: string; label: string; 
   }
   if (entity.official_stats_cbt) {
     blocks.push({ key: 'cbt', label: 'ネット試験(CBT)', stats: entity.official_stats_cbt });
+  }
+  for (const block of entity.official_stats_blocks ?? []) {
+    blocks.push(block);
   }
   return blocks;
 }
