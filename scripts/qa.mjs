@@ -19,7 +19,7 @@
  *   --quiet        PASS の行を出さない
  */
 
-import { readFileSync, existsSync, statSync, readdirSync } from 'node:fs';
+import { readFileSync, existsSync, statSync, readdirSync, mkdirSync, writeFileSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import { join, relative, resolve, dirname, extname, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -909,7 +909,26 @@ function report() {
   console.log(summary);
   console.log('');
 
+  if (errors.length === 0) stampPassed();
   return errors.length > 0 ? 1 : 0;
+}
+
+/**
+ * 通過の刻印を残す。`.claude/hooks/stop-gate.mjs` がこの時刻と
+ * site/ の最終更新時刻を比べ、**古ければターンを終わらせない**。
+ *
+ * 刻印を残すのが qa 側なのは、「検査を通した」という事実を知っているのが
+ * qa だけだからである。フック側で判定すると、フックが qa を起動することになり
+ * 毎ターン数秒かかって必ず外される。
+ */
+function stampPassed() {
+  try {
+    const cache = join(ROOT, '..', '.cache');
+    mkdirSync(cache, { recursive: true });
+    writeFileSync(join(cache, 'qa-stamp'), new Date().toISOString(), 'utf8');
+  } catch {
+    /* 刻印に失敗してもQAの結果は変えない */
+  }
 }
 
 async function main() {
