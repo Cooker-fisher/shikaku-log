@@ -7,6 +7,7 @@
  */
 import type { APIRoute } from 'astro';
 import { entities } from '../lib/entities';
+import { guides } from '../lib/guides';
 
 /** 更新頻度の目安。公式統計は年1回更新なので資格ページは monthly で十分 */
 const ROUTES: Array<{ path: string; changefreq: string; priority: string }> = [
@@ -40,6 +41,12 @@ export const GET: APIRoute = ({ site }) => {
         changefreq: 'weekly',
         priority: '0.7',
       })),
+    // 資格をまたぐ比較ページ。src/lib/guides.ts に登録したものが自動で載る
+    ...guides.map((g) => ({
+      loc: `${origin}${g.path}`,
+      changefreq: 'monthly',
+      priority: '0.7',
+    })),
   ];
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>

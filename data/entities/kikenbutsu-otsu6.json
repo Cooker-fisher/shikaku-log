@@ -36,6 +36,25 @@
     "fee_note": "令和6年5月1日施行の改定後の全国標準額(甲種7,200円/丙種4,200円)。",
     "retrieved_at": "2026-07-26"
   },
+  "textbooks": {
+    "items": [
+      {
+        "title": "この1冊で決める!! 乙種全類危険物取扱者 テキスト&問題集",
+        "publisher": "新星出版社",
+        "price_yen": 1980,
+        "source_url": "https://www.shin-sei.co.jp/np/isbn/978-4-405-03234-7/",
+        "note": "第1・2・3・5・6類をまとめて扱う本。"
+      },
+      {
+        "title": "1回で受かる! 乙種1・2・3・5・6類 危険物取扱者 合格テキスト",
+        "publisher": "成美堂出版",
+        "price_yen": null,
+        "source_url": "https://www.seibidoshuppan.co.jp/product/9784415240343"
+      }
+    ],
+    "retrieved_at": "2026-07-26",
+    "public_note": "第6類だけを扱う本は少なく、第4類以外をまとめた本が主流です。名前がよく似た「消防設備士 乙種第6類」のテキストとは別物なので、購入時にご注意ください。"
+  },
   "official_stats": {
     "unit": "全国集計(乙種第6類, 消防試験研究センター発表)",
     "series": [

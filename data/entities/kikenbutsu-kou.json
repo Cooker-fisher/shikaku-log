@@ -34,6 +34,24 @@
     "fee_note": "令和6年5月1日施行の改定後の全国標準額(乙種5,300円/丙種4,200円)。",
     "retrieved_at": "2026-07-26"
   },
+  "textbooks": {
+    "items": [
+      {
+        "title": "この1冊で決める!! 甲種危険物取扱者 テキスト&問題集",
+        "publisher": "新星出版社",
+        "price_yen": 2530,
+        "source_url": "https://www.shin-sei.co.jp/np/isbn/978-4-405-03243-9/"
+      },
+      {
+        "title": "工学教科書 炎の甲種危険物取扱者 テキスト&問題集",
+        "publisher": "翔泳社",
+        "price_yen": 2860,
+        "source_url": "https://www.shoeisha.co.jp/book/detail/9784798182155"
+      }
+    ],
+    "retrieved_at": "2026-07-26",
+    "public_note": "甲種には通信講座がほとんど無く、市販テキストでの独学が中心になります。"
+  },
   "official_stats": {
     "unit": "全国集計(甲種, 消防試験研究センター発表)",
     "series": [

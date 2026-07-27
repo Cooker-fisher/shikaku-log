@@ -1,0 +1,270 @@
+---
+/**
+ * 危険物取扱者の区分比較ページ。
+ *
+ * **なぜ作ったか**([検索意図マップ](../../../../research/keywords/01-検索意図マップ.md)):
+ * サジェストの実測で「**乙4と乙6どっちが難しい**」が実在する検索語として観測された。
+ * この問いに答えるデータ(全区分の合格率)は既に持っているのに、
+ * **どのページでも答えていなかった**。各資格ページは自分の区分の数字しか出さないためである。
+ *
+ * 実施団体の公式ページには全区分のクロス集計表があるが、
+ * **「どれが難しいか」という読み方は提示されていない**。そこが個人サイトの入る余地になる。
+ *
+ * **書くときの制約**:
+ * - 合格率の差の原因(科目免除)は**実施団体が公表していない**。「〜と考えられます」で止める
+ * - 「簡単」「おすすめ」と書かない。数字を並べて読者に決めさせる
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SourceLink from '../../components/SourceLink.astro';
+import { entities } from '../../lib/entities';
+
+/**
+ * 令和7年度の全区分。出典は消防試験研究センターの年度別結果ページ1本。
+ * 乙1〜乙3はサイトに個別ページを持たないため、ここでのみ扱う。
+ * 数値は research/qualifications/01-Wave1候補の公式統計.md に保存済み。
+ */
+const SOURCE = 'https://www.shoubo-shiken.or.jp/result/7/';
+const RETRIEVED = '2026-07-26';
+
+const rows = [
+  { key: '甲種', slug: 'kikenbutsu-kou', examinees: 20296, passers: 6900, rate: 34.0, target: '全6類すべて' },
+  { key: '乙種第1類', slug: null, examinees: 7931, passers: 5213, rate: 65.7, target: '酸化性固体' },
+  { key: '乙種第2類', slug: null, examinees: 8840, passers: 5830, rate: 66.0, target: '可燃性固体' },
+  { key: '乙種第3類', slug: null, examinees: 10275, passers: 6694, rate: 65.1, target: '自然発火性物質・禁水性物質' },
+  { key: '乙種第4類', slug: 'kikenbutsu-otsu4', examinees: 222545, passers: 71059, rate: 31.9, target: '引火性液体(ガソリン・灯油など)' },
+  { key: '乙種第5類', slug: 'kikenbutsu-otsu5', examinees: 10972, passers: 6815, rate: 62.1, target: '自己反応性物質' },
+  { key: '乙種第6類', slug: 'kikenbutsu-otsu6', examinees: 10402, passers: 7032, rate: 67.6, target: '酸化性液体' },
+  { key: '丙種', slug: 'kikenbutsu-hei', examinees: 19969, passers: 9593, rate: 48.0, target: 'ガソリン・灯油・軽油・重油など指定されたもの' },
+];
+
+const num = new Intl.NumberFormat('ja-JP');
+const maxRate = Math.max(...rows.map((r) => r.rate));
+const otsu4 = rows.find((r) => r.key === '乙種第4類')!;
+const otsuOthers = rows.filter((r) => r.key.startsWith('乙種') && r.key !== '乙種第4類');
+const otsuOthersMin = Math.min(...otsuOthers.map((r) => r.rate));
+const otsuOthersMax = Math.max(...otsuOthers.map((r) => r.rate));
+/** サイトに個別ページがある区分だけリンクする */
+const published = new Set(entities.map((e) => e.slug));
+
+const title = '危険物取扱者はどの類が難しい? 全8区分の合格率を並べて比べる';
+const description =
+  '危険物取扱者の甲種・乙種第1類〜第6類・丙種の合格率を、実施団体の令和7年度の公表資料から並べました。' +
+  '乙種第4類だけ合格率が31.9%と低く、他の乙種は62〜68%です。その差の理由も含めて説明します。';
+
+const origin = (Astro.site ?? new URL(Astro.url.origin)).origin;
+const canonical = new URL(Astro.url.pathname, origin).href;
+---
+
+<BaseLayout title={title} description={description} ogType="article">
+  <article class="page">
+    <nav class="crumbs" aria-label="パンくず">
+      <a href="/">ホーム</a> <span aria-hidden="true">/</span>
+      <span aria-current="page">危険物取扱者の区分比較</span>
+    </nav>
+
+    <header class="hd">
+      <h1>危険物取扱者はどの類が難しいか</h1>
+      <p class="lede">
+        甲種・乙種第1類〜第6類・丙種の合格率を、実施団体の公表資料から並べました。
+        数値は令和7年度のものです。
+      </p>
+    </header>
+
+    <section aria-labelledby="h-answer">
+      <h2 id="h-answer">先に結論</h2>
+      <p class="finding">
+        合格率だけで見ると、<strong>乙種第4類が {otsu4.rate}% で最も低い</strong>です。
+        同じ乙種の他の類は <strong>{otsuOthersMin}%〜{otsuOthersMax}%</strong> で、2倍前後の開きがあります。
+      </p>
+      <p>
+        ただし<strong>これは「第4類の問題が難しい」ことを意味しません。</strong>
+        乙種は、いずれかの類の免状を持っていると
+        「危険物に関する法令」と「基礎的な物理学及び基礎的な化学」が全部免除され、
+        残る10問だけを35分で解く形になります。
+        第4類の合格者が他の類を追加で取りに行く場合がこれにあたります。
+      </p>
+      <p>
+        つまり第4類以外の受験者には<strong>既に1つ受かっている人が多く含まれます</strong>。
+        合格率の差にはこの構成の違いが効いていると考えられますが、
+        <strong>実施団体は免除を受けた人と受けていない人を分けた合格率を公表していません。</strong>
+        そのため、ここでは差の大きさだけを示し、原因を断定していません。
+      </p>
+    </section>
+
+    <section aria-labelledby="h-table">
+      <h2 id="h-table">全8区分の受験者数と合格率(令和7年度)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">区分</th>
+              <th scope="col" class="n">受験者</th>
+              <th scope="col" class="n">合格者</th>
+              <th scope="col" class="n">合格率</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr class={r.key === '乙種第4類' ? 'mark' : undefined}>
+                <th scope="row">
+                  {r.slug && published.has(r.slug) ? <a href={`/shikaku/${r.slug}/`}>{r.key}</a> : r.key}
+                </th>
+                <td class="n">{num.format(r.examinees)}</td>
+                <td class="n">{num.format(r.passers)}</td>
+                <td class="n strong">
+                  <span class="bar" style={`width:${(r.rate / maxRate) * 100}%`} aria-hidden="true"></span>
+                  <span class="val">{r.rate.toFixed(1)}%</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        受験者数も第4類だけが桁違いです。8区分の合計に占める第4類の割合は
+        <strong>{Math.round((otsu4.examinees / rows.reduce((s, r) => s + r.examinees, 0)) * 100)}%</strong>で、
+        危険物取扱者の受験はほぼ第4類だと言えます。
+      </p>
+      <SourceLink href={SOURCE} label="一般財団法人 消防試験研究センター 令和7年度 試験実施状況" accessedAt={RETRIEVED} />
+    </section>
+
+    <section aria-labelledby="h-scope">
+      <h2 id="h-scope">それぞれ何を扱えるか</h2>
+      <dl class="scope">
+        {rows.map((r) => (
+          <div>
+            <dt>{r.key}</dt>
+            <dd>{r.target}</dd>
+          </div>
+        ))}
+      </dl>
+      <p class="note">
+        丙種が扱えるのは指定されたものに限られ、無資格者への立会いもできません。
+        甲種は受験資格が定められている唯一の区分です。
+      </p>
+    </section>
+
+    <section aria-labelledby="h-order">
+      <h2 id="h-order">受ける順番について</h2>
+      <p>
+        第4類から受ける人が多く、受験者数の偏りもそれを示しています。
+        第4類に受かった後、他の類は科目免除で
+        <strong>10問・35分</strong>になるため、続けて取る場合の負担は小さくなります。
+      </p>
+      <p>
+        乙種の免状を4種類以上持つと甲種の受験資格を満たす場合がありますが、
+        <strong>種類の数だけでは足りません。</strong>
+        「第1類または第6類」「第2類または第4類」「第3類」「第5類」の
+        4つのグループそれぞれから1つ以上が必要です。
+        申込前に実施団体の受験資格をご確認ください。
+      </p>
+      <p class="links">
+        各区分の詳しい試験制度は個別のページにあります:
+        {rows.filter((r) => r.slug && published.has(r.slug)).map((r, i) => (
+          <>{i > 0 && ' / '}<a href={`/shikaku/${r.slug}/`}>{r.key}</a></>
+        ))}
+      </p>
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: var(--measure-wide, 56rem);
+    margin-inline: auto;
+  }
+  .crumbs {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-4);
+  }
+  .hd h1 {
+    line-height: 1.4;
+  }
+  .lede {
+    color: var(--color-text-muted);
+    line-height: 1.9;
+  }
+  section {
+    margin-block: var(--space-6);
+  }
+  p {
+    line-height: 1.9;
+    overflow-wrap: anywhere;
+  }
+  .finding {
+    padding: var(--space-3);
+    border-left: 3px solid var(--color-accent, currentColor);
+    background: var(--color-surface);
+  }
+  .table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+  th,
+  td {
+    padding: var(--space-2);
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+    white-space: nowrap;
+  }
+  .n {
+    text-align: right;
+  }
+  tr.mark {
+    background: var(--color-surface);
+  }
+  td.strong {
+    position: relative;
+    font-weight: 700;
+  }
+  .bar {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 1.4em;
+    background: var(--color-accent-soft, rgba(28, 132, 101, 0.15));
+    border-radius: 2px;
+  }
+  .val {
+    position: relative;
+  }
+  .scope {
+    margin: 0;
+  }
+  .scope > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-3);
+    padding-block: var(--space-2);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .scope dt {
+    flex: 0 0 8em;
+    font-weight: 700;
+  }
+  .scope dd {
+    margin: 0;
+    flex: 1 1 16em;
+  }
+  .note {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+  .links a {
+    display: inline-block;
+    min-height: 44px;
+    line-height: 44px;
+  }
+  @media (max-width: 30rem) {
+    .scope > div {
+      display: block;
+    }
+  }
+</style>

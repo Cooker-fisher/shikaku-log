@@ -18,6 +18,8 @@ import StudyPaceTool from '../../components/StudyPaceTool.astro';
 import ReportForm from '../../components/ReportForm.astro';
 import RecentReports from '../../components/RecentReports.astro';
 import NextExamBox from '../../components/NextExamBox.astro';
+import TextbookList from '../../components/TextbookList.astro';
+import { guidesFor } from '../../lib/guides';
 import CourseCta from '../../components/CourseCta.astro';
 import { getSnapshot } from '../../lib/reportSummary';
 import {
@@ -107,6 +109,9 @@ for (const block of blocks) {
 const uniqueSources = [...sourceMap.entries()].map(([url, labels]) => ({ url, labels: [...new Set(labels)] }));
 
 const snapshot = getSnapshot(entity.slug);
+
+/** この資格を扱う比較ページ。登録しないと孤立ページになる(src/lib/guides.ts) */
+const relatedGuides = guidesFor(entity.slug);
 
 const origin = (Astro.site ?? new URL(Astro.url.origin)).origin;
 const canonical = new URL(Astro.url.pathname, origin).href;
@@ -365,6 +370,22 @@ const canonical = new URL(Astro.url.pathname, origin).href;
         </div>
       )}
     </section>
+
+    {relatedGuides.length > 0 && (
+      <section class="guides" aria-labelledby="h-guides">
+        <h2 id="h-guides">ほかの区分と比べる</h2>
+        <ul>
+          {relatedGuides.map((g) => (
+            <li>
+              <a href={g.path}>{g.title}</a>
+              <p>{g.blurb}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <TextbookList entity={entity} />
 
     <section class="sources" aria-labelledby="h-sources">
       <h2 id="h-sources">このページの出典</h2>

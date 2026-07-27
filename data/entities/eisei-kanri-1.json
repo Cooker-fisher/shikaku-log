@@ -37,6 +37,18 @@
     "duration_note": "3時間。科目免除者は2時間15分。",
     "retrieved_at": "2026-07-26"
   },
+  "textbooks": {
+    "items": [
+      {
+        "title": "2026年度版 スッキリわかる 第1種衛生管理者 テキスト&問題集",
+        "publisher": "TAC出版",
+        "price_yen": 1870,
+        "source_url": "https://tacpub.jp/list/detail.php?bc=112126"
+      }
+    ],
+    "retrieved_at": "2026-07-26",
+    "public_note": "この資格には通信講座もあります。市販テキストは年度版が出るため、購入時に年度をご確認ください。"
+  },
   "official_stats": {
     "unit": "全国集計(安全衛生技術試験協会発表)",
     "series": [
@@ -62,7 +74,10 @@
     "public_note": "実施団体が公表している全国集計です。申込者数は公表されていないため掲載していません。"
   },
   "related": [
-    { "slug": "eisei-kanri-2", "reason": "有害業務を扱わない業種向けの区分。受験資格は同じで、試験科目が少ない" }
+    {
+      "slug": "eisei-kanri-2",
+      "reason": "有害業務を扱わない業種向けの区分。受験資格は同じで、試験科目が少ない"
+    }
   ],
   "verification": {
     "collected_by": "PM(Fable)",

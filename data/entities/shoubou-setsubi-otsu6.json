@@ -38,6 +38,24 @@
     "fee_note": "乙種の受験手数料。消費税は非課税とされている。",
     "retrieved_at": "2026-07-26"
   },
+  "textbooks": {
+    "items": [
+      {
+        "title": "工学教科書 炎の消防設備士 第6類 テキスト&問題集",
+        "publisher": "翔泳社",
+        "price_yen": 2420,
+        "source_url": "https://www.shoeisha.co.jp/book/detail/9784798171388"
+      },
+      {
+        "title": "いちばんわかりやすい! 消防設備士6類 合格テキスト",
+        "publisher": "成美堂出版",
+        "price_yen": null,
+        "source_url": "https://www.seibidoshuppan.co.jp/product/9784415236797"
+      }
+    ],
+    "retrieved_at": "2026-07-26",
+    "public_note": "名前がよく似た「危険物取扱者 乙種第6類」のテキストとは別物です。購入時にご注意ください。"
+  },
   "official_stats": {
     "unit": "全国集計(乙種第6類, 消防試験研究センター発表)",
     "series": [

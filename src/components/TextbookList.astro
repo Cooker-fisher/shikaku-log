@@ -1,0 +1,132 @@
+---
+/**
+ * 市販テキストの一覧。
+ *
+ * **なぜ作ったか**([ADR-018](../../../decisions/018-収益経路を資格ごとに使い分ける.md)):
+ * サジェストの実測で「テキスト おすすめ」が情報型と同じ量だけ検索されていた。
+ * しかもこの型は**個人サイトが実際に上位にいる**(求人型はプラットフォームの独占で入れない)。
+ * 加えて危険物の甲種・乙5・乙6には通信講座が無く、**受験者が買うものは書籍だけ**である。
+ *
+ * **絶対にやらないこと**:
+ * - 「おすすめ」「人気」「一番わかりやすい」と書く。使った人のデータを持っていない
+ * - 順位を付ける。並べる順は価格でも評価でもなく、**出版社名の五十音**にする
+ * - 「この1冊で受かる」等、出版社の惹句をそのまま見出しに使う
+ */
+import type { Entity } from '../lib/entities';
+import SourceLink from './SourceLink.astro';
+
+interface Props {
+  entity: Entity;
+}
+const { entity } = Astro.props;
+const tb = entity.textbooks;
+
+const num = new Intl.NumberFormat('ja-JP');
+// 並び順を出版社名で固定する。価格順・評価順にすると「推奨」の含みが出る
+const items = tb ? [...tb.items].sort((a, b) => a.publisher.localeCompare(b.publisher, 'ja')) : [];
+const hasCourse = Boolean(entity.related && entity.textbooks);
+---
+
+{tb && items.length > 0 && (
+  <section class="textbooks" aria-labelledby="h-textbooks">
+    <h2 id="h-textbooks">{entity.short_name}の市販テキスト</h2>
+
+    <p class="intro">
+      書店で買えるテキストを、出版社の公式ページで実在を確認して並べています。
+      <strong>順位や優劣は付けていません。</strong>
+      どれが自分に合うかは、実際に中を見て決めてください。
+    </p>
+
+    <ul class="list">
+      {items.map((b) => (
+        <li>
+          <p class="title">{b.title}</p>
+          <p class="meta">
+            <span class="pub">{b.publisher}</span>
+            {b.price_yen !== null ? (
+              <span class="price">{num.format(b.price_yen)}円</span>
+            ) : (
+              <span class="price unknown">価格は未確認</span>
+            )}
+          </p>
+          {b.note && <p class="note">{b.note}</p>}
+          <p class="src">
+            <a href={b.source_url} rel="noopener" target="_blank">出版社のページで見る</a>
+          </p>
+        </li>
+      ))}
+    </ul>
+
+    {tb.public_note && <p class="pub-note">{tb.public_note}</p>}
+
+    <p class="caution">
+      価格は取得した時点のものです。改訂版が出ている場合があるので、購入前に版と年度をご確認ください。
+    </p>
+
+    <SourceLink
+      href={items[0].source_url}
+      label="各書名の出典は上の各リンク(出版社の公式ページ)"
+      accessedAt={tb.retrieved_at}
+    />
+  </section>
+)}
+
+<style>
+  .textbooks {
+    margin-block: var(--space-6);
+  }
+  .intro {
+    margin-bottom: var(--space-4);
+    line-height: 1.9;
+  }
+  .list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-3);
+  }
+  .list li {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    background: var(--color-surface);
+  }
+  .title {
+    margin: 0;
+    font-weight: 700;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+  .meta {
+    margin: var(--space-2) 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+  .price {
+    font-variant-numeric: tabular-nums;
+  }
+  .price.unknown {
+    font-style: normal;
+  }
+  .note,
+  .src {
+    margin: var(--space-2) 0 0;
+    font-size: var(--text-sm);
+  }
+  .src a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .pub-note,
+  .caution {
+    margin-top: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    line-height: 1.8;
+  }
+</style>

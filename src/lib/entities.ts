@@ -147,6 +147,30 @@ export interface Entity {
     source_url: string;
     retrieved_at?: string;
   };
+  /**
+   * 市販テキスト。**「おすすめ」と書かない。**
+   *
+   * 実際に使った人のデータを持たない段階で推奨すると、掟3-5(推測を事実として書かない)に触れる。
+   * ここは「この資格の市販テキストにはこれがある」という**事実の列挙**にとどめる。
+   * 合格報告の「使った教材」が集まったら、自己申告に基づく使用件数として別に出す。
+   *
+   * 通信講座が存在しない資格(危険物の甲種・乙5・乙6など)では、
+   * これが受験者にとって唯一の購買判断になる([ADR-018](decisions/018-収益経路を資格ごとに使い分ける.md))。
+   */
+  textbooks?: {
+    /** 出版社の公式ページで実在を確認したものだけを載せる */
+    items: Array<{
+      title: string;
+      publisher: string;
+      /** 税込価格。確認できなければ null にし、価格を書かない */
+      price_yen: number | null;
+      /** 出版社の公式ページ。書店リンクではない */
+      source_url: string;
+      note?: string;
+    }>;
+    retrieved_at: string;
+    public_note?: string;
+  };
   cbt_details?: Record<string, unknown>;
   unified_2026_schedule?: Record<string, unknown>;
   schedule_url?: string;
