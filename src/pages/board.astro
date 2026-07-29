@@ -1,0 +1,415 @@
+---
+/**
+ * 全資格を横断した書き込み一覧。
+ *
+ * ============================================================
+ * なぜ1枚作るのか(2026-07-28)
+ * ============================================================
+ * 書き込み欄は17枚の資格ページに1つずつ置いてある。
+ * これは2つの意味で壊れていた。
+ *
+ * **1. 希少な資源を17分割していた。**
+ * 投稿の総数が少ないうちは、17枚すべてが「まだ書き込みはありません」を出す。
+ * 最初に来た人に「誰も居ない場所に最初の1件を書け」と言っているのと同じである。
+ *
+ * **2. 答える側が戻ってくる場所が無かった。**
+ * このサイトが集めているのは「いま詰まっている勉強中の人」= 質問者だけで、
+ * 分かる人が答えに来る動機も経路も用意していなかった。
+ * アカウントも通知も持たない設計なので、**戻り先のURLが唯一の再訪経路**になる。
+ * それが無い以上、投稿が増えれば増えるほど
+ * 「未回答の質問が並ぶだけの場所」になる未来が最も確からしかった。
+ *
+ * このページは**そのURL**である。ブックマークして戻ってこられる場所を1つ作る。
+ * 既定で「まだ誰も答えていないもの」を先に出す。
+ *
+ * ============================================================
+ * なぜ実行時に取りに行くか
+ * ============================================================
+ * 投稿は静的ビルドの後にも増える。ビルド時に焼くと、書き込んでから
+ * 次のデプロイまで画面に出ない。ここは [StudyBoard](../components/StudyBoard.astro) と同じ扱いにする。
+ * **検索エンジンには載らない**という弱点は残る([B-035](../../../backlog.md))。
+ * このページの目的は流入ではなく、**答える人の再訪**なので、いまはこれでよい。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SourceChip from '../components/SourceChip.astro';
+import { SITE_NAME } from '../config';
+
+const title = '勉強中の人の書き込み(全資格)';
+const description =
+  '掲載しているすべての資格の書き込みを新しい順に並べています。まだ返信が付いていないものを先に表示します。登録は要りません。';
+---
+
+<BaseLayout title={title} description={description} hasUserData={true}>
+  <div class="board-page">
+    <header class="head">
+      <nav class="crumbs" aria-label="パンくず">
+        <a href="/">ホーム</a> <span aria-hidden="true">/</span>
+        <span aria-current="page">書き込み</span>
+      </nav>
+      <h1>勉強中の人の書き込み</h1>
+      <SourceChip kind="user" detail="掲載前に機械判定・登録不要" />
+
+    </header>
+
+    {/*
+      **説明文を <header> の外に出す(2026-07-28)。**
+
+      最初これらを <header> の中に書いたところ、QAの薄いページ検査に
+      「本文151文字」で落ちた。qa.mjs の extractText は header / nav / footer を
+      本文から除くためである。
+
+      **これは検査の癖ではなく、こちらの誤り。**
+      <header> はページの見出しを置く場所であって、
+      掲載方針や注意事項という本文を詰める場所ではない。
+      機械が「ここは飾りだ」と判断したのは、そう書いてあったからである。
+
+      内容そのものも必要なもの。一覧は実行時のfetchで入るので、
+      JSが動かない環境ではこのページに文章が1行も残らない。
+      そして掟 3-4 は**利用者の自己申告であることの明記**を求めている。
+    */}
+    <div class="intro">
+      <p>
+        このページには、掲載しているすべての資格の書き込みが新しい順に並びます。
+        <strong>まだ誰も答えていないものを先に出します。</strong>
+        分かることがあれば、その資格のページから返信できます。登録は要りません。
+      </p>
+      <p data-user-data-note>
+        ここに出るのは<strong>利用者の自己申告に基づく書き込み</strong>であり、
+        公的な統計でも、実施団体の見解でもありません。内容の正しさは保証していません。
+        勉強法や必要な時間は人によって違うので、書かれている数字をそのまま自分に当てはめないでください。
+        受験資格・試験日・手数料といった<strong>制度の情報は、必ず各資格のページに載せている実施団体の公表資料で確認してください。</strong>
+      </p>
+      <p>
+        答える側として使うこともできます。「まだ誰も答えていません」と付いた書き込みは、
+        誰も返信していないものです。自分が通ってきた資格のものがあれば、
+        その1件に答えるだけで、次に同じところで詰まる人に届きます。
+      </p>
+    </div>
+
+    <div class="controls" data-role="controls" hidden>
+      <div class="filters" role="group" aria-label="表示の切り替え">
+        <button type="button" class="chip is-on" data-filter="unanswered">未回答だけ</button>
+        <button type="button" class="chip" data-filter="all">すべて</button>
+      </div>
+      <p class="count" data-role="count"></p>
+    </div>
+
+    <ul class="feed" data-role="feed"></ul>
+
+    <p class="state" data-role="empty" hidden>
+      まだ書き込みはありません。各資格のページから最初の1件を書けます。
+    </p>
+    <p class="state" data-role="failed" hidden>
+      書き込みを読み込めませんでした。時間をおいて再読み込みしてください。
+    </p>
+    <p class="state" data-role="allanswered" hidden>
+      いま未回答の書き込みはありません。<button type="button" data-role="show-all">すべて表示する</button>
+    </p>
+
+    <noscript>
+      <p class="state">
+        書き込みの一覧を表示するにはJavaScriptが必要です。
+        各資格のページからも同じ書き込みを読めます。
+      </p>
+    </noscript>
+
+    <p class="rules-note">
+      試験問題そのものは書けません(実施団体に著作権があります)。
+      URL・連絡先も投稿できません。<a href="/rules/">投稿のルール</a>
+    </p>
+  </div>
+</BaseLayout>
+
+<script>
+  /*
+   * 表示は全て textContent で行う。**innerHTML は使わない。**
+   * 投稿は他人が書いた文字列であり、1箇所でも生のHTMLとして入れると
+   * そこがそのままXSSの入口になる。
+   */
+  const feed = document.querySelector<HTMLElement>('[data-role="feed"]');
+  if (feed) {
+    const controls = document.querySelector<HTMLElement>('[data-role="controls"]')!;
+    const countEl = document.querySelector<HTMLElement>('[data-role="count"]')!;
+    const emptyEl = document.querySelector<HTMLElement>('[data-role="empty"]')!;
+    const failedEl = document.querySelector<HTMLElement>('[data-role="failed"]')!;
+    const allAnsweredEl = document.querySelector<HTMLElement>('[data-role="allanswered"]')!;
+    const showAllEl = document.querySelector<HTMLButtonElement>('[data-role="show-all"]')!;
+    const chips = [...document.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+
+    const show = (el: HTMLElement, on: boolean) => {
+      el.hidden = !on;
+    };
+
+    function ago(iso: string): string {
+      const diff = (Date.now() - Date.parse(iso)) / 1000;
+      if (!Number.isFinite(diff)) return '';
+      if (diff < 60) return 'たった今';
+      if (diff < 3600) return `${Math.floor(diff / 60)}分前`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}時間前`;
+      if (diff < 86400 * 7) return `${Math.floor(diff / 86400)}日前`;
+      return iso.slice(0, 10);
+    }
+
+    interface Item {
+      id: number;
+      handle: string | null;
+      body: string;
+      statusLabel: string | null;
+      createdAt: string;
+      replyCount: number;
+      slug: string;
+      name: string;
+    }
+
+    let items: Item[] = [];
+    let mode: 'unanswered' | 'all' = 'unanswered';
+
+    function render() {
+      const list = mode === 'unanswered' ? items.filter((i) => i.replyCount === 0) : items;
+
+      feed.replaceChildren(
+        ...list.map((it) => {
+          const li = document.createElement('li');
+          li.className = 'item';
+
+          const head = document.createElement('p');
+          head.className = 'item-head';
+
+          const qual = document.createElement('a');
+          qual.className = 'item-qual';
+          /* 返信はその資格のページで行う。ここは見つける場所に徹する */
+          qual.href = `/shikaku/${it.slug}/#board`;
+          qual.textContent = it.name;
+          head.append(qual);
+
+          if (it.statusLabel) {
+            const tag = document.createElement('span');
+            tag.className = 'item-tag';
+            tag.textContent = it.statusLabel;
+            head.append(tag);
+          }
+
+          const time = document.createElement('time');
+          time.dateTime = it.createdAt;
+          time.className = 'item-time';
+          time.textContent = ago(it.createdAt);
+          head.append(time);
+
+          const body = document.createElement('p');
+          body.className = 'item-body';
+          body.textContent = it.body;
+
+          const foot = document.createElement('p');
+          foot.className = 'item-foot';
+          const state = document.createElement('span');
+          if (it.replyCount === 0) {
+            state.className = 'item-open';
+            state.textContent = 'まだ誰も答えていません';
+          } else {
+            state.className = 'item-replies';
+            state.textContent = `返信 ${it.replyCount}件`;
+          }
+          const go = document.createElement('a');
+          go.className = 'item-go';
+          go.href = `/shikaku/${it.slug}/#board`;
+          go.textContent = it.replyCount === 0 ? 'このページで答える' : '続きを読む';
+          foot.append(state, go);
+
+          li.append(head, body, foot);
+          return li;
+        }),
+      );
+
+      const unanswered = items.filter((i) => i.replyCount === 0).length;
+      countEl.textContent = `全${items.length}件 / 未回答${unanswered}件`;
+      show(allAnsweredEl, mode === 'unanswered' && unanswered === 0 && items.length > 0);
+      show(emptyEl, items.length === 0);
+    }
+
+    for (const chip of chips) {
+      chip.addEventListener('click', () => {
+        mode = chip.dataset.filter as 'unanswered' | 'all';
+        for (const c of chips) c.classList.toggle('is-on', c === chip);
+        render();
+      });
+    }
+    showAllEl.addEventListener('click', () => {
+      chips.find((c) => c.dataset.filter === 'all')?.click();
+    });
+
+    (async () => {
+      try {
+        const r = await fetch('/api/posts');
+        const data = await r.json();
+        if (!r.ok || !data.ok) throw new Error('failed');
+        items = data.items as Item[];
+        show(controls, items.length > 0);
+        render();
+      } catch {
+        show(failedEl, true);
+      }
+    })();
+  }
+</script>
+
+<style>
+  .board-page {
+    max-width: var(--width-prose);
+  }
+  .crumbs {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: var(--space-4);
+  }
+  .head h1 {
+    font-size: var(--fs-2xl);
+    margin: 0 0 var(--space-3);
+  }
+  .intro {
+    margin-top: var(--space-4);
+  }
+  .intro p {
+    line-height: var(--lh-normal);
+    color: var(--color-text-muted);
+    font-size: var(--fs-sm);
+    margin: 0 0 var(--space-3);
+  }
+  /* 自己申告の注記だけは弱めない。掟 3-4 が明記を求めている箇所である */
+  .intro p[data-user-data-note] {
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-userdata-bg);
+    border-left: 5px dashed var(--color-userdata);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    color: var(--color-text);
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin: var(--space-5) 0 var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: var(--border-thin);
+  }
+  .filters {
+    display: flex;
+    gap: var(--space-2);
+  }
+  .chip {
+    min-height: 40px;
+    padding: 0 var(--space-4);
+    font: inherit;
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+  }
+  .chip.is-on {
+    color: var(--color-primary-contrast);
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    font-weight: var(--fw-medium);
+  }
+  .count {
+    margin: 0;
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .feed {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-3);
+  }
+  /* 投稿は自己申告。**公式データと同じ見た目にしない**(破線で揃える) */
+  .feed :global(.item) {
+    padding: var(--space-4);
+    background: var(--color-userdata-bg);
+    border: 1px dashed var(--color-userdata);
+    border-left: 5px dashed var(--color-userdata);
+    border-radius: var(--radius-sm);
+  }
+  .feed :global(.item-head) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-3);
+    margin: 0 0 var(--space-2);
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+  }
+  .feed :global(.item-qual) {
+    font-weight: var(--fw-bold);
+    color: var(--color-link);
+  }
+  .feed :global(.item-tag) {
+    padding: 0 var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+  }
+  .feed :global(.item-body) {
+    margin: 0 0 var(--space-3);
+    line-height: var(--lh-normal);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .feed :global(.item-foot) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin: 0;
+    font-size: var(--fs-xs);
+  }
+  /* 未回答は「拾える場所」の印。答える側が探しているのはこれである */
+  .feed :global(.item-open) {
+    color: var(--color-accent);
+    font-weight: var(--fw-bold);
+  }
+  .feed :global(.item-replies) {
+    color: var(--color-text-muted);
+  }
+  .feed :global(.item-go) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+  }
+
+  .state {
+    margin: var(--space-4) 0;
+    padding: var(--space-4);
+    background: var(--color-notice-bg);
+    border-radius: var(--radius-sm);
+    line-height: var(--lh-normal);
+  }
+  .state button {
+    font: inherit;
+    color: var(--color-link);
+    background: none;
+    border: 0;
+    padding: 0 var(--space-1);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .rules-note {
+    margin-top: var(--space-6);
+    font-size: var(--fs-xs);
+    line-height: var(--lh-heading);
+    color: var(--color-text-muted);
+  }
+</style>

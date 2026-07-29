@@ -155,6 +155,11 @@ th.num {
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
+/*
+ * 本文 + 追従レールの2カラムを組むページ用。
+ * 既定の 64rem のままレールを出すと、本文が読みにくい幅まで痩せる。
+ */
+
 .prose {
   max-width: var(--width-prose);
 }
@@ -222,29 +227,121 @@ main {
   padding: 0;
 }
 
+/* --------------------------------------------------------------------------
+   出所ごとの視覚言語(2026-07-27 新設)
+
+   [ADR-009](../../decisions/009-テンプレートはC案ツール型を採用.md) が必須とした
+   「属性を変えるだけで公式/投稿の見た目が切り替わる」仕組みの実体。
+   **定義はここ1箇所だけに置く。**Panel.astro も、ページ側の節の入れ物も、
+   同じ `data-source` を読んで同じ変数を使う。
+
+   なぜ必要だったか: 14個のコンポーネントが各自 <style> を持ち、
+   `border: 1px solid var(--color-border)` が10個で独立に書かれていた。
+   10箇所が別々に「枠のある箱」を作れば全部同じ見た目になる。実測でも
+   資格ページの10節は**幅343pxの1種類だけ**で、公式統計も投稿もツールも
+   広告も同じ白い箱に見えていた。
+
+   色だけで区別しない(掟: 色覚特性)。**面・枠・余白・縦罫が同時に変わる。**
+   -------------------------------------------------------------------------- */
+[data-source] {
+  background: var(--src-surface, transparent);
+  border: var(--src-border, 0);
+  border-left: var(--src-rule, 0);
+  border-radius: var(--src-radius, 0);
+  padding: var(--src-pad, 0);
+}
+
+/*
+ * 実施団体の公表値。**実線**の枠に太い縦罫。
+ * 「線が閉じている = 出所が確定している」を形で表す。
+ */
+[data-source='official'] {
+  --src-surface: var(--color-surface);
+  --src-border: 1px solid var(--color-border);
+  --src-rule: 5px solid var(--color-official);
+  --src-radius: var(--radius-md);
+  --src-pad: var(--space-5);
+}
+
+/*
+ * 利用者の投稿。**破線**の枠。
+ *
+ * ここは 2026-07-28 に批評で指摘されて直した箇所である。
+ * それまで official と user は `--src-border` も `--src-radius` も `--src-pad` も
+ * **完全に同一**で、違いは面の色と縦罫の色という**色2つだけ**だった。
+ * それでいて、このファイルのコメントには「面・枠・余白・縦罫が同時に変わる」と
+ * 書いてあった。**コードが持っていない性質をコメントで主張していた。**
+ * グレースケールや低照度では公式統計と自己申告が同じ箱に見えていたことになる。
+ *
+ * いまは実線と破線で分けている。色を全て落としても区別がつく。
+ */
+[data-source='user'] {
+  --src-surface: var(--color-userdata-bg);
+  --src-border: 1px dashed var(--color-userdata);
+  --src-rule: 5px dashed var(--color-userdata);
+  --src-radius: var(--radius-sm);
+  --src-pad: var(--space-4);
+}
+
+/*
+ * **このサイトが自分で計算した数値。**
+ *
+ * 他資格との順位のように、どの実施団体も公表していない値をここに入れる。
+ * 以前は順位の節に `official` を付けていた。つまり
+ * 「白い箱は実施団体の公表値」という約束を、**その約束を最初に見せる節自身が破っていた。**
+ * 出所で見た目を分ける仕組みの唯一の意味は「誰が言ったか」なので、
+ * そこで嘘をつくとこの仕組み全体が無意味になる。
+ *
+ * 見た目は公式でも投稿でもない第3の形にする(枠を持たず、面と点線の縦罫だけ)。
+ */
+/*
+ * 縦罫は**細い実線**にする。
+ * 一度 5px の点線にしたが、太い点線は丸い粒の列として描画され、
+ * 罫線ではなく飾りのシールに見えた(実機で確認して差し戻した)。
+ * 種別の区別は SourceChip の文字が担っているので、
+ * ここは「公式ほど強く主張しない線」であればよい。
+ */
+[data-source='derived'] {
+  --src-surface: var(--color-bg-subtle);
+  --src-border: 0;
+  --src-rule: 2px solid var(--color-border-strong);
+  --src-radius: var(--radius-sm);
+  --src-pad: var(--space-5);
+}
+
+/* 入力して使う場所。罫線を持たず、面だけで「操作する所」に見せる */
+[data-source='tool'] {
+  --src-surface: var(--color-bg-subtle);
+  --src-radius: var(--radius-md);
+  --src-pad: var(--space-5);
+}
+
+/*
+ * 制度・出典・教材。**面も枠も与えない。**
+ * 全部の節が箱を持つと、箱があること自体が何の情報も運ばなくなる。
+ * ここを背景に沈めることで、公式データと投稿が主役に残る。
+ */
+[data-source='reference'] {
+  --src-surface: transparent;
+  --src-border: 0;
+  --src-pad: 0;
+}
+
+/* 入れ子の二重枠を防ぐ。中のコンポーネントが自前で持つ箱を無効にする */
+[data-source] > .board,
+[data-source] > .tool,
+[data-source] > .report,
+[data-source] > .recent {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
 /* --- 注記ブロック ------------------------------------------------------ */
-.notice {
-  padding: var(--space-3) var(--space-4);
-  border-left: 3px solid var(--color-notice-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-notice-bg);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-heading);
-}
-.notice--pr {
-  font-weight: var(--fw-medium);
-}
-.notice__label {
-  display: inline-block;
-  margin-right: var(--space-2);
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-sm);
-  background: var(--color-notice-border);
-  color: var(--color-bg);
-  font-size: var(--fs-2xs);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.08em;
-}
+
+
+
 
 .data-note {
   padding: var(--space-3) var(--space-4);
@@ -263,13 +360,7 @@ main {
   white-space: nowrap;
 }
 
-.card-grid {
-  display: grid;
-  gap: var(--space-4);
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  list-style: none;
-  padding: 0;
-}
+
 .card {
   padding: var(--space-4);
   border: var(--border-thin);
@@ -302,11 +393,4 @@ main {
 }
 
 /* honeypot: 人間には見えず、スクリーンリーダーにも読まれない */
-.hp-field {
-  position: absolute !important;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
+

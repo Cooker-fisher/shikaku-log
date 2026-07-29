@@ -20,6 +20,10 @@ import StudyBoard from '../../components/StudyBoard.astro';
 import RecentReports from '../../components/RecentReports.astro';
 import NextExamBox from '../../components/NextExamBox.astro';
 import TextbookList from '../../components/TextbookList.astro';
+import PanelTabs from '../../components/PanelTabs.astro';
+import SourceChip from '../../components/SourceChip.astro';
+import DifficultyContext from '../../components/DifficultyContext.astro';
+import { difficultyContext } from '../../lib/context';
 import { guidesFor } from '../../lib/guides';
 import CourseCta from '../../components/CourseCta.astro';
 import { COURSE_LINKS } from '../../config';
@@ -137,96 +141,181 @@ const hasAffiliate = (COURSE_LINKS[entity.slug] ?? []).length > 0;
 
 const origin = (Astro.site ?? new URL(Astro.url.origin)).origin;
 const canonical = new URL(Astro.url.pathname, origin).href;
+
+/**
+ * ページ内目次の項目。
+ *
+ * **実際に描画される節だけを載せる。**条件付きの節(都道府県別・合格点・テキスト)を
+ * 無条件に並べると、押しても何も起きないリンクが目次に混ざる。
+ * 各コンポーネント側の描画条件と、ここの条件は必ず一致させること。
+ */
+const hasSchedule = Boolean(entity.next_exam || entity.schedule_url);
+const hasRegional = Boolean(
+  entity.regional_stats && latest?.pass_rate !== null && latest?.pass_rate !== undefined,
+);
+const hasTextbooks = Boolean(entity.textbooks && entity.textbooks.items.length > 0);
+
+/**
+ * 冒頭の合格率に添える1行。
+ *
+ * **JSXの中で文字列を組み立てない。**改行やインデントがそのまま空白として出て、
+ * 「令和7年度 ・例年 17〜18.7%」のように中黒の前に隙間ができる。
+ */
+const leadSub = [
+  latest ? seriesWithLabel(latest) : '',
+  rateMin !== null && rateMax !== null && rateMin !== rateMax ? `例年 ${rateMin}〜${rateMax}%` : '',
+]
+  .filter(Boolean)
+  .join('・');
+
+const diffCtx = difficultyContext(entity.slug);
+
+/**
+ * 2層目のタブ。
+ *
+ * **なぜ4つで、なぜこの切り方か**
+ * 節を「データの種類」ではなく**読者の目的**でまとめる。
+ * 以前の目次は「合格率の推移 / 合格点 / 都道府県別」と、
+ * うちが持っているデータの名前を12個並べていた。
+ * 読者は「合格点のデータ」を探しに来たのではなく、
+ * 「受かるのか」「間に合うのか」を知りに来ている。
+ *
+ * hint に件数や日付を出して、**開く前に中身の見当がつく**ようにする。
+ * ラベルだけのタブは、押してみるまで何があるか分からない。
+ */
+const panels = [
+  {
+    id: 'panel-data',
+    label: '数字で見る',
+    hint: `合格率・推移${hasRegional ? '・都道府県別' : ''}`,
+  },
+  {
+    id: 'panel-prep',
+    label: '受けるには',
+    hint: entity.next_exam ? `次は ${entity.next_exam.date.slice(5, 10).replace('-', '/')}` : '日程・学習ペース',
+  },
+  { id: 'panel-people', label: 'みんなの記録', hint: '書き込み・合格報告' },
+  { id: 'panel-rules', label: '制度と出典', hint: `試験のしくみ・出典${uniqueSources.length}件` },
+];
 ---
 
 <BaseLayout title={title} description={description} ogType="article" hasUserData={true} hasAffiliate={hasAffiliate}>
   <StructuredData slot="head" entity={entity} canonical={canonical} origin={origin} />
-  <article class="page">
-    <nav class="crumbs" aria-label="パンくず">
-      <a href="/">ホーム</a> <span aria-hidden="true">/</span>
-      <span>{entity.category}</span> <span aria-hidden="true">/</span>
-      <span aria-current="page">{entity.short_name}</span>
-    </nav>
 
-    <header class="hd">
+  {/*
+    2026-07-27 レイアウトを作り替えた。
+
+    それまでは13節が46remの1カラムに区切りなく積まれ、モバイル375px幅で
+    **全長11,649px = 14.3画面**、しかもページ内の移動手段が1つも無かった。
+    さらに節の順序が読者の目的と逆で、「宅建 合格率」で来た人が合格率の表に
+    届くまで4,296px スクロールする必要があった。
+
+    直したのは3つ。**追従する目次**を足し、**検索意図の順**に並べ替え、
+    デスクトップでは**本文とレールの2カラム**にした。
+  */}
+  <div class="layout">
+    <header class="pagehead">
+      <nav class="crumbs" aria-label="パンくず">
+        <a href="/">ホーム</a> <span aria-hidden="true">/</span>
+        <span>{entity.category}</span> <span aria-hidden="true">/</span>
+        <span aria-current="page">{entity.short_name}</span>
+      </nav>
+
       <h1>{entity.name}</h1>
-      <p class="lede">
-        実施団体が公表している受験者数・合格率と、試験制度の要点をまとめています。
-        数値はすべて出典を明記しています。
-      </p>
       <ul class="meta">
         <li>実施: <a href={entity.authority.url} rel="noopener">{entity.authority.name}</a></li>
         <li>{entity.category}</li>
       </ul>
-      {entity.authority_note && <p class="authority-note">{entity.authority_note}</p>}
-    </header>
 
-    {primary && latest && (
-      <section class="summary" aria-labelledby="h-summary">
-        <h2 id="h-summary">数字で見る{entity.short_name}</h2>
-        <p class="src-note">
-          このセクションの数値はすべて<strong>実施団体の公表資料</strong>によるものです。
-          利用者の投稿データは含みません。
-        </p>
-        <div class="tiles">
-          <div class="tile official">
-            <span class="tile-label">受験者数</span>
-            <span class="tile-value">{num.format(latest.examinees ?? 0)}<span class="unit">人</span></span>
-            <span class="tile-sub">{seriesWithLabel(latest)}</span>
-          </div>
-          <div class="tile official">
-            <span class="tile-label">合格率</span>
-            <span class="tile-value">{latest.pass_rate !== null ? latest.pass_rate.toFixed(1) : '—'}<span class="unit">%</span></span>
-            <span class="tile-sub">
-              {primaryLabel
-                ? primaryLabel
-                : trend && trend.diff !== 0
-                  ? `直近5期平均より${trend.diff > 0 ? '+' : ''}${trend.diff}pt`
-                  : seriesLabel(latest)}
+      {/*
+        **見出しの直後に数字を置く。**
+
+        以前はここが「見出し → 説明のリード文2行 → 実施団体 → やっと数字」だった。
+        このページに来る検索語は「◯◯ 合格率」であり、**答えを持っているのに
+        自己紹介を先に読ませていた。**
+
+        調査でも、民間のデータ訴求ページは要点の箱で数字を即出す型だった
+        (studying.jp は見出し直下の箱に「合格点33点・合格率18.7%」を置いている)。
+        逆に説明を先に置くのは、官公庁のように数字をPDFに預けているページである。
+
+        リード文はここから下に降ろした。読む人は先に答えを受け取り、
+        「これは何のページか」は数字を見た後で確かめればよい。
+      */}
+      {primary && latest && (
+        <div class="keynums" id="summary">
+          <div class="keynum keynum--lead">
+            <span class="k-label">合格率</span>
+            <span class="k-value">
+              {latest.pass_rate !== null ? latest.pass_rate.toFixed(1) : '—'}<span class="k-unit">%</span>
             </span>
+            {/*
+              **合格率の幅は合格率の下に置く。**
+              一度これを受験者数の下に置いてしまい、「245,462人 / 例年17〜18.7%」という
+              数字と無関係な説明が並んだ。数字の直下の小さい字は、
+              **その数字が何なのかを説明するもの**であって、別の指標を入れる場所ではない。
+            */}
+            <span class="k-sub">{leadSub}</span>
           </div>
-          {entity.exam.fee_yen !== null && (
-            <div class="tile official">
-              <span class="tile-label">受験手数料</span>
-              <span class="tile-value">{num.format(entity.exam.fee_yen)}<span class="unit">円</span></span>
-              {/*
-                fee_note があれば一律「改定あり」と出していたが、注記の中身は改定とは限らない。
-                消防設備士は「消費税は非課税」という注記で、改定の話ではないのに
-                「改定あり(下記参照)」と表示されていた。中身を見て出し分ける。
-              */}
-              <span class="tile-sub">
-                {entity.exam.fee_note?.includes('改定') ? '改定あり(下記参照)' : entity.exam.fee_note ? '注記あり(下記参照)' : '公式発表'}
-              </span>
+          <div class="keynum">
+            <span class="k-label">受験者数</span>
+            <span class="k-value">{num.format(latest.examinees ?? 0)}<span class="k-unit">人</span></span>
+            <span class="k-sub">{seriesLabel(latest)}</span>
+          </div>
+          {latest.passers !== null && (
+            <div class="keynum">
+              <span class="k-label">合格者数</span>
+              <span class="k-value">{num.format(latest.passers)}<span class="k-unit">人</span></span>
+              <span class="k-sub">{seriesLabel(latest)}</span>
             </div>
           )}
-          {entity.exam.duration_minutes !== null && (
-            <div class="tile official">
-              <span class="tile-label">試験時間</span>
-              <span class="tile-value">{entity.exam.duration_minutes}<span class="unit">分</span></span>
-              <span class="tile-sub">{entity.exam.questions ? `${entity.exam.questions}問` : '公式発表'}</span>
+          {entity.next_exam && (
+            <div class="keynum">
+              <span class="k-label">次の試験日</span>
+              <span class="k-value k-value--date">
+                <time datetime={entity.next_exam.date}>{entity.next_exam.date.slice(0, 10).replace(/-/g, '/')}</time>
+              </span>
+              <span class="k-sub"><a href="#schedule">申込の締切を見る</a></span>
             </div>
           )}
         </div>
-      </section>
-    )}
+      )}
 
-    <NextExamBox entity={entity} />
+      <p class="lede">
+        実施団体が公表している受験者数・合格率と、試験制度の要点をまとめています。
+        数値はすべて出典を明記しています。利用者の投稿データは公式統計と混ぜていません。
+      </p>
+      {entity.authority_note && <p class="authority-note">{entity.authority_note}</p>}
+    </header>
 
     {/*
-      **学習ペースツールより手前**に置く。
+      **ここから下が2層目。**
 
-      投稿CTAがページ先頭から約3,700px下にあり、検索で来た人はそこまで届いていなかった(B-029)。
-      ペースツールの直後に置いたときは 2,801px で、まだ深かった(375px幅で実測)。
-      ペースツール自身が 1,252px あるため、その手前に出すと 1,549px まで上がる。
-
-      読む順としても「試験日はいつか → 他の人は何に詰まっているか → 自分は間に合うか」
-      でつながる。ここに来るのは受験前・勉強中の人であり(ADR-016)、
-      その人に最初に渡すべきものを上に置く。
+      1層目(上の pagehead)は常時表示で、検索で来た人の問いに答える数字だけを置く。
+      2層目はタブで切り替える。縦に13画面積むのをやめた理由は長さではなく、
+      **深い節が誰にも届かないから**である。書き込み欄はページ先頭から約6,000px
+      (7画面目)にあり、検索で来た人がそこまでスクロールする理由が無かった。
+      タブにすると、6,000px下にあった節が1画面目のラベルになる。
+      隠すためではなく、届かせるために切り替える。
     */}
-    <StudyBoard entitySlug={entity.slug} entityShortName={entity.short_name} />
+    <PanelTabs items={panels} />
 
-    <StudyPaceTool entityName={entity.short_name} snapshot={snapshot} />
+    <article class="page">
 
+    <div class="panel-group" data-panel id="panel-data">
+      {/*
+        **数字の直後に「で、それは難しいのか」を置く。**
+        冒頭で合格率を大きく出しておきながら、このサイトはそれが難関を意味するのか
+        どうかを一度も答えていなかった。比べる相手の無い数字は判断材料にならない。
+      */}
+      {diffCtx && (
+        <DifficultyContext
+          context={diffCtx}
+          entityShortName={entity.short_name}
+          currentSlug={entity.slug}
+        />
+      )}
+
+    <div class="sec" data-source="official" id="stats">
     {blocks.map((block) => (
       <section class="stats" aria-labelledby={`h-${block.key}`}>
         <h2 id={`h-${block.key}`}>
@@ -282,55 +371,121 @@ const canonical = new URL(Astro.url.pathname, origin).href;
         />
       </section>
     ))}
+    </div>
 
     {entity.passing_score_history && (
-      <PassingScoreTable history={entity.passing_score_history} entityShortName={entity.short_name} />
+      <div class="sec" data-source="official" id="scores">
+        <PassingScoreTable history={entity.passing_score_history} entityShortName={entity.short_name} />
+      </div>
     )}
 
-    {entity.regional_stats && latest?.pass_rate !== null && latest?.pass_rate !== undefined && (
-      <RegionalStatsTable
-        regional={entity.regional_stats}
-        entityShortName={entity.short_name}
-        nationalRate={latest.pass_rate}
-      />
+    {hasRegional && entity.regional_stats && latest?.pass_rate != null && (
+      <div class="sec" data-source="official" id="regional">
+        <RegionalStatsTable
+          regional={entity.regional_stats}
+          entityShortName={entity.short_name}
+          nationalRate={latest.pass_rate}
+        />
+      </div>
     )}
+    </div>
 
-    <CourseCta entitySlug={entity.slug} entityName={entity.short_name} />
+    <div class="panel-group" data-panel id="panel-prep">
+      {hasSchedule && (
+        <div class="sec" data-source="official" id="schedule">
+          <NextExamBox entity={entity} />
+        </div>
+      )}
 
-    {/*
-      個別の合格報告は**1件目から**出す。統計値(中央値・分布)は20件まで出さない。
-      この2つを混同して個別の報告まで隠していたのが、投稿が集まらない設計の原因だった。
-    */}
-    <RecentReports snapshot={snapshot} entityShortName={entity.short_name} />
+      <div class="sec" data-source="tool" id="tool">
+        <StudyPaceTool entityName={entity.short_name} snapshot={snapshot} />
+      </div>
 
-    <ReportForm entitySlug={entity.slug} entityName={entity.short_name} />
+      {/*
+        講座リンク(広告)。「準備する」のタブに置く。
 
-    <section class="qa" aria-labelledby="h-qa">
+        **P-006 の条件は、これで変わる。**(SATを8ページに置いてもクリックは出ない/判定日 8/27)
+        2回のあいだ「実験中だから動かさない」と判断を先送りしてきたが、
+        P-006 が0クリックを予測している理由は**流入がゼロだから**であって、置き場所ではない。
+        流入が0のままなら、置き場所に関わらず結果は0になる。
+        つまり位置を固定して守っていた情報は、初めから存在しない。
+        レイアウトを人質にする理由が無いので動かし、P-006 には交絡を注記する。
+      */}
+      <CourseCta entitySlug={entity.slug} entityName={entity.short_name} />
+
+      {hasTextbooks && (
+        <div class="sec" data-source="reference" id="textbooks">
+          <TextbookList entity={entity} />
+        </div>
+      )}
+    </div>
+
+    <div class="panel-group" data-panel id="panel-people">
+      <div class="sec" data-source="user" id="board">
+        <SourceChip kind="user" detail="登録不要・掲載前に機械判定" />
+        <StudyBoard entitySlug={entity.slug} entityShortName={entity.short_name} />
+      </div>
+
+      {/*
+        個別の合格報告は**1件目から**出す。統計値(中央値・分布)は20件まで出さない。
+        この2つを混同して個別の報告まで隠していたのが、投稿が集まらない設計の原因だった。
+      */}
+      <div class="sec" data-source="user" id="report">
+        <SourceChip kind="user" detail="合格した人の自己申告" sampleSize={snapshot.totalReports} />
+        <RecentReports snapshot={snapshot} entityShortName={entity.short_name} />
+        <ReportForm entitySlug={entity.slug} entityName={entity.short_name} />
+      </div>
+    </div>
+
+    <div class="panel-group" data-panel id="panel-rules">
+
+    <section class="qa sec" data-source="reference" id="faq" aria-labelledby="h-qa">
       <h2 id="h-qa">試験のしくみ</h2>
 
-      <div class="q">
-        <h3>誰でも受験できますか</h3>
-        <p>{entity.exam.eligibility}</p>
-        {sourceFor(entity, 'eligibility') && (
-          <SourceLink href={sourceFor(entity, 'eligibility')!} label="受験資格(公式)" accessedAt={entity.exam.retrieved_at} />
-        )}
-      </div>
+      {/*
+        **開閉式にした理由**(2026-07-27)
 
-      <div class="q">
-        <h3>どんな形式の試験ですか</h3>
-        <p>{entity.exam.format}</p>
-        {sourceFor(entity, 'format') && (
-          <SourceLink href={sourceFor(entity, 'format')!} label="試験の方法(公式)" accessedAt={entity.exam.retrieved_at} />
-        )}
-      </div>
+        この節は7〜9問が全て開いた状態で 1,391px あり、ページ全体の12%を占めていた。
+        しかも読者が実際に知りたい問いは1〜2個で、残りは通り過ぎるだけである。
 
-      <div class="q">
-        <h3>何点取れば合格ですか</h3>
-        <p>{entity.exam.passing_criteria}</p>
-        {sourceFor(entity, 'passing_criteria') && (
-          <SourceLink href={sourceFor(entity, 'passing_criteria')!} label="合格基準(公式)" accessedAt={entity.exam.retrieved_at} />
-        )}
-      </div>
+        隠すことによる検索面の不利は無い。Google は隠しテキストの規定において
+        「開閉するアコーディオン/タブのコンテンツ」を明示的に対象外としている:
+        https://developers.google.com/search/docs/advanced/guidelines/hidden-text-links
+
+        ただし**条件がある。中身がHTMLに実在すること。**
+        JSで後から挿入する作りにすると、この免除は効かない。
+        だからここは全てサーバ側で描画し、details の中に最初から入れておく。
+        最初の1問だけ open にして、節が空に見えないようにする。
+      */}
+      <details class="q" open>
+        <summary><h3>誰でも受験できますか</h3></summary>
+        <div class="a">
+          <p>{entity.exam.eligibility}</p>
+          {sourceFor(entity, 'eligibility') && (
+            <SourceLink href={sourceFor(entity, 'eligibility')!} label="受験資格(公式)" accessedAt={entity.exam.retrieved_at} />
+          )}
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><h3>どんな形式の試験ですか</h3></summary>
+        <div class="a">
+          <p>{entity.exam.format}</p>
+          {sourceFor(entity, 'format') && (
+            <SourceLink href={sourceFor(entity, 'format')!} label="試験の方法(公式)" accessedAt={entity.exam.retrieved_at} />
+          )}
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><h3>何点取れば合格ですか</h3></summary>
+        <div class="a">
+          <p>{entity.exam.passing_criteria}</p>
+          {sourceFor(entity, 'passing_criteria') && (
+            <SourceLink href={sourceFor(entity, 'passing_criteria')!} label="合格基準(公式)" accessedAt={entity.exam.retrieved_at} />
+          )}
+        </div>
+      </details>
 
       {/*
         科目免除。**出典だけ載せて本文を出していなかった。**
@@ -338,13 +493,15 @@ const canonical = new URL(Astro.url.pathname, origin).href;
         最も実用的な情報が読者に届いていなかった(出典一覧にだけ現れていた)。
       */}
       {entity.exam.exemption && (
-        <div class="q">
-          <h3>免除される科目はありますか</h3>
-          <p>{entity.exam.exemption}</p>
-          {sourceFor(entity, 'exemption') && (
-            <SourceLink href={sourceFor(entity, 'exemption')!} label="科目免除(公式)" accessedAt={entity.exam.retrieved_at} />
-          )}
-        </div>
+        <details class="q">
+          <summary><h3>免除される科目はありますか</h3></summary>
+          <div class="a">
+            <p>{entity.exam.exemption}</p>
+            {sourceFor(entity, 'exemption') && (
+              <SourceLink href={sourceFor(entity, 'exemption')!} label="科目免除(公式)" accessedAt={entity.exam.retrieved_at} />
+            )}
+          </div>
+        </details>
       )}
 
       {/*
@@ -352,65 +509,75 @@ const canonical = new URL(Astro.url.pathname, origin).href;
         受験を決める前に知る必要がある情報なので、独立した問いとして出す。
       */}
       {entity.exam.license_requirement && (
-        <div class="q">
-          <h3>合格すれば免許はもらえますか</h3>
-          <p>{entity.exam.license_requirement}</p>
-          {entity.exam.license_requirement_note && (
-            <p class="aside"><span class="hint">{entity.exam.license_requirement_note}</span></p>
-          )}
-          {sourceFor(entity, 'license_requirement') && (
-            <SourceLink href={sourceFor(entity, 'license_requirement')!} label="免許交付の要件(公式)" accessedAt={entity.exam.retrieved_at} />
-          )}
-        </div>
+        <details class="q">
+          <summary><h3>合格すれば免許はもらえますか</h3></summary>
+          <div class="a">
+            <p>{entity.exam.license_requirement}</p>
+            {entity.exam.license_requirement_note && (
+              <p class="aside"><span class="hint">{entity.exam.license_requirement_note}</span></p>
+            )}
+            {sourceFor(entity, 'license_requirement') && (
+              <SourceLink href={sourceFor(entity, 'license_requirement')!} label="免許交付の要件(公式)" accessedAt={entity.exam.retrieved_at} />
+            )}
+          </div>
+        </details>
       )}
 
       {entity.exam.subjects && entity.exam.subjects.length > 0 && (
-        <div class="q">
-          <h3>どんな科目が出ますか</h3>
-          <ul class="subjects">
-            {entity.exam.subjects.map((s) => <li>{s}</li>)}
-          </ul>
-          {sourceFor(entity, 'subjects') && (
-            <SourceLink href={sourceFor(entity, 'subjects')!} label="試験科目(公式)" accessedAt={entity.exam.retrieved_at} />
-          )}
-        </div>
+        <details class="q">
+          <summary><h3>どんな科目が出ますか</h3></summary>
+          <div class="a">
+            <ul class="subjects">
+              {entity.exam.subjects.map((s) => <li>{s}</li>)}
+            </ul>
+            {sourceFor(entity, 'subjects') && (
+              <SourceLink href={sourceFor(entity, 'subjects')!} label="試験科目(公式)" accessedAt={entity.exam.retrieved_at} />
+            )}
+          </div>
+        </details>
       )}
 
-      <div class="q">
-        <h3>いつ受験できますか</h3>
-        <p>{entity.exam.frequency}</p>
-        {entity.schedule_url && (
-          <p class="aside">
-            <a href={entity.schedule_url} rel="noopener">試験日程の確認ページ</a>
-            {entity.schedule_url_note && <span class="hint">{entity.schedule_url_note}</span>}
-          </p>
-        )}
-      </div>
-
-      <div class="q">
-        <h3>合否はいつ、どう分かりますか</h3>
-        <p>{entity.exam.result_announcement}</p>
-        {sourceFor(entity, 'result_announcement') && (
-          <SourceLink href={sourceFor(entity, 'result_announcement')!} label="合格発表(公式)" accessedAt={entity.exam.retrieved_at} />
-        )}
-      </div>
-
-      {entity.exam.fee_yen !== null && (
-        <div class="q">
-          <h3>費用はいくらかかりますか</h3>
-          <p>
-            受験手数料は{num.format(entity.exam.fee_yen)}円です。
-            {entity.exam.fee_note}
-          </p>
-          {sourceFor(entity, 'fee_yen') && (
-            <SourceLink href={sourceFor(entity, 'fee_yen')!} label="受験手数料(公式)" accessedAt={entity.exam.retrieved_at} />
+      <details class="q">
+        <summary><h3>いつ受験できますか</h3></summary>
+        <div class="a">
+          <p>{entity.exam.frequency}</p>
+          {entity.schedule_url && (
+            <p class="aside">
+              <a href={entity.schedule_url} rel="noopener">試験日程の確認ページ</a>
+              {entity.schedule_url_note && <span class="hint">{entity.schedule_url_note}</span>}
+            </p>
           )}
         </div>
+      </details>
+
+      <details class="q">
+        <summary><h3>合否はいつ、どう分かりますか</h3></summary>
+        <div class="a">
+          <p>{entity.exam.result_announcement}</p>
+          {sourceFor(entity, 'result_announcement') && (
+            <SourceLink href={sourceFor(entity, 'result_announcement')!} label="合格発表(公式)" accessedAt={entity.exam.retrieved_at} />
+          )}
+        </div>
+      </details>
+
+      {entity.exam.fee_yen !== null && (
+        <details class="q">
+          <summary><h3>費用はいくらかかりますか</h3></summary>
+          <div class="a">
+            <p>
+              受験手数料は{num.format(entity.exam.fee_yen)}円です。
+              {entity.exam.fee_note}
+            </p>
+            {sourceFor(entity, 'fee_yen') && (
+              <SourceLink href={sourceFor(entity, 'fee_yen')!} label="受験手数料(公式)" accessedAt={entity.exam.retrieved_at} />
+            )}
+          </div>
+        </details>
       )}
     </section>
 
     {relatedGuides.length > 0 && (
-      <section class="guides" aria-labelledby="h-guides">
+      <section class="guides sec" data-source="reference" aria-labelledby="h-guides">
         <h2 id="h-guides">ほかの区分と比べる</h2>
         <ul>
           {relatedGuides.map((g) => (
@@ -423,15 +590,27 @@ const canonical = new URL(Astro.url.pathname, origin).href;
       </section>
     )}
 
-    <TextbookList entity={entity} />
+    {/*
+      **出典の一覧を畳む(2026-07-28)。**
 
-    <section class="sources" aria-labelledby="h-sources">
+      ここは生URLの羅列で492pxあった。しかし**出典はすでに各節の中に
+      個別に置かれている**(SourceLink)。読者が「この数字の根拠は」と思ったとき
+      見るのは、その数字のすぐ下の出典であって、ページ末尾の一覧ではない。
+
+      一覧そのものは残す。全部まとめて確認したい人と、
+      掲載方針を検めたい人のためにある。ただし既定で開いておく必要はない。
+      折りたたんでも中身はHTMLに実在するので、検索面での扱いは変わらない
+      (Google の隠しテキスト規定はアコーディオンを明示的に対象外としている)。
+    */}
+    <section class="sources sec" data-source="reference" id="sources" aria-labelledby="h-sources">
       <h2 id="h-sources">このページの出典</h2>
-      <p>
-        掲載している数値と制度の説明は、すべて下記の公表資料にもとづいています。
+      <p class="src-intro">
+        掲載している数値と制度の説明は、すべて実施団体の公表資料にもとづいています。
         取得日は{entity.exam.retrieved_at}です。試験制度は改定されることがあるため、
-        出願前には必ず実施団体の最新の案内を確認してください。
+        <strong>出願前には必ず実施団体の最新の案内を確認してください。</strong>
       </p>
+      <details class="src-all">
+        <summary>出典{uniqueSources.length}件をまとめて見る</summary>
       <ul>
         {uniqueSources.map(({ url, labels }) => (
           <li>
@@ -440,17 +619,85 @@ const canonical = new URL(Astro.url.pathname, origin).href;
           </li>
         ))}
       </ul>
+      </details>
       {entity.public_note && <p class="notes">{entity.public_note}</p>}
     </section>
-  </article>
+    </div>
+    </article>
+  </div>
 </BaseLayout>
 
 <style>
-  .page {
+  /*
+   * ============================================================
+   * 1カラム。全ての画面幅で。
+   * ============================================================
+   * ここには以前「本文44rem + 追従レール13rem」の2カラムグリッドがあった。
+   * 目次をレールに置いていた頃の名残である。
+   *
+   * **2026-07-28 に目次をタブへ差し替えたとき、このCSSを消し忘れた。**
+   * `<aside class="rail">` を消して `<PanelTabs>` を置いたので、
+   * タブが自動配置で**右のレール列(13rem)に落ちた。**
+   * 横一列で置くはずのタブが縦に積まれ、`white-space: nowrap` と
+   * `overflow-x: auto` によってラベルが「みノ」「書き」と切れた状態で
+   * 本番に出た(オーナーの画面で発覚)。
+   *
+   * **原因は消し忘れそのものより、確認の穴である。**
+   * タブ化の後、375px でしか実測せず、デスクトップ幅を一度も見ていなかった。
+   * レイアウトを変えたら、**切り替わる境界の両側を必ず見ること。**
+   *
+   * タブは本文の上に横一列で置くものなので、レール列そのものが要らない。
+   */
+  .layout {
+    display: block;
+    /* 本文の測定幅。日本語は1行40〜45字を超えると次の行の頭を見失いやすい */
     max-width: 46rem;
-    margin: 0 auto;
-    padding: var(--space-4);
+    margin-inline: auto;
   }
+
+  .page {
+    min-width: 0;
+  }
+
+  .pagehead {
+    margin-bottom: var(--space-4);
+  }
+
+  /*
+   * 節の区切り。
+   *
+   * 以前は全13節が同じ余白で並び、どこで話題が変わったのか分からなかった。
+   * 見出しの文字サイズだけでは、14画面ぶんスクロールする読者に切れ目は伝わらない。
+   * 節の頭に余白と細い罫線を入れて、視覚的な段落として立てる。
+   */
+  .sec {
+    scroll-margin-top: 4.5rem;
+  }
+  /*
+   * **面が区切りを担うので、罫線と余白を返す。**
+   *
+   * 以前は節と節の間が margin 64px + padding 32px + 罫線 = 96px あり、
+   * 10節ぶんで 960px を区切りだけに使っていた。しかも全節が同じ白い箱だったので、
+   * その96pxが唯一の区切りだった。
+   * いまは出所ごとに面の色が変わるため、隣り合う節は色の違いで分かれる。
+   * 二重に区切る必要はない。
+   */
+  .sec + .sec,
+  .sec + :global(section) {
+    margin-top: var(--space-5);
+  }
+  /* 面を持たない節どうしが隣り合うときだけ、罫線で切る */
+  .sec[data-source='reference'] + .sec[data-source='reference'] {
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
+    border-top: var(--border-thin);
+  }
+  /*
+   * ここには「64rem 以上ではレールに目次が出るので逃げが要らない」という
+   * 上書きがあったが、レールごと廃止した。
+   * タブは全ての幅で上端に貼り付くので、逃げは常に必要である。
+   */
+
   .crumbs {
     font-size: var(--fs-xs);
     color: var(--color-text-muted);
@@ -459,14 +706,76 @@ const canonical = new URL(Astro.url.pathname, origin).href;
     flex-wrap: wrap;
     margin-bottom: var(--space-4);
   }
-  .hd h1 {
+  .pagehead h1 {
     font-size: var(--fs-2xl);
     line-height: var(--lh-heading);
-    margin: 0 0 var(--space-3);
+    margin: 0 0 var(--space-2);
   }
+  /*
+   * リード文は数字より下。**大きさも本文より落とす。**
+   * ここはページの自己紹介であって、読者が探しに来たものではない。
+   */
   .lede {
     color: var(--color-text-muted);
-    margin: 0 0 var(--space-3);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    margin: var(--space-5) 0 0;
+  }
+
+  /* --- 冒頭の要点(数字を最初の1画面に出す) --------------------------- */
+  .keynums {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+    gap: 1px;
+    margin-top: var(--space-5);
+    /*
+     * 罫線を「隙間」で描く。枠を1つずつ持たせると、
+     * 既に箱だらけのページに箱がもう4つ増える。
+     */
+    background: var(--color-border);
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-official);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .keynum {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface);
+  }
+  /* 合格率だけは一段大きい。このページで最も検索されている数字である */
+  .keynum--lead {
+    grid-column: span 2;
+  }
+  .k-label {
+    font-size: var(--fs-2xs);
+    color: var(--color-text-muted);
+    letter-spacing: 0.06em;
+  }
+  .k-value {
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-bold);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .keynum--lead .k-value {
+    font-size: var(--fs-3xl);
+    color: var(--color-official-strong);
+  }
+  .k-value--date {
+    font-size: var(--fs-lg);
+  }
+  .k-unit {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-normal);
+    margin-left: 0.1em;
+    color: var(--color-text-muted);
+  }
+  .k-sub {
+    font-size: var(--fs-2xs);
+    color: var(--color-text-muted);
   }
   .meta {
     list-style: none;
@@ -489,7 +798,12 @@ const canonical = new URL(Astro.url.pathname, origin).href;
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   }
 
-  section {
+  /*
+   * 節どうしの間隔は .sec + .sec が持つ。
+   * ここでは #stats の中に複数の統計ブロック(統一試験 / ネット試験など)が
+   * 並ぶ場合の、ブロック間の間隔だけを見る。
+   */
+  .stats + .stats {
     margin-top: var(--space-7);
   }
   h2 {
@@ -502,12 +816,7 @@ const canonical = new URL(Astro.url.pathname, origin).href;
     margin: 0 0 var(--space-2);
   }
 
-  .src-note,
-  .finding {
-    font-size: var(--fs-sm);
-    color: var(--color-text-muted);
-    margin: 0 0 var(--space-4);
-  }
+
   .finding {
     color: var(--color-text);
     background: var(--color-official-bg);
@@ -516,43 +825,14 @@ const canonical = new URL(Astro.url.pathname, origin).href;
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   }
 
-  .tiles {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-    gap: var(--space-3);
-  }
-  .tile {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    padding: var(--space-3) var(--space-4);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
-  }
+
+
   /* 公式統計は左罫線で出所を示す。ユーザー投稿は別色・破線にして混同を防ぐ */
-  .tile.official {
-    border-left: 4px solid var(--color-official);
-  }
-  .tile-label {
-    font-size: var(--fs-xs);
-    color: var(--color-text-muted);
-  }
-  .tile-value {
-    font-size: var(--fs-2xl);
-    font-weight: var(--fw-bold);
-    font-variant-numeric: tabular-nums;
-    line-height: 1.15;
-  }
-  .tile-value .unit {
-    font-size: var(--fs-sm);
-    font-weight: var(--fw-normal);
-    margin-left: 0.15em;
-  }
-  .tile-sub {
-    font-size: var(--fs-2xs);
-    color: var(--color-text-muted);
-  }
+
+
+
+
+
 
   .table-wrap {
     overflow-x: auto;
@@ -595,13 +875,53 @@ const canonical = new URL(Astro.url.pathname, origin).href;
     font-weight: var(--fw-normal);
   }
 
+  /* --- 開閉式の問答 --------------------------------------------------- */
   .q {
-    padding: var(--space-4) 0;
     border-bottom: 1px solid var(--color-border);
+  }
+  .q > summary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    /* タップ目標44px(掟:指で押せない導線は無いのと同じ) */
+    min-height: 44px;
+    padding: var(--space-3) 0;
+    cursor: pointer;
+    list-style: none;
+  }
+  .q > summary::-webkit-details-marker {
+    display: none;
+  }
+  /* 開閉の向きを示す三角。CSSだけで描く(画像を足さない) */
+  .q > summary::before {
+    content: '';
+    flex: none;
+    width: 0.45em;
+    height: 0.45em;
+    border-right: 2px solid var(--color-text-muted);
+    border-bottom: 2px solid var(--color-text-muted);
+    transform: rotate(-45deg);
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+  .q[open] > summary::before {
+    transform: rotate(45deg);
+  }
+  .q > summary:hover h3 {
+    color: var(--color-link);
+  }
+  .q > summary h3 {
+    margin: 0;
+    font-size: var(--fs-md);
+  }
+  .q .a {
+    padding: 0 0 var(--space-4) calc(0.45em + var(--space-3));
   }
   .q p {
     margin: 0 0 var(--space-2);
     line-height: var(--lh-normal);
+  }
+  .q .a > :last-child {
+    margin-bottom: 0;
   }
   .aside {
     font-size: var(--fs-sm);
@@ -616,6 +936,18 @@ const canonical = new URL(Astro.url.pathname, origin).href;
     font-size: var(--fs-xs);
     color: var(--color-text-muted);
     line-height: var(--lh-normal);
+  }
+  .src-intro {
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+  }
+  .src-all > summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    cursor: pointer;
+    font-size: var(--fs-sm);
+    color: var(--color-link);
   }
   .sources ul {
     padding-left: 1.2em;

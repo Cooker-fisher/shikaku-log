@@ -1067,7 +1067,7 @@ function checkPredictions() {
 /** src/lib/entities.ts の KNOWN_ENTITY_TYPES と functions/api/report.ts の SCHEMAS に対応 */
 const KNOWN_ENTITY_TYPES = ['certification'];
 
-const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'social', 'sources', 'claims', 'migration', 'metrics', 'predictions'];
+const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'social', 'tokens', 'money', 'deadcss', 'sources', 'claims', 'migration', 'metrics', 'predictions'];
 
 function report() {
   const errors = findings.filter((f) => f.severity === 'error');
@@ -1137,6 +1137,253 @@ function stampPassed() {
   }
 }
 
+/**
+ * 定義されていないデザイントークンの参照(2026-07-27 新設)
+ *
+ * **なぜ機械で止めるか**
+ * CSSの `var(--存在しない)` は**エラーにならない。**値が無いまま静かに継承値になる。
+ * 実際、`--text-sm` という存在しない名前が10箇所で使われており、
+ * 「小さく出すつもりの注記」が全て本文と同じ16pxで出ていた。
+ * 見た目が少し大きいだけなので、目視レビューでは1か月気づかなかった。
+ *
+ * さらに悪いのは色である。`var(--color-warn-050, #fdf3e3)` のように
+ * ハードコードの予備値を書くと、**ダークモードで予備値が採用される。**
+ * 合格点の注意書きは、ダークモードでコントラスト比 **1.09**(下限は4.5)だった。
+ * 淡色の背景に淡色の文字で、事実上見えていなかった。
+ *
+ * 掟4「1箇所直せば全ページに波及するようコンポーネント化する」は、
+ * トークン名が実在してはじめて成立する。存在しない名前はその仕組みを黙って外す。
+ */
+async function checkCssTokens() {
+  const TOKENS_FILE = 'src/styles/tokens.css';
+  let defined;
+  try {
+    const css = readFileSync(join(ROOT, TOKENS_FILE), 'utf8');
+    defined = new Set([...css.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gim)].map((m) => m[1]));
+  } catch {
+    error('tokens', TOKENS_FILE, 'トークン定義ファイルを読めない');
+    finishCheck('tokens', '未定義のデザイントークン', 0);
+    return;
+  }
+
+  const all = await walk(join(ROOT, 'src'));
+  const files = all.filter((f) => /\.(astro|css|ts)$/.test(f) && !f.endsWith('tokens.css'));
+  let examined = 0;
+
+  for (const file of files) {
+    const text = readFileSync(file, 'utf8');
+    const rel = relative(ROOT, file).replace(/\\/g, '/');
+    examined++;
+
+    for (const m of text.matchAll(/var\(\s*(--[a-z0-9-]+)\s*(,)?/gi)) {
+      const name = m[1];
+      // 自前で定義しているローカル変数(コンポーネント内 :root や .foo { --x: } )は許す
+      if (new RegExp(`${name}\\s*:`).test(text)) continue;
+      if (defined.has(name)) continue;
+
+      const hasFallback = Boolean(m[2]);
+      error(
+        'tokens',
+        rel,
+        `${name} は tokens.css に存在しない` +
+          (hasFallback
+            ? '。予備値が書かれているが、**予備値はダークモードで切り替わらない**ので色に使うと破綻する'
+            : '(値が無いまま継承値になる。エラーにならないので目視では見つからない)'),
+      );
+    }
+  }
+
+  finishCheck('tokens', '未定義のデザイントークン', examined);
+}
+
+/**
+ * 収益経路を持たない資格ページ(2026-07-28 新設)
+ *
+ * **なぜ機械で見るか**
+ * 宅建は掲載中で**受験者数が最大(245,462人)**、10/18試験・7/31申込締切という
+ * 年間最大の商機を持つページでありながら、**広告リンクが0本**だった。
+ * 提携済みのSATが現場系国家資格に特化していて宅建を扱わないためだが、
+ * **3回レイアウトを直しても誰も気づかなかった。**
+ * 見た目の改善は目的関数(月¥15,000)に一切効かないのに、
+ * 効いている気になれる。だから機械に数えさせる。
+ *
+ * WARN に留める理由: 提携の承認はオーナーにしか取れず、
+ * こちらの努力で今すぐ0にはできない。ERROR にすると
+ * 「落ちるのが常態」になって検査そのものが無視される。
+ * ただし**受験者数の多い順に並べて出す**ので、放置すると毎回目に入る。
+ */
+function checkMonetization() {
+  const dir = join(ROOT, 'data', 'entities');
+  if (!existsSync(dir)) {
+    finishCheck('money', '収益経路を持たない資格ページ', 0);
+    return;
+  }
+
+  let config = '';
+  try {
+    config = readFileSync(join(ROOT, 'src', 'config.ts'), 'utf8');
+  } catch {
+    error('money', 'src/config.ts', '設定ファイルを読めない');
+    finishCheck('money', '収益経路を持たない資格ページ', 0);
+    return;
+  }
+
+  const block = config.match(/COURSE_LINKS[^=]*=\s*\{([\s\S]*?)\n\};/);
+  const linked = new Set(
+    [...(block ? block[1] : '').matchAll(/^\s{2}'?([a-z0-9-]+)'?\s*:/gm)].map((m) => m[1]),
+  );
+
+  const rows = [];
+  for (const file of readdirSync(dir).filter((f) => f.endsWith('.json'))) {
+    let e;
+    try {
+      e = JSON.parse(readFileSync(join(dir, file), 'utf8'));
+    } catch {
+      continue;
+    }
+    if (e.draft) continue;
+    /*
+     * 受験者数は主系列の最新値を使う。
+     * **系列は新しい順に並んでいるので先頭を取る**(src/lib/entities.ts の latestSeries と同じ)。
+     * 一度ここを末尾にしていて、全資格が「受験者 0人」と表示され、
+     * 「受験者数の多い順に並べる」という検査の意図が消えていた。
+     */
+    const series = e.official_stats?.series ?? [];
+    const last = series[0];
+    rows.push({
+      slug: e.slug,
+      name: e.short_name ?? e.slug,
+      examinees: typeof last?.examinees === 'number' ? last.examinees : 0,
+      linked: linked.has(e.slug),
+    });
+  }
+
+  const missing = rows.filter((r) => !r.linked).sort((a, b) => b.examinees - a.examinees);
+  for (const r of missing) {
+    warn(
+      'money',
+      `data/entities/${r.slug}.json`,
+      `${r.name}(受験者 ${r.examinees.toLocaleString('ja-JP')}人)に講座リンクが無い。` +
+        `COURSE_LINKS に登録が無いページは、どれだけ読まれても収益が発生しない`,
+    );
+  }
+
+  finishCheck('money', '収益経路を持たない資格ページ', rows.length);
+}
+
+/**
+ * 使われていないCSSセレクタ(2026-07-29 新設)
+ *
+ * ============================================================
+ * なぜ作るか — 実際に本番を壊した
+ * ============================================================
+ * 資格ページの目次を「追従レール(`.rail`)」から「タブ」に差し替えたとき、
+ * **マークアップから `<aside class="rail">` を消しただけで、CSSを消し忘れた。**
+ *
+ * 残っていたのは、レール用の2カラムグリッドである:
+ *   .layout { grid-template-columns: minmax(0,44rem) 13rem }
+ *   .rail   { grid-column: 2; grid-row: 2 }
+ *
+ * `.rail` の規則はどの要素にも当たらなくなったが、**グリッドの列定義は生きていた。**
+ * そこへ新しいタブが自動配置で入り、13rem の右列に押し込まれて縦積みになり、
+ * ラベルが「みノ」「書き」と切れた状態で**本番に出た。**
+ *
+ * `npm run qa` も `smoke` も通っていた。どちらも**見た目を見ていない**からである。
+ *
+ * ============================================================
+ * この検査が捕まえるもの
+ * ============================================================
+ * 崩れそのものは検出できない。しかし**「マークアップから消えたのにCSSが残っている」**
+ * という直前の状態は検出できる。`.rail` は死んだセレクタとして必ず引っかかる。
+ *
+ * レイアウトを変えたら残骸が出る。**残骸が出たことに気づけるようにする。**
+ */
+async function checkDeadSelectors() {
+  if (!existsSync(DIST)) {
+    finishCheck('deadcss', '使われていないCSSセレクタ', 0);
+    return;
+  }
+
+  const files = await walk(DIST);
+  const htmlFiles = files.filter((f) => f.endsWith('.html'));
+  const cssFiles = files.filter((f) => f.endsWith('.css'));
+  if (!htmlFiles.length || !cssFiles.length) {
+    finishCheck('deadcss', '使われていないCSSセレクタ', 0);
+    return;
+  }
+
+  /* 全HTMLに出てくる class と id を集める */
+  const classes = new Set();
+  const ids = new Set();
+  for (const f of htmlFiles) {
+    const html = readFileSync(f, 'utf8');
+    for (const m of html.matchAll(/\sclass="([^"]*)"/g)) {
+      for (const cl of m[1].split(/\s+/)) if (cl) classes.add(cl);
+    }
+    for (const m of html.matchAll(/\sid="([^"]*)"/g)) if (m[1]) ids.add(m[1]);
+  }
+
+  /*
+   * セレクタから .foo / #bar を拾って、1つでもHTMLに在れば「生きている」とみなす。
+   * **緩めに判定する。**JSが後から付けるクラス(is-on / hidden 等)まで
+   * 死んだと言い出すと、警告が多すぎて読まれなくなる。
+   */
+  const JS_ADDED = /^(is-|has-|js-)/;
+
+  /**
+   * **データが揃ったときだけ描画される要素。**
+   *
+   * いま dist に出ていないのは「消し忘れ」ではなく「条件が満たされていない」から。
+   * これを警告し続けると、本物の消し忘れが埋もれて検査そのものが読まれなくなる
+   * (掟 6: 飛ばされる検査は無いのと同じ)。
+   *
+   * **ここに足すときは理由を書くこと。**「とりあえず黙らせる」ために使わない。
+   */
+  const CONDITIONAL = new Map([
+    ['.gauge', '投稿が閾値に達すると出る集計ゲージ(StudyPaceTool)'],
+    ['.gauge-label', '同上'],
+    ['.hours', '合格報告が1件以上あるとき(RecentReports)'],
+    ['.attempts', '同上'],
+    ['.year', '同上'],
+    ['.material', '同上'],
+    ['.card-nostat', '公式統計を持たない資格のカード(トップ)'],
+    ['.item', 'JSが実行時に組み立てる書き込み一覧(/board/)'],
+  ]);
+
+  const dead = new Map();
+  for (const f of cssFiles) {
+    const css = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const m of css.matchAll(/(^|[},])\s*([^{}@]+?)\s*\{/g)) {
+      const selectorList = m[2];
+      if (!selectorList || selectorList.includes(':') === false && !/[.#]/.test(selectorList)) continue;
+      for (const sel of selectorList.split(',')) {
+        const names = [...sel.matchAll(/([.#])([A-Za-z_][\w-]*)/g)];
+        if (!names.length) continue;
+        const alive = names.some(([, sigil, name]) =>
+          sigil === '.' ? classes.has(name) || JS_ADDED.test(name) : ids.has(name),
+        );
+        if (!alive) {
+          const key = names.map(([, s, n]) => s + n).join('');
+          dead.set(key, (dead.get(key) ?? 0) + 1);
+        }
+      }
+    }
+  }
+
+  for (const [sel] of [...dead].sort()) {
+    if (CONDITIONAL.has(sel)) continue;
+    warn(
+      'deadcss',
+      'dist/_astro/*.css',
+      `${sel} はどのページのHTMLにも存在しない。` +
+        `マークアップを変えてCSSを消し忘れていないか確認すること` +
+        `(消し忘れたグリッド定義が本番のレイアウトを壊した実績がある)`,
+    );
+  }
+
+  finishCheck('deadcss', '使われていないCSSセレクタ', cssFiles.length);
+}
+
 async function main() {
   await checkSecrets();
 
@@ -1162,6 +1409,9 @@ async function main() {
   checkPhrases(pages);
   checkPlaceholders(pages);
   checkSocialCard(pages);
+  await checkCssTokens();
+  checkMonetization();
+  await checkDeadSelectors();
   checkSources();
   checkNegativeClaims();
   checkMigrations();

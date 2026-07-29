@@ -1,0 +1,84 @@
+---
+/**
+ * 「この数字は誰が出したものか」を**文字で**言う小さな札。
+ *
+ * **なぜ色と枠だけに任せないか(2026-07-28 の批評指摘)**
+ * 出所ごとに面の色を変えていたが、読者はその対応表を教わっていない。
+ * 「白い箱は実施団体の公表値、橙の箱は利用者の自己申告」という約束は
+ * 設計者の頭の中にしか無く、凡例も説明も出していなかった。
+ * 学習を要求する記号は、学習の機会が無ければただの装飾である。
+ *
+ * 形(実線/破線/点線)で区別する対策も入れたが、それも規約にすぎない。
+ * **最後は文字で言う。**1行増えても、誤読の代償のほうが大きい。
+ *
+ * 掟 3-4「ユーザー投稿データは『自己申告に基づく』と必ず明記する」は、
+ * まさにこれを要求している。色で暗示することは明記ではない。
+ */
+interface Props {
+  kind: 'official' | 'user' | 'derived';
+  /** 実施団体名など、出所を具体的に言えるときに添える */
+  detail?: string;
+  /** 件数。利用者データでは n を必ず出す(掟 3-5) */
+  sampleSize?: number;
+}
+const { kind, detail, sampleSize } = Astro.props;
+
+const LABEL: Record<Props['kind'], string> = {
+  official: '実施団体の公表値',
+  user: '利用者の投稿(自己申告)',
+  derived: 'このサイトの集計',
+};
+---
+
+<p class="chip" data-chip={kind}>
+  <span class="chip-dot" aria-hidden="true"></span>
+  <span class="chip-label">{LABEL[kind]}</span>
+  {detail && <span class="chip-detail">{detail}</span>}
+  {sampleSize !== undefined && <span class="chip-n">n={sampleSize}</span>}
+</p>
+
+<style>
+  .chip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-3);
+    font-size: var(--fs-2xs);
+    line-height: 1.4;
+    color: var(--color-text-muted);
+    letter-spacing: 0.04em;
+  }
+  /* 印は色 + 形。色を落としても3種を見分けられるようにする */
+  .chip-dot {
+    width: 9px;
+    height: 9px;
+    flex: none;
+  }
+  [data-chip='official'] .chip-dot {
+    background: var(--color-official);
+    border-radius: 50%;
+  }
+  [data-chip='user'] .chip-dot {
+    background: var(--color-userdata);
+    /* 四角。丸(公式)と形で違う */
+    border-radius: 1px;
+  }
+  [data-chip='derived'] .chip-dot {
+    background: none;
+    border: 2px dotted var(--color-border-strong);
+    border-radius: 50%;
+  }
+  .chip-label {
+    font-weight: var(--fw-bold);
+  }
+  [data-chip='official'] .chip-label {
+    color: var(--color-official-strong);
+  }
+  [data-chip='user'] .chip-label {
+    color: var(--color-userdata-strong);
+  }
+  .chip-n {
+    font-variant-numeric: tabular-nums;
+  }
+</style>

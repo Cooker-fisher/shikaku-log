@@ -71,19 +71,18 @@ const smallCount = ranked.filter((x) => x.examinees < SMALL_N).length;
     全国の合格率{pct(national)}を上回ったのは{above}都道府県でした。
   </p>
 
-  <p class="caveat">
-    上回った県が少なく見えますが、全国の合格率は受験者数で重みづけされるため、
-    受験者の多い都市部に引き寄せられます。
-    実際、上回った{above}都道府県だけで<strong>全受験者の{aboveShare}%</strong>を占めます。
-    平均より低い県だから不利、という意味ではありません。
-  </p>
+  {/*
+    **注記は表の後ろに移した(2026-07-28)。**
 
-  <p class="caveat">
-    受験した都道府県での区分であり、居住地とは限りません。
-    また受験者が{num.format(SMALL_N)}人に満たない県が{smallCount}あり、
-    そうした県は年による振れ幅が大きくなります。<strong>順位は毎年入れ替わります。</strong>
-  </p>
+    ここには表の前に注記が2本(実測270px)積まれていて、512pxの表に対して
+    前置きが567pxあった。ADR-009 が定めた節の形は「結論1文 → 図表 → 出典」であり、
+    注記を結論とデータの間に挟むことは含まれていない。
+    読者は結論を読んだ直後にデータを見たいのであって、
+    データを見る前に注意事項を3つ読まされたいわけではない。
 
+    **消してはいない。**誤読を防ぐ注記はこのサイトの資産であり、
+    表を見た直後に読める位置に置く。
+  */}
   <div class="table-wrap">
     <table>
       <caption>{name} {r.year} 都道府県別(合格率の高い順)</caption>
@@ -113,6 +112,21 @@ const smallCount = ranked.filter((x) => x.examinees < SMALL_N).length;
     </table>
   </div>
 
+  <div class="caveats">
+    <p class="caveat">
+      上回った県が少なく見えますが、全国の合格率は受験者数で重みづけされるため、
+      受験者の多い都市部に引き寄せられます。
+      実際、上回った{above}都道府県だけで<strong>全受験者の{aboveShare}%</strong>を占めます。
+      平均より低い県だから不利、という意味ではありません。
+    </p>
+
+    <p class="caveat">
+      受験した都道府県での区分であり、居住地とは限りません。
+      また受験者が{num.format(SMALL_N)}人に満たない県が{smallCount}あり、
+      そうした県は年による振れ幅が大きくなります。<strong>順位は毎年入れ替わります。</strong>
+    </p>
+  </div>
+
   {r.public_note && <p class="notes">{r.public_note}</p>}
 
   <SourceLink href={r.source_url} label={`${r.year} 都道府県別集計(公式)`} accessedAt={r.retrieved_at} />
@@ -130,11 +144,19 @@ const smallCount = ranked.filter((x) => x.examinees < SMALL_N).length;
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
     margin: 0 0 var(--space-3);
   }
+  /*
+   * 表の後ろに回した注記。**本文と同じ大きさ・同じ行間で出さない。**
+   * 前は fs-sm / 行間1.75 で、注記2本が270pxを占めていた。
+   * 読み飛ばしてよいものと、読むべきものが同じ見た目だと、どちらも読まれない。
+   */
+  .caveats {
+    margin: var(--space-3) 0 var(--space-2);
+  }
   .caveat {
-    font-size: var(--fs-sm);
+    font-size: var(--fs-xs);
     color: var(--color-text-muted);
-    margin: 0 0 var(--space-4);
-    line-height: var(--lh-normal);
+    margin: 0 0 var(--space-2);
+    line-height: var(--lh-heading);
   }
   /* 47行は縦に長い。画面内で収めてスクロールさせる方が全体像を掴みやすい */
   .table-wrap {

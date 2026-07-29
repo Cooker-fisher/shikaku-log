@@ -107,6 +107,8 @@
 
   /* --- レイアウト ------------------------------------------------------- */
   --width-prose: 42rem;
+  /* 表や図が主役で、本文の測定幅(42rem)では窮屈なページ用(比較ページなど) */
+  --width-prose-wide: 56rem;
   --width-content: 64rem;
   --width-wide: 76rem;
   --gutter: var(--space-4);

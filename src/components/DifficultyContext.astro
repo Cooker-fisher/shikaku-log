@@ -1,0 +1,179 @@
+---
+/**
+ * 「で、この合格率は難しいのか」に答える節。
+ *
+ * **なぜ要るか**
+ * ページ冒頭に「合格率 18.7%」と大きく出しているのに、それが難関を意味するのか
+ * どうかをこのサイトは一度も答えていなかった。比べる相手が無い数字は判断材料にならない。
+ * 17資格分の合格率を持ちながら、各ページを孤立した数字置き場にしていた。
+ *
+ * **なぜ順位だけを出し、難易度を断定しないか**
+ * 試験が違えば受験する人も違う。宅建と簿記3級では受験資格も準備度合いも問題の性質も違い、
+ * 合格率の差をそのまま「難しさの差」と読むことはできない。
+ * ここで出すのは**このサイトに載っている範囲での順位という事実だけ**で、
+ * 難易度の断定はしない(掟 3-7)。範囲(◯資格中)は必ず併記する。
+ *
+ * **なぜ隣接する資格を並べるか**
+ * 順位の数字だけでは位置が掴めない。前後の資格名が出ていれば、
+ * 読者が知っている資格を手がかりに自分で判断できる。
+ * 同時に、資格ページどうしが初めて内部リンクで繋がる
+ * (それまで各ページはトップ以外どこにも繋がっていなかった)。
+ *
+ * JSに依存させない(ADR-009 必須要件)。棒はCSSの幅だけで描く。
+ */
+import type { DifficultyContext } from '../lib/context';
+import SourceChip from './SourceChip.astro';
+
+interface Props {
+  context: DifficultyContext;
+  entityShortName: string;
+  currentSlug: string;
+}
+const { context, entityShortName, currentSlug } = Astro.props;
+const { total, rankFromHardest, passRate, min, max, median, peers } = context;
+
+/**
+ * 前後3件ずつを出す。全17件を並べると、この節だけで1画面を使ってしまう。
+ * 端に寄っている資格でも常に同じ件数が出るように、窓の位置を調整する。
+ */
+const WINDOW = 7;
+const idx = rankFromHardest - 1;
+let start = Math.max(0, idx - Math.floor(WINDOW / 2));
+start = Math.min(start, Math.max(0, peers.length - WINDOW));
+const shown = peers.slice(start, start + WINDOW);
+
+/** 棒の長さは最大値を基準にする。0起点なので長さの比がそのまま合格率の比になる */
+const barWidth = (rate: number) => `${(rate / max) * 100}%`;
+
+/** 中央値より上か下か。「真ん中あたり」を言えるようにする */
+const side =
+  passRate < median ? '低いほう' : passRate > median ? '高いほう' : '中央値ちょうど';
+---
+
+<section class="ctx sec" data-source="derived" id="context" aria-labelledby="h-ctx">
+  <h2 id="h-ctx">この合格率はどのくらいか</h2>
+  {/* この順位はどの実施団体も公表していない。**うちが計算した数字**だと先に言う */}
+  <SourceChip kind="derived" detail={`掲載${total}資格の最新値から算出`} />
+
+  {/* 結論1文 → 図表 → 出典(ADR-009 が定めた節の形) */}
+  <p class="finding">
+    このサイトに載っている<strong>{total}資格</strong>の中では、
+    {entityShortName}の合格率は<strong>低いほうから{rankFromHardest}番目</strong>です。
+    掲載中の合格率は{min}%〜{max}%に分布していて、中央値は{median}%なので、
+    {entityShortName}は{side}に入ります。
+  </p>
+
+  <ol class="peers" start={start + 1}>
+    {shown.map((p) => (
+      <li class:list={['peer', p.slug === currentSlug && 'is-self']}>
+        <span class="peer-name">
+          {p.slug === currentSlug ? (
+            <strong>{p.shortName}<span class="here">(このページ)</span></strong>
+          ) : (
+            <a href={`/shikaku/${p.slug}/`}>{p.shortName}</a>
+          )}
+          {p.seriesNote && <span class="peer-note">{p.seriesNote}</span>}
+        </span>
+        <span class="peer-bar" aria-hidden="true">
+          <span class="peer-fill" style={`width:${barWidth(p.passRate)}`}></span>
+        </span>
+        <span class="peer-rate">{p.passRate.toFixed(1)}<span class="u">%</span></span>
+      </li>
+    ))}
+  </ol>
+
+  <p class="caveat">
+    <strong>試験が違えば受ける人も違うため、合格率の差は難易度の差とは限りません。</strong>
+    受験資格も、受験者の準備状況も同じではありません。各資格の数値と出典は、それぞれのページにあります。
+  </p>
+</section>
+
+<style>
+  /* 結論の1文。ここが節の主役で、図表はその裏づけという順序を崩さない */
+  .finding {
+    margin: 0 0 var(--space-4);
+    line-height: var(--lh-normal);
+  }
+
+  .peers {
+    list-style: none;
+    margin: 0 0 var(--space-3);
+    padding: 0;
+    display: grid;
+    gap: 1px;
+  }
+  .peer {
+    display: grid;
+    /* 名前 / 棒 / 数値。棒だけが伸縮する */
+    grid-template-columns: minmax(6.5rem, auto) 1fr minmax(3.2rem, auto);
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+  }
+  /* 自分の行だけ面を変える。色だけに頼らず、太字と「(このページ)」も併用する */
+  .peer.is-self {
+    background: var(--color-official-bg);
+  }
+
+  .peer-name {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: var(--lh-heading);
+  }
+  /*
+   * 押せる高さは行そのもので確保する(行の縦padding + この最小高)。
+   * リンク側に min-height を持たせると行が積み上がり、7行で420pxになっていた。
+   */
+  .peer {
+    min-height: 40px;
+  }
+  .here {
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-normal);
+    color: var(--color-text-muted);
+    margin-left: 0.3em;
+  }
+  .peer-note {
+    font-size: var(--fs-2xs);
+    color: var(--color-text-muted);
+  }
+
+  .peer-bar {
+    height: 8px;
+    background: var(--color-bg-subtle);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+  }
+  .peer-fill {
+    display: block;
+    height: 100%;
+    background: var(--color-official);
+    border-radius: var(--radius-pill);
+  }
+  .peer.is-self .peer-fill {
+    background: var(--color-official-strong);
+  }
+
+  .peer-rate {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--fw-bold);
+  }
+  .peer-rate .u {
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-normal);
+    color: var(--color-text-muted);
+    margin-left: 0.1em;
+  }
+
+  /* 注記は figure の後ろ。前に置くと、読者はデータに辿り着く前に注意書きを読まされる */
+  .caveat {
+    margin: 0;
+    font-size: var(--fs-xs);
+    line-height: var(--lh-heading);
+    color: var(--color-text-muted);
+  }
+</style>

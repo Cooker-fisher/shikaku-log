@@ -1,0 +1,247 @@
+---
+/**
+ * ページを2層にする切り替え。
+ *
+ * ============================================================
+ * なぜ縦積みをやめるのか(2026-07-28)
+ * ============================================================
+ * 資格ページは10節を1カラムに縦積みし、モバイルで13画面あった。
+ * 3回の改修で順序・色・余白を直したが、**「縦に積む」という選択そのものを
+ * 一度も検討していなかった。**目次を足したのは、悪い構造の上に案内板を置いただけである。
+ *
+ * 縦積みの実害は長さではない。**深い節が誰にも届かないこと**である。
+ * 書き込み欄はページ先頭から約6,000px(7画面目)にあり、
+ * 検索で来た人がそこまでスクロールする理由が無い。
+ * 「投稿が集まらない」の原因を投稿フォームの作りに求めていたが、
+ * **そもそも到達されていなかった。**
+ *
+ * タブにすると、6,000px下にあった書き込み欄が**1画面目のラベルになる。**
+ * 隠すための仕組みではなく、届かせるための仕組みとして入れる。
+ *
+ * ============================================================
+ * 段階的強化(JSが無くても壊れない)
+ * ============================================================
+ * - JSなし: タブはただのページ内リンク。全パネルが従来どおり縦に並ぶ。
+ *   **情報は1つも失われない**(ADR-009 の必須要件: JSに依存させない)
+ * - JSあり: role="tablist" の本物のタブになり、1つのパネルだけを出す
+ *
+ * 検索エンジンには全パネルがHTMLとして見えている。
+ * Google は隠しテキストの規定でタブ/アコーディオンを明示的に対象外としている。
+ */
+interface TabItem {
+  id: string;
+  label: string;
+  /** ラベルの下に出す件数や補足(「3件」など)。無ければ出さない */
+  hint?: string;
+}
+interface Props {
+  items: TabItem[];
+}
+const { items } = Astro.props;
+---
+
+<nav class="tabs" aria-label="このページの内容" data-role="tabs">
+  <ul>
+    {items.map((item, i) => (
+      <li>
+        <a
+          href={`#${item.id}`}
+          data-tab={item.id}
+          class:list={['tab', i === 0 && 'is-on']}
+        >
+          <span class="tab-label">{item.label}</span>
+          {item.hint && <span class="tab-hint">{item.hint}</span>}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<script>
+  /*
+   * リンクの並びを、本物のタブに格上げする。
+   * **HTMLを作り直さない。**既にあるリンクに role と挙動を足すだけにする。
+   * こうしておくと、このスクリプトが失敗しても「ページ内リンク」として動き続ける。
+   */
+  const nav = document.querySelector<HTMLElement>('[data-role="tabs"]');
+  const panels = [...document.querySelectorAll<HTMLElement>('[data-panel]')];
+
+  if (nav && panels.length > 1) {
+    const tabs = [...nav.querySelectorAll<HTMLAnchorElement>('[data-tab]')];
+    const list = nav.querySelector('ul');
+    list?.setAttribute('role', 'tablist');
+    for (const li of nav.querySelectorAll('li')) li.setAttribute('role', 'presentation');
+
+    for (const t of tabs) {
+      t.setAttribute('role', 'tab');
+      t.id = `tab-${t.dataset.tab}`;
+    }
+    for (const p of panels) {
+      p.setAttribute('role', 'tabpanel');
+      p.setAttribute('aria-labelledby', `tab-${p.id}`);
+      /* キーボードでパネル内に入れるようにする */
+      p.tabIndex = 0;
+    }
+
+    /** その節を含むパネルのidを返す。ページ内リンクから飛んできたとき用 */
+    function panelOf(hash: string): string | null {
+      if (!hash || hash.length < 2) return null;
+      const id = decodeURIComponent(hash.slice(1));
+      const direct = panels.find((p) => p.id === id);
+      if (direct) return direct.id;
+      const el = document.getElementById(id);
+      const owner = el?.closest<HTMLElement>('[data-panel]');
+      return owner ? owner.id : null;
+    }
+
+    function activate(id: string, focusPanel = false) {
+      for (const p of panels) p.hidden = p.id !== id;
+      for (const t of tabs) {
+        const on = t.dataset.tab === id;
+        t.classList.toggle('is-on', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        /* 選ばれていないタブは Tab キーで飛ばす(矢印キーで移動させる) */
+        t.tabIndex = on ? 0 : -1;
+      }
+      if (focusPanel) document.getElementById(id)?.focus({ preventScroll: true });
+    }
+
+    /**
+     * **切り替えを計測する。**
+     *
+     * [ADR-022](../../../decisions/022-資格ページを2層にする.md) の「覆す条件」は
+     * 「切り替え率が5%未満なら1カラムに戻す」だが、**計測が無ければ永久に判定できない。**
+     * 実際 [ADR-009](../../../decisions/009-テンプレートはC案ツール型を採用.md) の覆す条件
+     * (ツール利用率1%未満)は、GA4のイベントを実装しなかったせいで一度も発火していない。
+     * **判定できない条件を書くのは、条件を書かないのと同じ**なので、同じ穴を二度開けない。
+     *
+     * gtag はGA4が読み込まれた本番でだけ存在する。無ければ何もしない。
+     */
+    function track(tabId: string) {
+      const g = (window as unknown as { gtag?: (...a: unknown[]) => void }).gtag;
+      if (typeof g !== 'function') return;
+      g('event', 'panel_switch', {
+        panel: tabId,
+        page_path: location.pathname,
+      });
+    }
+
+    for (const t of tabs) {
+      t.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = t.dataset.tab!;
+        activate(id);
+        track(id);
+        /* 履歴を汚さずにURLだけ合わせる。戻るボタンでページを離れられるように */
+        history.replaceState(null, '', `#${id}`);
+        /* タブ自身が画面外に出ないよう、切り替え後は先頭へ寄せる */
+        nav.scrollIntoView({ block: 'nearest' });
+      });
+    }
+
+    /* 左右キーでタブを移動する(WAI-ARIA のタブの作法) */
+    nav.addEventListener('keydown', (e) => {
+      const i = tabs.findIndex((t) => t === document.activeElement);
+      if (i === -1) return;
+      let next = -1;
+      if (e.key === 'ArrowRight') next = (i + 1) % tabs.length;
+      if (e.key === 'ArrowLeft') next = (i - 1 + tabs.length) % tabs.length;
+      if (e.key === 'Home') next = 0;
+      if (e.key === 'End') next = tabs.length - 1;
+      if (next === -1) return;
+      e.preventDefault();
+      const t = tabs[next]!;
+      t.focus();
+      activate(t.dataset.tab!);
+    });
+
+    /* 別ページから #board などで来たときは、それを含むパネルを開く */
+    const fromHash = panelOf(location.hash);
+    activate(fromHash ?? panels[0]!.id);
+    if (fromHash && location.hash) {
+      const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+      target?.scrollIntoView({ block: 'start' });
+    }
+
+    window.addEventListener('hashchange', () => {
+      const id = panelOf(location.hash);
+      if (id) activate(id, true);
+    });
+  }
+</script>
+
+<style>
+  .tabs {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    /*
+     * 狭い画面では画面端まで伸ばす(貼り付いたときに切れ目が出ないように)。
+     * 広い画面では本文の幅に揃える。**はみ出させたままにしない。**
+     */
+    margin: var(--space-5) calc(var(--gutter) * -1) var(--space-5);
+    padding: 0 var(--gutter);
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  @media (min-width: 48rem) {
+    .tabs {
+      margin-inline: 0;
+      padding-inline: 0;
+    }
+  }
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tabs ul {
+    display: flex;
+    gap: var(--space-1);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .tabs li {
+    flex: none;
+  }
+
+  .tab {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.1rem;
+    /* 指で押せる高さ。ここを削ると一覧の切り替えが押しにくくなる */
+    min-height: 48px;
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 3px solid transparent;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .tab:hover {
+    color: var(--color-text);
+  }
+  /* 選択中は下線と太字。**色だけで示さない** */
+  .tab.is-on {
+    color: var(--color-text);
+    border-bottom-color: var(--color-primary);
+    font-weight: var(--fw-bold);
+  }
+  .tab-label {
+    font-size: var(--fs-sm);
+  }
+  .tab-hint {
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-normal);
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* パネルにフォーカスが移ったときの枠。キーボード操作の現在地を見失わせない */
+  :global([data-panel]:focus-visible) {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 4px;
+    border-radius: var(--radius-sm);
+  }
+</style>

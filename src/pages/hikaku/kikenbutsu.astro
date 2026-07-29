@@ -170,11 +170,11 @@ const canonical = new URL(Astro.url.pathname, origin).href;
 
 <style>
   .page {
-    max-width: var(--measure-wide, 56rem);
+    max-width: var(--width-prose-wide);
     margin-inline: auto;
   }
   .crumbs {
-    font-size: var(--text-sm);
+    font-size: var(--fs-sm);
     color: var(--color-text-muted);
     margin-bottom: var(--space-4);
   }
@@ -229,7 +229,7 @@ const canonical = new URL(Astro.url.pathname, origin).href;
     top: 50%;
     transform: translateY(-50%);
     height: 1.4em;
-    background: var(--color-accent-soft, rgba(28, 132, 101, 0.15));
+    background: var(--color-data-bg);
     border-radius: 2px;
   }
   .val {
@@ -254,7 +254,7 @@ const canonical = new URL(Astro.url.pathname, origin).href;
     flex: 1 1 16em;
   }
   .note {
-    font-size: var(--text-sm);
+    font-size: var(--fs-sm);
     color: var(--color-text-muted);
   }
   .links a {

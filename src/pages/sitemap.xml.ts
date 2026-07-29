@@ -12,6 +12,13 @@ import { guides } from '../lib/guides';
 /** 更新頻度の目安。公式統計は年1回更新なので資格ページは monthly で十分 */
 const ROUTES: Array<{ path: string; changefreq: string; priority: string }> = [
   { path: '/', changefreq: 'daily', priority: '1.0' },
+  /*
+   * 書き込み一覧。中身は実行時にD1から読むためクローラには空に見えるが、
+   * **サイトマップから外す理由にはならない。**
+   * 静的な説明文とルールは載っており、ここが入口として存在することは伝える。
+   * 中身を静的に焼く話は B-035。
+   */
+  { path: '/board/', changefreq: 'daily', priority: '0.6' },
   { path: '/about/', changefreq: 'monthly', priority: '0.5' },
   { path: '/privacy/', changefreq: 'yearly', priority: '0.2' },
   { path: '/contact/', changefreq: 'yearly', priority: '0.3' },

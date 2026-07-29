@@ -38,8 +38,53 @@ const { entitySlug, entityShortName } = Astro.props;
   <!-- 一覧。JSが動く前は「読み込み中」を出さない(0件と区別がつかないため) -->
   <div class="list" data-role="list" hidden></div>
 
+  {/*
+    **書き込みが増えてもページが伸び続けないようにする。**
+
+    当初この欄は全スレッド・全返信を無条件に描画していた。1件あたり約110pxなので、
+    50件たまれば 5,500px、200件で 22,000px がこの節だけで積み上がる。
+    資格ページは投稿0件の時点で既に 11,649px(モバイル14.3画面)あり、
+    そこに上限の無い領域を置くと、増えるほど読めなくなる作りだった。
+
+    初期表示を絞り、残りは「もっと見る」で足す。返信も同じ扱いにする。
+    件数は必ず先に出す(何件あるのか分からないまま畳まれているのが一番不親切)。
+  */}
+  <p class="board-count" data-role="count" hidden></p>
+
+  <p class="more-wrap" data-role="more-wrap" hidden>
+    <button type="button" data-role="more"></button>
+  </p>
+
   <p class="empty" data-role="empty" hidden>
     まだ書き込みはありません。<strong>最初の1件になれます。</strong>
+  </p>
+
+  {/*
+    **ほかの資格の最近の書き込み(2026-07-28 追加)。**
+
+    この欄は17枚の資格ページすべてに置いてある。投稿の総数が少ないうちは
+    **17枚すべてが「まだ書き込みはありません」を出す。**
+    投稿という希少な資源を17分割したので、どのページも過疎に見える構造だった。
+    最初に来た人には「誰も居ない場所に最初の1件を書け」と言っているのと同じである。
+
+    この資格の書き込みが3件未満のときだけ、他の資格の直近の書き込みを添える。
+    **同じ一覧に混ぜない。**資格名を付けて別の見出しの下に出す。
+    ここで混ぜると「宅建の書き込み」として他資格の話が読まれてしまう。
+  */}
+  <section class="elsewhere" data-role="elsewhere" hidden>
+    <h3>ほかの資格では、こんな書き込みがあります</h3>
+    <ul data-role="elsewhere-list"></ul>
+  </section>
+
+  {/*
+    **戻り先のURLを必ず出す(2026-07-28)。**
+    このサイトはアカウントも通知も持たない。
+    分かる人が「どこかに未回答の質問があるはずだ」と思ったとき、
+    17枚の資格ページを1枚ずつ開いて確かめる以外の手段が無かった。
+    ブックマークできる1つの入口が、唯一の再訪経路になる。
+  */}
+  <p class="to-all">
+    <a href="/board/">すべての資格の書き込みを見る(未回答が先)</a>
   </p>
 
   <p class="failed" data-role="failed" hidden>
@@ -99,8 +144,25 @@ const { entitySlug, entityShortName } = Astro.props;
     const form = section.querySelector<HTMLFormElement>('[data-role="composer"]')!;
     const resultEl = section.querySelector<HTMLElement>('[data-role="result"]')!;
     const counterEl = section.querySelector<HTMLElement>('[data-role="counter"]')!;
+    const countEl = section.querySelector<HTMLElement>('[data-role="count"]')!;
+    const moreWrapEl = section.querySelector<HTMLElement>('[data-role="more-wrap"]')!;
+    const moreEl = section.querySelector<HTMLButtonElement>('[data-role="more"]')!;
     const bodyEl = form.elements.namedItem('body') as HTMLTextAreaElement;
     const loadedAt = Date.now();
+
+    /**
+     * 一度に出すスレッド数と、スレッド1本あたりに最初から開いておく返信数。
+     *
+     * 5 と 2 の根拠は「初期表示をこの節1つで1画面に収める」こと。
+     * スレッド1本が約110px、返信1本が約70pxなので、5本 + 返信2本ずつで
+     * 概ね 800px 前後に収まる。**上限を持たない設計にしないことが要点**であり、
+     * この数字自体は実際の投稿が集まってから調整してよい。
+     */
+    const PAGE_SIZE = 5;
+    const REPLIES_SHOWN = 2;
+
+    let threads: Post[] = [];
+    let rendered = 0;
 
     const show = (el: HTMLElement, on: boolean) => {
       el.hidden = !on;
@@ -156,8 +218,39 @@ const { entitySlug, entityShortName } = Astro.props;
       if (!isReply) {
         const replies = document.createElement('div');
         replies.className = 'replies';
-        for (const r of post.replies ?? []) replies.append(renderPost(r, true));
+        const all = post.replies ?? [];
+        /* 返信も上限を持たせる。議論が伸びたスレッドが1本でページを支配しないように */
+        for (const r of all.slice(0, REPLIES_SHOWN)) replies.append(renderPost(r, true));
         article.append(replies);
+
+        /*
+         * **まだ誰も答えていない印(2026-07-28)。**
+         *
+         * この欄は「詰まっている勉強中の人」だけを集める作りで、
+         * **答える側が動く理由をどこにも用意していなかった。**
+         * 投稿が増えれば、未回答の質問が並ぶだけの場所になる。
+         * どれが未回答かが一目で分かれば、分かる人が拾える。
+         */
+        if (all.length === 0) {
+          const flag = document.createElement('p');
+          flag.className = 'unanswered';
+          flag.textContent = 'まだ誰も答えていません';
+          head.after(flag);
+        }
+
+        const hidden = all.length - REPLIES_SHOWN;
+        if (hidden > 0) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'more-replies';
+          btn.textContent = `返信をあと${hidden}件表示`;
+          btn.addEventListener('click', () => {
+            for (const r of all.slice(REPLIES_SHOWN)) replies.append(renderPost(r, true));
+            btn.remove();
+          });
+          article.append(btn);
+        }
+
         article.append(buildReplyForm(post.id, replies));
       }
       return article;
@@ -225,14 +318,87 @@ const { entitySlug, entityShortName } = Astro.props;
       }
     }
 
+    /** 次の PAGE_SIZE 件を一覧に足す。**既に出したものは作り直さない** */
+    function renderMore() {
+      const next = threads.slice(rendered, rendered + PAGE_SIZE);
+      for (const t of next) listEl.append(renderPost(t, false));
+      rendered += next.length;
+      paintControls();
+    }
+
+    /** 件数表示と「もっと見る」の状態を、いまの描画数から組み立て直す */
+    function paintControls() {
+      const total = threads.length;
+      show(listEl, rendered > 0);
+      show(emptyEl, total === 0);
+
+      countEl.textContent = total === 0 ? '' : `${total}件中 ${rendered}件を表示`;
+      show(countEl, total > PAGE_SIZE);
+
+      const remaining = total - rendered;
+      moreEl.textContent =
+        remaining > PAGE_SIZE ? `次の${PAGE_SIZE}件を表示(残り${remaining}件)` : `残り${remaining}件を表示`;
+      show(moreWrapEl, remaining > 0);
+    }
+
+    moreEl.addEventListener('click', renderMore);
+
+    interface Elsewhere {
+      id: number;
+      handle: string | null;
+      body: string;
+      createdAt: string;
+      slug: string;
+      name: string;
+    }
+
+    /**
+     * ほかの資格の直近の書き込み。
+     * **本文は1行に切る。**ここは「この場所は動いている」を伝えるためのもので、
+     * 他資格の議論を読ませる場所ではない。読みたければリンク先に行ってもらう。
+     */
+    function renderElsewhere(items: Elsewhere[]) {
+      const wrap = section.querySelector<HTMLElement>('[data-role="elsewhere"]')!;
+      const list = section.querySelector<HTMLElement>('[data-role="elsewhere-list"]')!;
+      if (!items.length) {
+        show(wrap, false);
+        return;
+      }
+      list.replaceChildren(
+        ...items.map((it) => {
+          const li = document.createElement('li');
+
+          const a = document.createElement('a');
+          a.href = `/shikaku/${it.slug}/#board`;
+          a.className = 'elsewhere-name';
+          a.textContent = it.name;
+
+          const body = document.createElement('span');
+          body.className = 'elsewhere-body';
+          body.textContent = it.body;
+
+          const time = document.createElement('time');
+          time.dateTime = it.createdAt;
+          time.className = 'elsewhere-time';
+          time.textContent = ago(it.createdAt);
+
+          li.append(a, body, time);
+          return li;
+        }),
+      );
+      show(wrap, true);
+    }
+
     async function load() {
       try {
         const r = await fetch(`/api/posts?slug=${encodeURIComponent(slug)}`);
         const data = await r.json();
         if (!r.ok || !data.ok) throw new Error('failed');
-        listEl.replaceChildren(...data.threads.map((t: Post) => renderPost(t, false)));
-        show(listEl, data.threads.length > 0);
-        show(emptyEl, data.threads.length === 0);
+        threads = data.threads as Post[];
+        rendered = 0;
+        listEl.replaceChildren();
+        renderMore();
+        renderElsewhere(data.elsewhere ?? []);
       } catch {
         show(failedEl, true);
       }
@@ -259,9 +425,11 @@ const { entitySlug, entityShortName } = Astro.props;
       resultEl.textContent = res.message;
       show(resultEl, true);
       if (res.ok && res.post) {
+        /* 自分の書き込みは必ず先頭に出す。上限に隠されて「書けたのか分からない」を作らない */
+        threads.unshift(res.post);
+        rendered++;
         listEl.prepend(renderPost(res.post, false));
-        show(listEl, true);
-        show(emptyEl, false);
+        paintControls();
         bodyEl.value = '';
         counterEl.textContent = '0 / 400';
       }
@@ -273,10 +441,13 @@ const { entitySlug, entityShortName } = Astro.props;
 </script>
 
 <style>
+  /*
+   * 面と枠は、この節を包む [data-source] が持つ(global.css)。
+   * ここで箱を描くと二重枠になり、実測で左右48px・上下48pxを無駄にしていた。
+   * **箱を描く場所は1つに保つ。**
+   */
   .board {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: var(--space-5) var(--space-4);
+    padding: 0;
   }
   .lede {
     margin: 0 0 var(--space-4);
@@ -285,7 +456,101 @@ const { entitySlug, entityShortName } = Astro.props;
   .list {
     display: grid;
     gap: var(--space-3);
-    margin-bottom: var(--space-5);
+    margin-bottom: var(--space-3);
+  }
+  .board-count {
+    margin: 0 0 var(--space-3);
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* まだ誰も答えていない印。答える側が拾える場所を見つけるための目印 */
+  .board :global(.unanswered) {
+    display: inline-block;
+    margin: 0 0 var(--space-2);
+    padding: 0 var(--space-2);
+    font-size: var(--fs-2xs);
+    color: var(--color-accent);
+    border: 1px dashed var(--color-accent);
+    border-radius: var(--radius-pill);
+  }
+
+  .to-all {
+    margin: var(--space-4) 0 0;
+    font-size: var(--fs-sm);
+  }
+
+  /* ほかの資格の書き込み。**この資格の一覧とは別の見出しの下に置く** */
+  .elsewhere {
+    margin: var(--space-5) 0;
+    padding-top: var(--space-4);
+    border-top: 1px dashed var(--color-border);
+  }
+  .elsewhere h3 {
+    margin: 0 0 var(--space-3);
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+  }
+  .elsewhere ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-3);
+  }
+  .elsewhere li {
+    display: grid;
+    gap: 0.15rem;
+    font-size: var(--fs-xs);
+  }
+  .elsewhere :global(.elsewhere-name) {
+    font-weight: var(--fw-bold);
+  }
+  /* 本文は1行で切る。ここは賑わいを伝える場所で、読ませる場所ではない */
+  .elsewhere :global(.elsewhere-body) {
+    color: var(--color-text-muted);
+    line-height: var(--lh-heading);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .elsewhere :global(.elsewhere-time) {
+    color: var(--color-text-faint);
+  }
+  .more-wrap {
+    margin: 0 0 var(--space-5);
+  }
+  .more-wrap button {
+    width: 100%;
+    min-height: 44px;
+    font: inherit;
+    font-size: var(--fs-sm);
+    color: var(--color-link);
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .more-wrap button:hover {
+    border-color: var(--color-border-strong);
+    background: var(--color-bg-subtle);
+  }
+  .board :global(.more-replies) {
+    margin-top: var(--space-2);
+    padding: var(--space-2) 0;
+    min-height: 44px;
+    font: inherit;
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    background: none;
+    border: 0;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .board :global(.more-replies):hover {
+    color: var(--color-link);
   }
   .empty,
   .failed {

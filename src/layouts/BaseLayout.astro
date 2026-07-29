@@ -16,6 +16,11 @@ interface Props {
   /** ユーザー投稿データを表示するページ(自己申告の注記を強制する) */
   hasUserData?: boolean;
   ogType?: 'website' | 'article';
+  /**
+   * 本文 + 追従レールの2カラムを組むページ。
+   * 既定の 64rem では、レールを出すと本文が読みにくい幅まで痩せる。
+   */
+  wide?: boolean;
 }
 
 const {
@@ -25,6 +30,7 @@ const {
   hasAffiliate = false,
   hasUserData = false,
   ogType = 'website',
+  wide = false,
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
@@ -99,7 +105,7 @@ const ogImage = new URL('/og.png', Astro.site ?? Astro.url.origin).href;
     </header>
 
     <main id="main">
-      <div class="container">
+      <div class={wide ? 'container container--wide' : 'container'}>
         {/*
           広告を含むページでは**本文の冒頭**にPR表記を出す。
           ステマ規制が求めるのは「広告であることが一般消費者にとって明瞭であること」であり、

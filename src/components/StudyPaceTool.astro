@@ -215,11 +215,13 @@ const n = snapshot.studyHours.sampleSize;
 </script>
 
 <style>
+  /*
+   * 面と枠は、この節を包む [data-source="tool"] が持つ(global.css)。
+   * ここで箱を描くと二重枠になり、実測で左右48px・上下48pxを無駄にしていた。
+   * **箱を描く場所は1つに保つ。**
+   */
   .tool {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: var(--space-5) var(--space-4);
-    background: var(--color-bg-subtle);
+    padding: 0;
   }
   .intro {
     font-size: var(--fs-sm);
@@ -351,11 +353,16 @@ const n = snapshot.studyHours.sampleSize;
     height: 100%;
     background: var(--color-userdata);
   }
+  /*
+   * 集計を出さない理由の説明。**読むべきだが、本文の行間で組む必要はない。**
+   * 5文を行間1.75で組むと224pxになり、ツール本体(630px)の3分の1を占めていた。
+   * 注記は注記の密度で組む。
+   */
   .why {
     margin: var(--space-3) 0 0;
     font-size: var(--fs-xs);
     color: var(--color-text-muted);
-    line-height: var(--lh-normal);
+    line-height: var(--lh-heading);
   }
   .notes {
     font-size: var(--fs-xs);

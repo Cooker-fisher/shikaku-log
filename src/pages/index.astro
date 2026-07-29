@@ -13,6 +13,21 @@ const cards = entities
   })
   .sort((a, b) => (b.latest?.examinees ?? 0) - (a.latest?.examinees ?? 0));
 
+/**
+ * カテゴリの絞り込み。
+ *
+ * **JSが無い環境では全件が出る**(hidden を付けるのはスクリプト側だけ)。
+ * 掲載資格を増やすほど一覧は縦に伸びるので、17件の時点で入れておく。
+ * 300件になってから入れると、それまでに来た人には縦積みの一覧しか届かない。
+ */
+const categories = [...new Set(cards.map((c) => c.entity.category))].sort(
+  (a, b) =>
+    cards.filter((c) => c.entity.category === b).length -
+    cards.filter((c) => c.entity.category === a).length,
+);
+
+const totalExaminees = cards.reduce((sum, c) => sum + (c.latest?.examinees ?? 0), 0);
+
 const title = `${SITE_NAME} — 資格の受験者数・合格率と合格報告のデータベース`;
 const description =
   '資格試験の受験者数・合格率の推移と試験日程を公式発表から集約し、合格者の自己申告データ(勉強時間・使用教材)を併せて掲載するデータベース。';
@@ -20,224 +35,408 @@ const description =
 
 <BaseLayout title={title} description={description}>
   {/*
-    2026-07-26 全面改稿。
-    それまでのトップは「掲載する3つの層」「数字の扱い方」という**運営方針の説明**が主役で、
-    資格一覧はページ最下部、投稿導線に至っては1つも無かった。
-    投稿してもらうサイトなのに、最重要の行動が画面に存在していなかった。
-
-    方針の説明は削らない(誠実さはこのサイトの資産である)。主役から降ろすだけにする。
+    2026-07-27 一覧としての作りに変更。
+    それまでは 672px の1カラムに17枚を縦積みし(1280px幅で7.4画面)、
+    さらに「合格報告を送る」ボタンが17個並ぶ区画があった。
+    掲載資格が増えるほど破綻が大きくなる形だったので、
+    絞り込みとグリッドを持つ**一覧**に作り替える。
   */}
-  <div class="prose stack">
-    <h1>資格の数字を、出典つきで1ページに</h1>
+  <div class="home">
+    <header class="hero">
+      <h1>資格の数字を、出典つきで1ページに</h1>
+      <p class="lede">
+        受験者数・合格率・試験日程を、実施団体の公表資料から資格ごとに集約している。
+        掲載する数値には必ず公式発表のURLと取得日を添える。
+      </p>
+      <p class="scale">
+        <span class="scale-item"><b class="num">{cards.length}</b> 資格</span>
+        <span class="scale-item"><b class="num">{categories.length}</b> 分野</span>
+        <span class="scale-item">年間受験者 <b class="num">{num.format(totalExaminees)}</b> 人ぶん</span>
+      </p>
+    </header>
 
-    <p class="lede">
-      受験者数・合格率・試験日程を、実施団体の公表資料から資格ごとに集約している。
-      掲載する数値には必ず公式発表のURLと取得日を添える。
-    </p>
+    <section class="finder" aria-labelledby="h-shikaku">
+      <div class="finder-head">
+        <h2 id="h-shikaku">資格を選ぶ</h2>
+        <p class="count" data-role="count" hidden></p>
+      </div>
 
-    <h2 id="shikaku">資格を選ぶ</h2>
+      {/*
+        絞り込みは JS が無くても一覧が全件見える形にする。
+        フォーム部品は script 側で有効化し、それまでは hidden にしておく
+        (押しても何も起きない部品を先に見せない)。
+      */}
+      <div class="controls" data-role="controls" hidden>
+        <label class="search">
+          <span class="sr-only">資格名で絞り込む</span>
+          <input type="search" data-role="q" placeholder="資格名で絞り込む(例:危険物)" autocomplete="off" />
+        </label>
+        <div class="chips" role="group" aria-label="分野で絞り込む">
+          <button type="button" class="chip is-on" data-cat="">すべて</button>
+          {categories.map((c) => <button type="button" class="chip" data-cat={c}>{c}</button>)}
+        </div>
+      </div>
 
-    <ul class="shikaku-list">
-      {cards.map(({ entity, latest }) => (
-        <li>
-          <a href={`/shikaku/${entity.slug}/`} class="shikaku-link">
-            <span class="shikaku-name">{entity.name}</span>
-            <span class="shikaku-cat">{entity.category}</span>
-          </a>
-          {latest && (
-            <dl class="shikaku-stats">
-              <div>
-                <dt>受験者数</dt>
-                <dd class="num">{num.format(latest.examinees ?? 0)}人</dd>
-              </div>
-              <div>
-                <dt>合格率</dt>
-                <dd class="num">{latest.pass_rate}%</dd>
-              </div>
-              <div>
-                <dt>集計</dt>
-                <dd class="muted">{seriesLabel(latest)}</dd>
-              </div>
-            </dl>
-          )}
-          <p class="shikaku-actions">
-            <a class="btn btn-primary" href={`/shikaku/${entity.slug}/#report`}>
-              合格報告を送る
+      <ul class="grid" data-role="grid">
+        {cards.map(({ entity, latest }) => (
+          <li class="card" data-cat={entity.category} data-name={`${entity.name} ${entity.short_name} ${entity.category}`}>
+            <a class="card-link" href={`/shikaku/${entity.slug}/`}>
+              <span class="card-cat">{entity.category}</span>
+              <span class="card-name">{entity.name}</span>
             </a>
-            <a class="btn btn-quiet" href={`/shikaku/${entity.slug}/`}>データを見る</a>
-          </p>
-        </li>
-      ))}
-    </ul>
-
-    <p class="note">
-      掲載する資格は順次増やしている。実施団体の公表資料で数値を確認できたものだけを載せている。
-    </p>
-
-    <section class="invite" aria-labelledby="h-invite">
-      <h2 id="h-invite">合格した人へ</h2>
-      <p>
-        勉強時間・受験回数・使った教材を送ってほしい。入力は<strong>3項目・30秒</strong>で終わる。
-        名前もメールアドレスも要らない。
-      </p>
-      <p>
-        これから受ける人が知りたいのは「実際どれくらいやったか」で、
-        それは公式発表には載っていない。<strong>合格した人しか持っていない情報</strong>である。
-      </p>
-      <p class="note">
-        送られたデータは<strong>自己申告に基づく</strong>もので、公的な統計ではない。
-        掲載時は件数を必ず併記し、公式統計とは別の枠で表示する。
-      </p>
-      <p class="invite-actions">
-        {cards.map(({ entity }) => (
-          <a class="btn btn-primary" href={`/shikaku/${entity.slug}/#report`}>
-            {entity.short_name}の合格報告を送る
-          </a>
+            {latest ? (
+              <dl class="card-stats">
+                <div>
+                  <dt>受験者数</dt>
+                  <dd class="num">{num.format(latest.examinees ?? 0)}<span class="u">人</span></dd>
+                </div>
+                <div>
+                  <dt>合格率</dt>
+                  <dd class="num">{latest.pass_rate}<span class="u">%</span></dd>
+                </div>
+              </dl>
+            ) : (
+              <p class="card-nostat">公式統計を確認中</p>
+            )}
+            <p class="card-foot">{latest ? seriesLabel(latest) : entity.category}</p>
+          </li>
         ))}
+      </ul>
+
+      <p class="empty" data-role="empty" hidden>
+        その名前の資格は掲載していません。<button type="button" data-role="reset">絞り込みを外す</button>
+      </p>
+
+      <p class="note">
+        掲載する資格は順次増やしている。実施団体の公表資料で数値を確認できたものだけを載せている。
       </p>
     </section>
 
-    <h2>数字の扱い方</h2>
+    <section class="policy" aria-labelledby="h-policy">
+      <h2 id="h-policy">数字の扱い方</h2>
 
-    <p>
-      投稿データの集計は、有効回答が<span class="num">{MIN_SAMPLE_SIZE}</span>件に達するまで
-      中央値も分布も順位も表示しない。数件しかない状態の中央値は、投稿が1件増えるだけで大きく動く。
-      その数字を見せることは、読む人に誤った基準を渡すことになる。
-      閾値の判定は集計ロジック側で強制していて、表示側が独自に緩めることはできない。
-    </p>
+      <p>
+        投稿データの集計は、有効回答が<span class="num">{MIN_SAMPLE_SIZE}</span>件に達するまで
+        中央値も分布も順位も表示しない。数件しかない状態の中央値は、投稿が1件増えるだけで大きく動く。
+        その数字を見せることは、読む人に誤った基準を渡すことになる。
+        閾値の判定は集計ロジック側で強制していて、表示側が独自に緩めることはできない。
+      </p>
 
-    <p>
-      ただし<strong>個々の合格報告は1件目から掲載する</strong>。
-      「何時間で受かったか」という1人の記録は、集計値ではないので誤解を生まない。
-      統計として出せる数と、人の記録として出せる数は別に扱う。
-    </p>
+      <p>
+        ただし<strong>個々の合格報告は1件目から掲載する</strong>。
+        「何時間で受かったか」という1人の記録は、集計値ではないので誤解を生まない。
+        統計として出せる数と、人の記録として出せる数は別に扱う。
+      </p>
 
-    <p>
-      公式統計についても同じ姿勢を取る。公表されていない年度は空欄にし、
-      「おそらくこの程度」という補間はしない。
-      掲載方針の詳細は<a href="/about/">このサイトについて</a>に書いている。
-    </p>
+      <p>
+        公式統計についても同じ姿勢を取る。公表されていない年度は空欄にし、
+        「おそらくこの程度」という補間はしない。
+        掲載方針の詳細は<a href="/about/">このサイトについて</a>に書いている。
+      </p>
+
+      <p class="note">
+        送られたデータは<strong>自己申告に基づく</strong>もので、公的な統計ではない。
+        掲載時は件数を必ず併記し、公式統計とは別の枠で表示する。
+        各資格のページに、勉強中の人が書き込める欄と、合格した人が記録を送る欄がある。
+      </p>
+    </section>
   </div>
 </BaseLayout>
 
+<script>
+  /*
+   * 絞り込み。**DOM を作り替えず hidden の付け外しだけで行う。**
+   * 全カードは常に HTML に存在するので、クローラからは全資格が見えたままになる
+   * (孤立ページを作らないという掟をJSで壊さない)。
+   */
+  const root = document.querySelector<HTMLElement>('.finder');
+  if (root) {
+    const controls = root.querySelector<HTMLElement>('[data-role="controls"]')!;
+    const q = root.querySelector<HTMLInputElement>('[data-role="q"]')!;
+    const countEl = root.querySelector<HTMLElement>('[data-role="count"]')!;
+    const emptyEl = root.querySelector<HTMLElement>('[data-role="empty"]')!;
+    const resetEl = root.querySelector<HTMLButtonElement>('[data-role="reset"]')!;
+    const chips = [...root.querySelectorAll<HTMLButtonElement>('.chip')];
+    const cards = [...root.querySelectorAll<HTMLElement>('.card')];
+    const total = cards.length;
+    let cat = '';
+
+    controls.hidden = false;
+
+    const apply = () => {
+      const term = q.value.trim().toLowerCase();
+      let shown = 0;
+      for (const card of cards) {
+        const okCat = !cat || card.dataset.cat === cat;
+        const okTerm = !term || (card.dataset.name ?? '').toLowerCase().includes(term);
+        const on = okCat && okTerm;
+        card.hidden = !on;
+        if (on) shown++;
+      }
+      const filtered = Boolean(cat) || Boolean(term);
+      countEl.textContent = filtered ? `${total}件中 ${shown}件` : '';
+      countEl.hidden = !filtered;
+      emptyEl.hidden = shown > 0;
+    };
+
+    q.addEventListener('input', apply);
+    for (const chip of chips) {
+      chip.addEventListener('click', () => {
+        cat = chip.dataset.cat ?? '';
+        for (const c of chips) c.classList.toggle('is-on', c === chip);
+        apply();
+      });
+    }
+    resetEl.addEventListener('click', () => {
+      q.value = '';
+      cat = '';
+      for (const c of chips) c.classList.toggle('is-on', !c.dataset.cat);
+      apply();
+      q.focus();
+    });
+  }
+</script>
+
 <style>
-  .shikaku-list {
+  /* トップは読み物ではなく一覧なので、prose 幅(42rem)に押し込めない */
+  .home > * + * {
+    margin-top: var(--space-8);
+  }
+
+  .hero {
+    max-width: var(--width-prose);
+  }
+  .hero h1 {
+    margin-bottom: var(--space-3);
+  }
+  .lede {
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+    margin-bottom: var(--space-4);
+  }
+  .scale {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-5);
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+  }
+  .scale-item b {
+    font-size: var(--fs-lg);
+    color: var(--color-text);
+    margin-right: 0.15em;
+  }
+
+  .finder-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+  .finder-head h2 {
+    margin: 0;
+    border: 0;
+    padding: 0;
+  }
+  .count {
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin: var(--space-4) 0 var(--space-5);
+    padding-bottom: var(--space-4);
+    border-bottom: var(--border-thin);
+  }
+  .search input {
+    width: 100%;
+    max-width: 24rem;
+    min-height: 44px;
+    padding: 0 var(--space-3);
+    font: inherit;
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .chip {
+    min-height: 36px;
+    padding: 0 var(--space-3);
+    font: inherit;
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+  .chip:hover {
+    color: var(--color-text);
+    border-color: var(--color-border-strong);
+  }
+  .chip.is-on {
+    color: var(--color-primary-contrast);
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    font-weight: var(--fw-medium);
+  }
+
+  /*
+   * 1280px で 672px の1カラムだったものをグリッドにする。
+   * minmax の下限は「資格名が2行に折れない」幅から決めている。
+   */
+  .grid {
     list-style: none;
     padding: 0;
     margin: 0;
     display: grid;
     gap: var(--space-3);
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
   }
-  .shikaku-list > li {
+  .card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-4);
+    background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-left: 4px solid var(--color-official);
     border-radius: var(--radius-md);
-    padding: var(--space-4);
-    background: var(--color-surface);
+    transition: border-color var(--duration-fast) var(--ease-out);
   }
-  .shikaku-link {
+  .card:hover {
+    border-color: var(--color-border-strong);
+    border-left-color: var(--color-official-strong);
+  }
+  .card[hidden] {
+    display: none;
+  }
+
+  /*
+   * カード全体を1つのリンクにする。
+   * 以前はカードごとに「合格報告を送る」「データを見る」の2ボタンを置いており、
+   * 一覧に34個、下の区画に17個で計51個のボタンが並んでいた。
+   * 押し先が実質1つしか無いものに、ボタンを2つ置く理由が無い。
+   */
+  .card-link {
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
     text-decoration: none;
   }
-  .shikaku-name {
+  /* 当たり判定をカード全面に広げる(見た目は変えない) */
+  .card-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  .card {
+    position: relative;
+  }
+  .card-cat {
+    font-size: var(--fs-2xs);
+    color: var(--color-text-muted);
+    letter-spacing: 0.04em;
+  }
+  .card-name {
     font-size: var(--fs-lg);
     font-weight: var(--fw-bold);
+    line-height: var(--lh-heading);
     color: var(--color-link);
   }
-  .shikaku-link:hover .shikaku-name {
+  .card:hover .card-name {
     text-decoration: underline;
   }
-  .shikaku-cat {
-    font-size: var(--fs-xs);
-    color: var(--color-text-muted);
-  }
-  .shikaku-stats {
+
+  .card-stats {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2) var(--space-5);
     margin: var(--space-3) 0 0;
   }
-  .shikaku-stats > div {
+  .card-stats > div {
     display: flex;
-    align-items: baseline;
-    gap: 0.4rem;
+    flex-direction: column;
   }
-  .shikaku-stats dt {
-    font-size: var(--fs-xs);
+  .card-stats dt {
+    font-size: var(--fs-2xs);
     color: var(--color-text-muted);
   }
-  .shikaku-stats dd {
+  .card-stats dd {
     margin: 0;
+    font-size: var(--fs-lg);
     font-weight: var(--fw-bold);
+    line-height: 1.2;
     font-variant-numeric: tabular-nums;
   }
-  .shikaku-stats dd.muted {
+  .card-stats .u {
+    font-size: var(--fs-xs);
     font-weight: var(--fw-normal);
+    margin-left: 0.1em;
+    color: var(--color-text-muted);
+  }
+  .card-nostat {
+    margin: var(--space-3) 0 0;
     font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+  }
+  .card-foot {
+    margin: auto 0 0;
+    padding-top: var(--space-3);
+    font-size: var(--fs-2xs);
     color: var(--color-text-muted);
   }
 
-  .lede {
-    color: var(--color-text-muted);
-    line-height: var(--lh-normal);
+  .empty {
+    margin: var(--space-5) 0 0;
+    padding: var(--space-4);
+    background: var(--color-notice-bg);
+    border-radius: var(--radius-sm);
   }
-  .note {
-    font-size: var(--fs-sm);
-    color: var(--color-text-muted);
-  }
-
-  /*
-   * タップ目標は最低44px。スマホで押せない導線は無いのと同じ。
-   * 2026-07-26の実測では24リンク中22が44px未満だった。
-   */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 44px;
-    padding: 0 var(--space-4);
-    border-radius: var(--radius-md);
-    font-size: var(--fs-sm);
-    font-weight: var(--fw-bold);
-    text-decoration: none;
-  }
-  .btn-primary {
-    background: var(--color-primary);
-    color: var(--color-primary-contrast);
-    border: 1px solid var(--color-primary);
-  }
-  .btn-quiet {
-    background: transparent;
+  .empty button {
+    font: inherit;
     color: var(--color-link);
-    border: 1px solid var(--color-border-strong);
-  }
-  .shikaku-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    margin: var(--space-4) 0 0;
+    background: none;
+    border: 0;
+    padding: 0 var(--space-1);
+    text-decoration: underline;
+    cursor: pointer;
   }
 
-  .invite {
-    margin-top: var(--space-7);
-    padding: var(--space-5) var(--space-4);
-    border: 1px solid var(--color-border);
-    border-left: 4px solid var(--color-userdata);
-    border-radius: var(--radius-md);
-    background: var(--color-userdata-bg);
+  .note {
+    margin-top: var(--space-4);
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
   }
-  .invite h2 {
+
+  .policy {
+    max-width: var(--width-prose);
+  }
+  .policy h2 {
     margin-top: 0;
   }
-  .invite p {
+  .policy p {
     line-height: var(--lh-normal);
   }
-  .invite-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    margin-bottom: 0;
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 </style>

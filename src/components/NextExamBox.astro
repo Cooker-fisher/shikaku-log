@@ -140,7 +140,7 @@ if (next?.result_date)
     gap: 0 var(--space-3);
     align-items: baseline;
     padding-block: var(--space-2);
-    border-top: 1px solid var(--color-border-subtle, var(--color-border));
+    border-top: 1px solid var(--color-border);
   }
   .row:first-child {
     border-top: 0;
@@ -149,7 +149,7 @@ if (next?.result_date)
     flex: 0 0 auto;
     min-width: 14em;
     color: var(--color-text-muted);
-    font-size: var(--text-sm);
+    font-size: var(--fs-sm);
   }
   .row dd {
     margin: 0;
@@ -161,11 +161,11 @@ if (next?.result_date)
   /* 残り日数はJSが付ける。付かなければ何も出ないので、日付だけで成立する */
   .rest {
     margin-left: 0.6em;
-    font-size: var(--text-sm);
+    font-size: var(--fs-sm);
     color: var(--color-text-muted);
   }
   .rest[data-state='soon'] {
-    color: var(--color-warning-text, #9a3412);
+    color: var(--color-accent);
     font-weight: 700;
   }
   .rest[data-state='closed'] {
@@ -175,7 +175,7 @@ if (next?.result_date)
   .note,
   .caution {
     margin-top: var(--space-3);
-    font-size: var(--text-sm);
+    font-size: var(--fs-sm);
     line-height: 1.8;
   }
   .caution {
@@ -185,7 +185,7 @@ if (next?.result_date)
     margin-top: var(--space-4);
     padding-top: var(--space-3);
     border-top: 1px solid var(--color-border);
-    font-size: var(--text-sm);
+    font-size: var(--fs-sm);
   }
   .reason {
     margin-top: var(--space-3);

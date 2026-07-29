@@ -29,6 +29,12 @@ export const CONTACT_FORM_URL = 'https://forms.gle/p74hYkAqS8WMqvEv5';
 export const GA_MEASUREMENT_ID = 'G-Z7RFR77QVW';
 
 export const NAV_LINKS: ReadonlyArray<{ href: string; label: string }> = [
+  /*
+   * 書き込み一覧は**全ページの上部**に出す。
+   * 答える側はどの資格のページから来るか分からないので、
+   * 資格ページの中だけに戻り先を置くと、結局その資格の読者にしか届かない。
+   */
+  { href: '/board/', label: '書き込み' },
   { href: '/about/', label: 'このサイトについて' },
 ];
 
