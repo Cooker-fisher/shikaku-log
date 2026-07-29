@@ -23,13 +23,27 @@ const { entity, canonical, origin } = Astro.props;
 const blocks = statBlocks(entity);
 const primary = blocks[0];
 
+/**
+ * パンくず。
+ *
+ * **カテゴリの階層を入れない(2026-07-30 修正)。**
+ *
+ * 以前は ホーム > カテゴリ > 資格名 の3段で、真ん中のカテゴリに `item`(URL)を
+ * 付けていなかった。カテゴリ単独のページが存在しないためである。
+ * しかし BreadcrumbList は**最後の項目以外に URL を必須とする。**
+ * Search Console の URL 検査で「パンくずリスト: 1件の無効なアイテムを検出しました」と
+ * 出ていたのはこれで、**宅建ページがインデックスされた直後に発覚した。**
+ *
+ * 対処は2つあった。カテゴリのページを作ってURLを与えるか、階層から外すか。
+ * **存在しないURLをでっち上げない**ので後者を採る。
+ * カテゴリは見出し直下の meta に出ているので、情報は失われない。
+ */
 const breadcrumb = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'ホーム', item: `${origin}/` },
-    { '@type': 'ListItem', position: 2, name: entity.category },
-    { '@type': 'ListItem', position: 3, name: entity.short_name, item: canonical },
+    { '@type': 'ListItem', position: 2, name: entity.short_name, item: canonical },
   ],
 };
 

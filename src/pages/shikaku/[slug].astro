@@ -216,8 +216,12 @@ const panels = [
   <div class="layout">
     <header class="pagehead">
       <nav class="crumbs" aria-label="パンくず">
+        {/*
+          カテゴリの段を外した(2026-07-30)。**構造化データと表示を一致させるため。**
+          カテゴリ単独のページが無いのでリンクにできず、BreadcrumbList では
+          中間項目のURL欠落として無効になっていた。カテゴリは下の meta に出ている。
+        */}
         <a href="/">ホーム</a> <span aria-hidden="true">/</span>
-        <span>{entity.category}</span> <span aria-hidden="true">/</span>
         <span aria-current="page">{entity.short_name}</span>
       </nav>
 

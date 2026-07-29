@@ -1067,7 +1067,7 @@ function checkPredictions() {
 /** src/lib/entities.ts の KNOWN_ENTITY_TYPES と functions/api/report.ts の SCHEMAS に対応 */
 const KNOWN_ENTITY_TYPES = ['certification'];
 
-const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'social', 'tokens', 'money', 'deadcss', 'sources', 'claims', 'migration', 'metrics', 'predictions'];
+const CHECK_ORDER = ['secrets', 'seo', 'legal', 'links', 'thin', 'phrases', 'placeholder', 'social', 'schema', 'tokens', 'money', 'deadcss', 'sources', 'claims', 'migration', 'metrics', 'predictions'];
 
 function report() {
   const errors = findings.filter((f) => f.severity === 'error');
@@ -1384,6 +1384,86 @@ async function checkDeadSelectors() {
   finishCheck('deadcss', '使われていないCSSセレクタ', cssFiles.length);
 }
 
+/**
+ * 構造化データ(JSON-LD)の妥当性(2026-07-30 新設)
+ *
+ * **なぜ作るか — Search Console に指摘されて初めて気づいた**
+ * 宅建ページがインデックスされた直後、URL検査に
+ * 「パンくずリスト: 1件の無効なアイテムを検出しました」と出た。
+ *
+ * 原因は BreadcrumbList の中間項目(カテゴリ)に `item`(URL)が無かったこと。
+ * **BreadcrumbList は最後の項目以外に URL を必須とする。**
+ * カテゴリ単独のページが存在しないため、名前だけを置いていた。
+ *
+ * JSON-LD は**壊れていても画面には何も出ない。**
+ * 目視でもブラウザでも気づけず、Googleに拾われて初めて分かる。
+ * だから機械で読む。
+ */
+function checkStructuredData(pages) {
+  let examined = 0;
+
+  for (const page of pages) {
+    if (isExcludedRoute(page.route)) continue;
+    const blocks = [...page.html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+    if (!blocks.length) continue;
+    examined++;
+
+    for (const [, raw] of blocks) {
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch (e) {
+        error('schema', page.route, `JSON-LD がJSONとして壊れている: ${e.message}`);
+        continue;
+      }
+
+      const type = data['@type'];
+
+      if (type === 'BreadcrumbList') {
+        const items = Array.isArray(data.itemListElement) ? data.itemListElement : [];
+        if (!items.length) {
+          error('schema', page.route, 'BreadcrumbList に itemListElement が無い');
+          continue;
+        }
+        items.forEach((it, i) => {
+          const isLast = i === items.length - 1;
+          if (!it.name) {
+            error('schema', page.route, `パンくず ${i + 1}番目に name が無い`);
+          }
+          // 最後の項目だけ item を省略できる。中間で省略すると無効になる
+          if (!isLast && !it.item) {
+            error(
+              'schema',
+              page.route,
+              `パンくず ${i + 1}番目「${it.name ?? '?'}」に item(URL)が無い。` +
+                `**最後以外の項目はURLが必須。**リンク先のページが無いなら階層から外すこと`,
+            );
+          }
+          if (it.position !== i + 1) {
+            error('schema', page.route, `パンくず ${i + 1}番目の position が ${it.position} になっている`);
+          }
+        });
+      }
+
+      if (type === 'FAQPage') {
+        const qs = Array.isArray(data.mainEntity) ? data.mainEntity : [];
+        for (const q of qs) {
+          if (!q.name || !q.acceptedAnswer?.text) {
+            error('schema', page.route, 'FAQPage に質問文か回答本文が欠けている項目がある');
+            break;
+          }
+        }
+      }
+
+      if (type === 'Dataset' && !data.url) {
+        error('schema', page.route, 'Dataset に url が無い');
+      }
+    }
+  }
+
+  finishCheck('schema', '構造化データ(JSON-LD)', examined);
+}
+
 async function main() {
   await checkSecrets();
 
@@ -1409,6 +1489,7 @@ async function main() {
   checkPhrases(pages);
   checkPlaceholders(pages);
   checkSocialCard(pages);
+  checkStructuredData(pages);
   await checkCssTokens();
   checkMonetization();
   await checkDeadSelectors();
