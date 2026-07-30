@@ -1272,6 +1272,111 @@ function checkMonetization() {
 }
 
 /**
+ * A8へ提出済みの広告掲載URL(2026-07-31 新設 / B-042)
+ *
+ * **なぜ機械で見るか**
+ * A8は「広告が掲載されたコンテンツの公開後、広告掲載URL管理からURLを提出してください」
+ * 「開示を求めた際に応じていただけない場合は成果キャンセルとなる可能性がございます」と定めている。
+ * SATは 2026-07-27 に8ページへ広告を出しながら、**3日間1本も提出していなかった**。
+ * 成果が出ても取り消され得る状態で走っていたことになる。
+ *
+ * 飛んだ理由は能力でも意思でもなく、**提出が管理画面での手作業で、どの検査にも入っていなかった**こと。
+ * 掟6-1「手で実行する装置は、急いでいるときに必ず飛ばされる」の実例である。
+ *
+ * **検査対象は人が書き足さない**(掟6-3)。
+ * 「どのページにどの広告主の広告が出ているか」は **dist/ の実HTMLから機械が数える**。
+ * 人が触るのは `ops/a8-listing-urls.json`(提出したという事実)だけで、
+ * 提出せずにページを増やすと ERROR で落ちる。
+ *
+ * 広告主の識別は `a8ejpredirect` の飛び先ホストで行う。プログラムIDはHTMLに出ないため使えない。
+ */
+function checkAdListing(pages) {
+  const path = join(ROOT, '..', 'ops', 'a8-listing-urls.json');
+
+  /** @type {Map<string, Set<string>>} host -> 実際に広告が出ているルート */
+  const live = new Map();
+  for (const page of pages) {
+    for (const a of page.doc.querySelectorAll('a[href]')) {
+      const href = a.getAttribute('href') ?? '';
+      if (!href.includes('px.a8.net')) continue;
+      let host;
+      try {
+        const dest = new URL(href).searchParams.get('a8ejpredirect');
+        host = dest ? new URL(dest).host : null;
+      } catch {
+        host = null;
+      }
+      if (!host) {
+        warn('adlisting', page.route, 'A8リンクの飛び先を読み取れない。提出先の広告主を特定できない');
+        continue;
+      }
+      if (!live.has(host)) live.set(host, new Set());
+      live.get(host).add(page.route);
+    }
+  }
+
+  const pairs = [...live.values()].reduce((n, s) => n + s.size, 0);
+
+  if (pairs === 0) {
+    finishCheck('adlisting', 'A8への広告掲載URL提出', 0);
+    return;
+  }
+
+  let ledger;
+  try {
+    ledger = JSON.parse(readFileSync(path, 'utf8'));
+  } catch (e) {
+    error(
+      'adlisting',
+      'ops/a8-listing-urls.json',
+      `提出台帳を読めない(${e.message})。広告を${pairs}件出しているが、提出済みか確認できない`,
+    );
+    finishCheck('adlisting', 'A8への広告掲載URL提出', pairs);
+    return;
+  }
+
+  const submitted = ledger.submitted ?? {};
+
+  for (const [host, routes] of live) {
+    const entry = submitted[host];
+    if (!entry) {
+      error(
+        'adlisting',
+        'ops/a8-listing-urls.json',
+        `飛び先 ${host} の広告が${routes.size}ページに出ているが、台帳に広告主の項目が無い。` +
+          `A8の広告掲載URL管理に提出し、提出したURLをここに記録すること`,
+      );
+      continue;
+    }
+    const done = new Set(entry.routes ?? []);
+    for (const route of [...routes].sort()) {
+      if (done.has(route)) continue;
+      error(
+        'adlisting',
+        route,
+        `${entry.advertiser ?? host} の広告を出しているが、A8に掲載URLを提出していない。` +
+          `未提出のページで発生した成果はキャンセルされ得る`,
+      );
+    }
+    /*
+     * 逆向きも見る。台帳にあるのに広告が消えているページは、
+     * 提出内容が実態とずれている状態である。成果は失わないので WARN にとどめる。
+     */
+    for (const route of [...done].sort()) {
+      if (routes.has(route)) continue;
+      warn(
+        'adlisting',
+        route,
+        `台帳では ${entry.advertiser ?? host} を提出済みだが、このページに広告が出ていない。` +
+          `掲載をやめたなら台帳から外すこと`,
+      );
+    }
+  }
+
+  finishCheck('adlisting', 'A8への広告掲載URL提出', pairs);
+}
+
+/**
  * 使われていないCSSセレクタ(2026-07-29 新設)
  *
  * ============================================================
@@ -1492,6 +1597,7 @@ async function main() {
   checkStructuredData(pages);
   await checkCssTokens();
   checkMonetization();
+  checkAdListing(pages);
   await checkDeadSelectors();
   checkSources();
   checkNegativeClaims();
