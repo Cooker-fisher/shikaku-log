@@ -112,7 +112,52 @@ const SAT_KIKENBUTSU: CourseLink = {
   note: '動画(eラーニング)とDVDから選べる通信講座。乙種第4類・甲種・乙種第1/2/3/5/6類に対応',
 };
 
+/**
+ * オンスク.JP(株式会社オンラインスクール / A8)の商品リンク。2026-07-25 提携、2026-07-30 掲載。
+ *
+ * **SATが扱えない資格を埋めるために入れている。**SATは現場系国家資格(危険物・消防設備士・
+ * ボイラー・衛生管理者)に特化しており、宅建・簿記3級・ITパスポート・FP・登録販売者を扱わない。
+ * この6ページは提携から5日間、講座リンクが1本も無く構造的に¥0だった([backlog B-041])。
+ *
+ * **SATが既にあるページには足さない**([backlog B-015])。危険物乙4・第一種/第二種衛生管理者が該当する。
+ * 選択肢を増やすと高EPCのプログラムからクリックを奪い、総収益はむしろ下がる。
+ *
+ * 広告主の掲載条件(守らないと提携解除・成果キャンセル):
+ *  - 飛び先は `https://onsuku.jp` 内に限る
+ *  - 広告と分かる表示が必須 → CourseCta のPR表記と BaseLayout の hasAffiliate で担保
+ *  - **A8の管理画面にあるPR文(「業界最安値」等)を転載しない。**広告表示に適さない場合があると
+ *    明記されており、掟3-9(誇大表現の禁止)にも触れる。ここに書く事実は onsuku.jp で直接確認したものだけ
+ *  - 公開後、A8の「広告掲載URL管理」に掲載ページのURLを提出する(オーナー作業)
+ *
+ * **成果は有料プランの新規申込。無料体験・無料会員登録だけでは成果にならない**(否認条件)。
+ * だからといって無料体験の存在を伏せない。読者にとっては入口がある方が事実として有用である。
+ */
+const ONSUKU_A8MAT = '4B88SZ+DOYXO2+408S+BW0YB';
+const onsukuLink = (path: string) =>
+  `https://px.a8.net/svt/ejp?a8mat=${ONSUKU_A8MAT}&a8ejpredirect=${encodeURIComponent(`https://onsuku.jp${path}`)}`;
+
+/**
+ * 注記は**サービス全体の事実**にとどめ、講座ごとの講義数・問題数は書かない。
+ * 講座は改訂されるため(宅建講座は2026-06-04改訂)、資格ごとに数字を持つと確認できないまま古くなる。
+ * 料金は https://onsuku.jp/plan_guidance で確認(2026-07-30)。
+ */
+const ONSUKU_NOTE =
+  '月額1,078円(ライトプラン)または1,628円(スタンダードプラン)の定額制。初期費用・入会金なしで対象講座を受講できる。無料体験あり';
+
+const onsuku = (subject: string, path: string): CourseLink => ({
+  name: `オンスク.JP(株式会社オンラインスクール)の${subject}講座`,
+  url: onsukuLink(path),
+  note: ONSUKU_NOTE,
+});
+
 export const COURSE_LINKS: Record<string, CourseLink[]> = {
+  takken: [onsuku('宅建(宅地建物取引士)', '/training/takkenshi')],
+  'boki-3kyu': [onsuku('日商簿記3級', '/training/boki3')],
+  'it-passport': [onsuku('ITパスポート', '/training/itpass')],
+  'fp-2kyu': [onsuku('FP2級(ファイナンシャルプランナー)', '/training/fp2')],
+  'fp-3kyu': [onsuku('FP3級(ファイナンシャルプランナー)', '/training/fp3')],
+  'touroku-hanbaisha': [onsuku('登録販売者', '/training/touroku')],
+
   'kikenbutsu-otsu4': [SAT_KIKENBUTSU],
   'kikenbutsu-kou': [SAT_KIKENBUTSU],
   'kikenbutsu-otsu5': [SAT_KIKENBUTSU],
