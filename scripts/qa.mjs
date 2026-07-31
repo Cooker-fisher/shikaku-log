@@ -1272,6 +1272,170 @@ function checkMonetization() {
 }
 
 /**
+ * 公開ページに出ている広告を、ルート -> 飛び先ホストの集合に落とす。
+ * checkAdListing / checkPredictionCoverage / checkGates が共有する。
+ */
+function collectAdPages(pages) {
+  /** @type {Map<string, Set<string>>} route -> 飛び先ホスト */
+  const byRoute = new Map();
+  for (const page of pages) {
+    for (const a of page.doc.querySelectorAll('a[href]')) {
+      const href = a.getAttribute('href') ?? '';
+      if (!href.includes('px.a8.net')) continue;
+      let host = null;
+      try {
+        const dest = new URL(href).searchParams.get('a8ejpredirect');
+        host = dest ? new URL(dest).host : null;
+      } catch {
+        host = null;
+      }
+      if (!byRoute.has(page.route)) byRoute.set(page.route, new Set());
+      byRoute.get(page.route).add(host ?? '(飛び先不明)');
+    }
+  }
+  return byRoute;
+}
+
+/**
+ * 施策の前に予測を書いたか(2026-08-01 新設 / B-044)
+ *
+ * **なぜ機械で見るか**
+ * 掟7は「予測を先に書く。後から書いたものは予測ではない」と定めている。
+ * 2026-07-30 に14ページへ収益導線を通したが、予測(P-009)を書いたのは**翌日**だった。
+ * 掟は CLAUDE.md にあり、読むのは動きたくなっている本人だけで、行動時に何も起きなかった。
+ *
+ * **「施策を打つ」をデプロイと定義すると、この検査が門になる。**
+ * 広告を出しているページは、`retro/predictions.json` のどれかの `covers.pages` に
+ * 入っていなければならない。入っていなければ ERROR で落ち、デプロイできない。
+ * **予測を書かない限り施策は世に出ない。**順序が構造的に保証される。
+ *
+ * ローカルで config.ts を編集する行為は縛らない。縛ると開発が止まる。
+ * 縛るのは「読者に届く瞬間」だけでよい。
+ */
+function checkPredictionCoverage(pages) {
+  const path = join(ROOT, '..', 'retro', 'predictions.json');
+  const adRoutes = [...collectAdPages(pages).keys()].sort();
+
+  if (adRoutes.length === 0) {
+    finishCheck('predcover', '施策より前に予測があるか', 0);
+    return;
+  }
+
+  let ledger;
+  try {
+    ledger = JSON.parse(readFileSync(path, 'utf8'));
+  } catch (e) {
+    error('predcover', 'retro/predictions.json', `予測台帳を読めない(${e.message})`);
+    finishCheck('predcover', '施策より前に予測があるか', adRoutes.length);
+    return;
+  }
+
+  /** @type {Map<string, string>} route -> それを扱う予測ID */
+  const covered = new Map();
+  for (const p of ledger.predictions ?? []) {
+    for (const route of p.covers?.pages ?? []) {
+      if (!covered.has(route)) covered.set(route, p.id);
+    }
+  }
+
+  for (const route of adRoutes) {
+    if (covered.has(route)) continue;
+    error(
+      'predcover',
+      route,
+      `広告を出しているが、この施策を扱う予測が retro/predictions.json に無い。` +
+        `掟7は施策の前に予測を書くことを求めている。` +
+        `予測を書き、covers.pages にこのページを入れるまでデプロイできない`,
+    );
+  }
+
+  finishCheck('predcover', '施策より前に予測があるか', adRoutes.length);
+}
+
+/**
+ * ゲート(2026-08-01 新設 / B-044)
+ *
+ * **なぜ機械で見るか**
+ * 2026-07-30、自分で置いた掲載ゲート(「両方否認された場合に限り」
+ * 「8/10 時点で未決なら宅建・簿記3級の2ページ」)を、同日に6ページへ広げて破った。
+ * ゲートは `research/affiliates/a8-programs.md` と backlog の**散文にしか無く**、
+ * 行動する瞬間に読むのは動きたくなっている本人だけだった。だから通った。
+ *
+ * **ゲートは越えられてよい。黙って越えられるのが問題である。**
+ * `releasedAt` を書けば越えられるが、それはコミットに残る明示的な行為になる。
+ * 「気づかず通り過ぎた」が成立しなくなる。
+ */
+function checkGates(pages) {
+  const path = join(ROOT, '..', 'ops', 'gates.json');
+  let ledger;
+  try {
+    ledger = JSON.parse(readFileSync(path, 'utf8'));
+  } catch (e) {
+    error('gates', 'ops/gates.json', `ゲート台帳を読めない(${e.message})`);
+    finishCheck('gates', '自分で置いたゲート', 0);
+    return;
+  }
+
+  const gates = ledger.gates ?? [];
+  const byRoute = collectAdPages(pages);
+  const today = new Date().toISOString().slice(0, 10);
+
+  for (const g of gates) {
+    const where = `ops/gates.json (${g.id})`;
+
+    if (g.releasedAt) {
+      /*
+       * 解除済みのゲートは評価しない。ただし理由の無い解除は、
+       * 「ゲートを消して通った」のと区別がつかないので警告する。
+       */
+      if (!g.releaseReason || g.releaseReason.length < 20) {
+        warn('gates', where, `${g.title} は解除されているが、releaseReason が書かれていない`);
+      }
+      continue;
+    }
+
+    const check = g.check ?? {};
+    if (check.type === 'not-before') {
+      if (check.date && today < check.date) {
+        error(
+          'gates',
+          where,
+          `${g.title}: ${check.date} より前は動かさないと決めている(今日は ${today})。` +
+            `条件: ${g.condition}`,
+        );
+      }
+    } else if (check.type === 'course-links-scope') {
+      const allow = new Set(check.allowPages ?? []);
+      for (const [route, hosts] of byRoute) {
+        if (!hosts.has(check.advertiserHost)) continue;
+        if (allow.has(route)) continue;
+        error(
+          'gates',
+          route,
+          `${g.title}: ${check.advertiserHost} をこのページに出してよいと決めていない。` +
+            `条件: ${g.condition} / ` +
+            `越えるなら ${g.id} に releasedAt と releaseReason を書くこと(黙って越えない)`,
+        );
+      }
+    } else if (check.type === 'max-links-per-page') {
+      const max = typeof check.max === 'number' ? check.max : 2;
+      for (const [route, hosts] of byRoute) {
+        if (hosts.size <= max) continue;
+        error(
+          'gates',
+          route,
+          `${g.title}: 広告が${hosts.size}件並んでいる(上限${max}件)。条件: ${g.condition}`,
+        );
+      }
+    } else {
+      warn('gates', where, `${g.title}: check.type "${check.type}" を評価できない。qa.mjs に実装が要る`);
+    }
+  }
+
+  finishCheck('gates', '自分で置いたゲート', gates.length);
+}
+
+/**
  * A8へ提出済みの広告掲載URL(2026-07-31 新設 / B-042)
  *
  * **なぜ機械で見るか**
@@ -1598,6 +1762,8 @@ async function main() {
   await checkCssTokens();
   checkMonetization();
   checkAdListing(pages);
+  checkPredictionCoverage(pages);
+  checkGates(pages);
   await checkDeadSelectors();
   checkSources();
   checkNegativeClaims();
