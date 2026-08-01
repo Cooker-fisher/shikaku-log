@@ -41,16 +41,30 @@ function entities() {
     .filter((e) => !e.draft);
 }
 
-/** 最新年度の受験者数。系列の持ち方が資格によって違うので拾えるものを拾う */
+/**
+ * 統計の系列を持ち方の違いを吸収して取り出す。実際に3通りある。
+ *   official_stats / official_stats_unified / official_stats_cbt … 直下に series
+ *   official_stats_blocks … [{ key, label, stats: { series } }] の入れ子(FP3級・2級)
+ * 入れ子を読めていなかったせいで FP の受験者数が長らく0として合計されていた。
+ */
+function statSeries(node) {
+  if (!node || typeof node !== 'object') return [];
+  if (Array.isArray(node)) return node.flatMap((b) => statSeries(b?.stats ?? b));
+  return Array.isArray(node.series) && node.series.length ? [node.series] : [];
+}
+
+/**
+ * 最新年度の受験者数。
+ * 学科と実技、統一試験とCBTは同じ人が両方に出てくるので、足さずに最大値を取る。
+ */
 function latestExaminees(e) {
-  const blocks = Object.keys(e)
-    .filter((k) => k.startsWith('official_stats'))
-    .map((k) => e[k])
-    .filter((b) => b && Array.isArray(b.series) && b.series.length);
   let max = 0;
-  for (const b of blocks) {
-    const v = b.series[0]?.examinees;
-    if (typeof v === 'number' && v > max) max = v;
+  for (const key of Object.keys(e)) {
+    if (!key.startsWith('official_stats')) continue;
+    for (const series of statSeries(e[key])) {
+      const v = series[0]?.examinees;
+      if (typeof v === 'number' && v > max) max = v;
+    }
   }
   return max;
 }
@@ -110,6 +124,11 @@ const snapshot = {
     qualification_pages: list.length,
     /** 掲載資格の最新年度受験者数の合計。市場規模の代理指標 */
     covered_examinees: list.reduce((s, e) => s + latestExaminees(e), 0),
+    /**
+     * 受験者数を1件も拾えなかった資格。合計が黙って小さく出るのを防ぐための内訳。
+     * 統計の持ち方を増やしたときにここへ出る(FPの入れ子を読み落としていた再発防止)。
+     */
+    examinees_unread: list.filter((e) => latestExaminees(e) === 0).map((e) => e.slug),
     entities_in_d1: entityRows?.[0]?.n ?? null,
     reports_total: reportRows ? Object.values(byStatus).reduce((a, b) => a + b, 0) : null,
     reports_published: reportRows ? (byStatus.published ?? 0) : null,
@@ -148,6 +167,9 @@ console.log('  ' + '-'.repeat(58));
 console.log(`  公開ページ数          ${a.published_pages ?? '取得不可(先に npm run build)'}`);
 console.log(`  資格ページ数          ${a.qualification_pages}`);
 console.log(`  掲載資格の受験者合計  ${a.covered_examinees.toLocaleString('ja-JP')} 人`);
+if (a.examinees_unread.length) {
+  console.log(`  ⚠ 受験者数を拾えず   ${a.examinees_unread.join(', ')}`);
+}
 console.log(`  D1の資格件数          ${a.entities_in_d1 ?? '取得不可'}`);
 console.log(`  合格報告(累計/公開)   ${a.reports_total ?? '—'} / ${a.reports_published ?? '—'}`);
 console.log(`  自己採点の送信        ${a.saiten_submissions ?? '—'}`);

@@ -1034,6 +1034,21 @@ function checkMetrics() {
     }
   }
 
+  /*
+   * 受験者数を1件も拾えなかった資格。合計は黙って小さくなるだけで誰も気づかない。
+   * FP3級・2級が official_stats_blocks という入れ子で統計を持っていて、
+   * 集計側がその形を読めず0として足されていた(数字は正しいのに集計が間違う類)。
+   */
+  const unread = snap.auto?.examinees_unread;
+  if (Array.isArray(unread) && unread.length) {
+    warn(
+      'metrics',
+      `metrics/${newest}`,
+      `受験者数を拾えていない資格がある: ${unread.join(', ')}。` +
+        'covered_examinees がその分だけ小さく出る(scripts/metrics.mjs の statSeries を確認)',
+    );
+  }
+
   finishCheck('metrics', '週次スナップショット', files.length);
 }
 
