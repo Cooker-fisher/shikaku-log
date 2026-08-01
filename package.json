@@ -17,6 +17,7 @@
     "smoke": "node scripts/smoke.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "metrics": "node scripts/metrics.mjs",
+    "gsc": "node scripts/gsc.mjs",
     "deploy": "wrangler pages deploy dist --project-name=shikakulog --branch=main --commit-dirty=true",
     "test:moderation": "node scripts/test-moderation.mjs"
   },

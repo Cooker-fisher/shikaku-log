@@ -994,6 +994,46 @@ function checkMetrics() {
     else warn('metrics', `metrics/${newest}`, msg);
   }
 
+  /*
+   * Search Console の数字が入るようになったので、**届いた量そのもの**を見る。
+   *
+   * gsc_* は `scripts/gsc.mjs` が API から埋める。null は「認証情報が無くて取れなかった」で、
+   * 0 は「本当に表示されていない」である。**この2つを混同してはならない。**
+   * 前者は取得の設定漏れ(警告)、後者は配信の失敗(記録が続くならERROR)。
+   *
+   * P-004 では13ページ出して表示回数1だった。そのとき機械検査は全部通っていた。
+   * 「出す物が正しいか」をいくら検査しても届いたかは分からない、が唯一ここで出る。
+   */
+  const impressions = manual.gsc_impressions_7d;
+  if (impressions === null || impressions === undefined) {
+    warn(
+      'metrics',
+      `metrics/${newest}`,
+      'Search Console の表示回数が null。`npm run gsc` が動く状態か確認すること' +
+        '(認証情報は .env、手順は scripts/gsc.mjs の冒頭)',
+    );
+  } else if (impressions === 0) {
+    /* 直近3回そろって0なら、作る側の手を止めて届け方を直す合図とする */
+    const recent = files
+      .slice(-3)
+      .map((f) => {
+        try {
+          return JSON.parse(readFileSync(join(dir, f), 'utf8')).manual?.gsc_impressions_7d;
+        } catch {
+          return undefined;
+        }
+      })
+      .filter((v) => v !== undefined && v !== null);
+    const msg =
+      '検索の表示回数が0。ページを増やす前に、インデックス状況と対象クエリを見直すこと' +
+      '(`npm run gsc -- --inspect` で未収録のURLが出る)';
+    if (recent.length >= 3 && recent.every((v) => v === 0)) {
+      error('metrics', `metrics/${newest}`, `3週続けて${msg}`);
+    } else {
+      warn('metrics', `metrics/${newest}`, msg);
+    }
+  }
+
   finishCheck('metrics', '週次スナップショット', files.length);
 }
 

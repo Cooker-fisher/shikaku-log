@@ -77,6 +77,40 @@ npm run qa       # 公開前の自動チェック(これが通らないものは
 
 ERROR が1件でもあれば終了コード1で落ちる。人の注意力に頼らず機械で止める方針。
 
+### 検索トラフィックの記録
+
+```bash
+npm run metrics             # 週次スナップショット(Search Console も一緒に取る)
+npm run gsc                 # Search Console だけ取り直す
+npm run gsc -- --inspect    # sitemap の各URLがインデックスされているかも数える
+npm run gsc -- --print      # 記録せず表示だけ
+```
+
+表示回数・クリック数・平均掲載順位・上位クエリは Search Analytics API から取る。
+以前は管理画面を見て手で書く欄にしていたが、手作業の工程は急いでいるときに必ず飛ばされる。
+`npm run metrics` の中に入れて飛ばせなくしてある。
+
+`npm run qa` は次の3つを見る。**「0」と「取れていない」を別のものとして扱う。**
+
+| 状態 | 扱い |
+|---|---|
+| 表示回数が `null` | WARN — 取得の設定が壊れている(数字の話ではない) |
+| 表示回数が 0 | WARN — 届いていない |
+| 3週続けて 0 | ERROR — ページを増やす前に届け方を直す |
+
+認証情報は `.env` に置く(`.gitignore` 済み)。サービスアカウントの鍵を使う場合:
+
+```
+GSC_SERVICE_ACCOUNT_FILE=/path/to/key.json
+# 任意。ドメインプロパティなら sc-domain:shikaku-log.com
+# GSC_SITE_URL=https://shikaku-log.com/
+```
+
+Google Cloud でサービスアカウントを作って鍵(JSON)を落とし、Search Console の
+「設定 > ユーザーと権限」でその `client_email` を**制限付き**ユーザーとして追加する。
+OAuth を使う場合は `GSC_CLIENT_ID` / `GSC_CLIENT_SECRET` / `GSC_REFRESH_TOKEN` を置く。
+認証情報が無いときは取得を飛ばすだけで、週次の記録そのものは止まらない。
+
 ## 掲載データについて
 
 - 公式統計は各実施団体の公表資料から取得している。出典URLと取得日は各ページに明記

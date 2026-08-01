@@ -10,6 +10,10 @@ dist/
 .dev.vars
 .dev.vars.*
 
+# Search Console のサービスアカウント鍵。リポジトリ直下に置かれても取り込まない
+*service-account*.json
+*.key.json
+
 # ローカルD1
 .mf/
 *.sqlite
