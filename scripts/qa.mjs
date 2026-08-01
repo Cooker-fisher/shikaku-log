@@ -23,6 +23,8 @@ import { readFileSync, existsSync, statSync, readdirSync, mkdirSync, writeFileSy
 import { readdir } from 'node:fs/promises';
 import { join, relative, resolve, dirname, extname, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { userInfo, homedir } from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { parse } from 'node-html-parser';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -208,6 +210,117 @@ function isTextFile(file) {
 // ---------------------------------------------------------------------------
 // 1. 秘匿情報
 // ---------------------------------------------------------------------------
+
+/**
+ * 身元が割れる情報の混入(2026-08-01 新設 / B-045)
+ *
+ * **なぜ機械で見るか**
+ * `site/` は公開リポジトリ(github.com/Cooker-fisher/shikaku-log)として push される。
+ * 秘匿情報スキャンはASP ID・APIキーを見ているが、**運営者個人が特定される情報は見ていなかった。**
+ * メールアドレス・端末のユーザー名・ローカルの絶対パス・電話番号は、
+ * 認証情報ではないので既存の検査を素通りする。一度 push すると履歴から消せない。
+ *
+ * **照合する個人の値は、このファイルに書かない。**
+ * `qa.mjs` 自身が公開リポジトリに入るため、ここに実際のメールアドレスや
+ * ユーザー名を書けば、対策のつもりで本体を公開することになる。
+ * だから**実行時に環境から取る**(OSのユーザー名・ホームディレクトリ・git の user.email)。
+ * どこにも保存されず、公開物にも残らない。
+ *
+ * 画像の中の文字は読めない。`public/og.png` などは目視で確認すること。
+ */
+function personalStrings() {
+  const out = new Set();
+  const add = (v) => {
+    if (typeof v === 'string' && v.trim().length >= 4) out.add(v.trim());
+  };
+
+  try {
+    add(userInfo().username);
+  } catch {
+    /* 取れない環境では諦める */
+  }
+  try {
+    add(homedir());
+  } catch {
+    /* 同上 */
+  }
+  for (const key of ['user.email', 'user.name']) {
+    try {
+      add(execFileSync('git', ['config', '--get', key], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }));
+    } catch {
+      /* git が無い / 未設定なら飛ばす */
+    }
+  }
+  /*
+   * リポジトリのオーナー名は公開URLに出るので隠しようがない。除外する。
+   * ここで弾きたいのは「公開する意図が無かったのに混ざった値」である。
+   */
+  return [...out].filter((s) => !/^Cooker-fisher$/i.test(s));
+}
+
+/** 個人を特定しうる形。値そのものはここに書かない */
+const PII_PATTERNS = [
+  { re: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, label: 'メールアドレス' },
+  { re: /[A-Za-z]:\\Users\\[^\\/"'\s]+/gi, label: 'Windowsのローカルパス(ユーザー名を含む)' },
+  { re: /\/(?:home|Users)\/[A-Za-z0-9._-]+/g, label: 'ホームディレクトリのパス' },
+  { re: /\b0\d{1,4}-\d{1,4}-\d{4}\b/g, label: '電話番号らしき数字' },
+];
+
+/** 誤検知として許す値(公開してよいと確認済みのものだけを、理由つきで足す) */
+const PII_ALLOW = [
+  /noreply@/i,
+  /example\.(com|org|net)/i,
+  /@[a-z-]+\.(astro|css|js|ts)/i, // import 文などの誤検知
+];
+
+async function checkPii() {
+  const targets = [];
+  for (const dir of SOURCE_DIRS) targets.push(...(await walk(join(ROOT, dir))));
+  for (const f of SOURCE_FILES) {
+    const p = join(ROOT, f);
+    if (existsSync(p)) targets.push(p);
+  }
+  if (existsSync(DIST)) targets.push(...(await walk(DIST)));
+
+  const personal = personalStrings();
+  let examined = 0;
+
+  for (const file of targets) {
+    if (file === SELF) continue;
+    if (!isTextFile(file)) continue;
+    let content;
+    try {
+      content = readFileSync(file, 'utf8');
+    } catch {
+      continue;
+    }
+    examined++;
+    const where = relative(ROOT, file).split('\\').join('/');
+
+    for (const value of personal) {
+      if (!content.includes(value)) continue;
+      const line = content.split('\n').findIndex((l) => l.includes(value)) + 1;
+      error(
+        'pii',
+        `${where}:${line}`,
+        `この端末の個人情報(OSのユーザー名 / ホームディレクトリ / git の user.email・user.name のいずれか)が` +
+          `そのまま入っている。site/ は公開リポジトリに push される。**値はここに出さない**ので、該当行を自分で開いて消すこと`,
+      );
+    }
+
+    for (const { re, label } of PII_PATTERNS) {
+      re.lastIndex = 0;
+      const hits = content.match(re) ?? [];
+      for (const hit of new Set(hits)) {
+        if (PII_ALLOW.some((ok) => ok.test(hit))) continue;
+        const line = content.split('\n').findIndex((l) => l.includes(hit)) + 1;
+        error('pii', `${where}:${line}`, `${label}が公開対象に入っている。site/ は公開リポジトリに push される`);
+      }
+    }
+  }
+
+  finishCheck('pii', '身元が割れる情報(公開リポジトリ向け)', examined);
+}
 
 async function checkSecrets() {
   const targets = [];
@@ -1735,6 +1848,7 @@ function checkStructuredData(pages) {
 
 async function main() {
   await checkSecrets();
+  await checkPii();
 
   const pages = await loadPages();
   if (pages === null) {
