@@ -71,7 +71,6 @@ const ogImage = new URL('/og.png', Astro.site ?? Astro.url.origin).href;
     {GA_MEASUREMENT_ID && (
       <>
         <script
-          type="text/partytown-ignore"
           is:inline
           define:vars={{ GA_MEASUREMENT_ID }}
           set:html={`
@@ -124,6 +123,29 @@ const ogImage = new URL('/og.png', Astro.site ?? Astro.url.origin).href;
         <slot />
       </div>
     </main>
+
+    {/*
+      広告リンクのクリックを GA4 に送る。
+      どのページの、どの位置のリンクが押されたかが分からないと、
+      広告の置き場所も、次にどの資格を足すかも勘で決めることになる。
+
+      - 対象は rel="sponsored" のリンクだけ。位置は data-ad-slot で区別する
+      - 送るのはページのパス・位置・リンクの文言で、読者を識別する値は送らない
+      - gtag は本番ホストでしか定義されないので、それ以外では何もしない
+    */}
+    {hasAffiliate && GA_MEASUREMENT_ID && (
+      <script is:inline>
+        document.addEventListener('click', function (e) {
+          var a = e.target && e.target.closest ? e.target.closest('a[rel~="sponsored"]') : null;
+          if (!a || typeof window.gtag !== 'function') return;
+          window.gtag('event', 'affiliate_click', {
+            ad_slot: a.getAttribute('data-ad-slot') || 'unknown',
+            ad_name: (a.textContent || '').trim().slice(0, 80),
+            page_path: location.pathname,
+          });
+        });
+      </script>
+    )}
 
     <footer class="site-footer">
       <div class="container">

@@ -1,0 +1,207 @@
+---
+/**
+ * 合格点(合格基準点)の推移ページ。/shikaku/[slug]/gokakuten/
+ *
+ * 資格詳細ページとは分ける。検索意図が違うため
+ * (詳細ページ=「合格率は?」/ このページ=「合格点は何点だったか」)。
+ *
+ * `passing_score_history` を持つ entity にだけ生成される。
+ * データを足せば、ページ・サイトマップ・詳細ページからのリンクが自動で増える。
+ *
+ * **詳細ページに無いものを載せる。**同じ表を別URLに置くだけでは重複ページになる。
+ * ここでは前回差・正答率・点数ごとの回数を、同じ公表値から計算して出している。
+ * 計算しているのは差と割合と回数だけで、予想や見込みは書かない。
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PassingScoreTable from '../../../components/PassingScoreTable.astro';
+import SourceLink from '../../../components/SourceLink.astro';
+import { entities, type Entity } from '../../../lib/entities';
+
+export function getStaticPaths() {
+  return entities
+    .filter((e) => e.passing_score_history)
+    .map((entity) => ({ params: { slug: entity.slug }, props: { entity } }));
+}
+
+interface Props {
+  entity: Entity;
+}
+const { entity } = Astro.props;
+const h = entity.passing_score_history!;
+// series は新しい順に並んでいる(PassingScoreTable と同じ前提)
+const rows = h.series;
+const latest = rows[0];
+const oldest = rows[rows.length - 1];
+
+const generals = rows.map((s) => s.general);
+const min = Math.min(...generals);
+const max = Math.max(...generals);
+
+const changes = rows.map((s, i) => {
+  const prev = rows[i + 1]; // 1つ前の回。同じ年度に2回実施された年があるので「前年」ではない
+  return {
+    year: s.year,
+    general: s.general,
+    diff: prev ? s.general - prev.general : null,
+    ratio: (s.general / h.total_questions) * 100,
+  };
+});
+const signed = (v: number) => (v > 0 ? `+${v}` : v === 0 ? '±0' : `${v}`);
+
+const diffs = changes.filter((c) => c.diff !== null);
+const biggest = diffs.length
+  ? diffs.reduce((a, c) => (Math.abs(c.diff!) > Math.abs(a.diff!) ? c : a))
+  : null;
+
+// 点数ごとに、その点だった年度を集める
+const byScore = new Map<number, string[]>();
+for (const s of rows) byScore.set(s.general, [...(byScore.get(s.general) ?? []), s.year]);
+const distribution = [...byScore.entries()].sort((a, b) => b[0] - a[0]);
+
+const title = `${entity.name}の合格点の推移(${oldest.year}〜${latest.year})`;
+const description =
+  `${entity.name}の合格基準点を${rows.length}回分、実施団体の公表資料から並べています。` +
+  `${latest.year}は${h.total_questions}問中${latest.general}点、${rows.length}回の幅は${min}点〜${max}点。前回との差と正答率も載せています。`;
+---
+
+<BaseLayout title={title} description={description} ogType="article">
+  <article class="page">
+    <nav class="crumbs" aria-label="パンくず">
+      <a href="/">ホーム</a> <span aria-hidden="true">/</span>
+      <a href={`/shikaku/${entity.slug}/`}>{entity.short_name}</a> <span aria-hidden="true">/</span>
+      <span aria-current="page">合格点の推移</span>
+    </nav>
+
+    <header class="hd">
+      <h1>{entity.name}の合格点の推移</h1>
+      <p class="lede">
+        {latest.year}の合格基準点は<strong>{h.total_questions}問中{latest.general}点</strong>でした。
+        公表されている{rows.length}回({oldest.year}〜{latest.year})を、実施団体の資料から並べています。
+      </p>
+    </header>
+
+    <PassingScoreTable history={h} entityShortName={entity.short_name} />
+
+    <section aria-labelledby="h-change">
+      <h2 id="h-change">前回との差と正答率</h2>
+      {biggest && (
+        <p>
+          前回からの動きが最も大きかったのは{biggest.year}の<strong>{signed(biggest.diff!)}点</strong>です。
+          正答率は合格基準点を{h.total_questions}問で割った値で、一般受験者の場合です。
+        </p>
+      )}
+      <div class="table-wrap">
+        <table>
+          <caption>{entity.short_name} 合格基準点の前回差と正答率(一般受験者)</caption>
+          <thead>
+            <tr>
+              <th scope="col">実施年度</th>
+              <th scope="col" class="num">合格基準点</th>
+              <th scope="col" class="num">前回差</th>
+              <th scope="col" class="num">正答率</th>
+            </tr>
+          </thead>
+          <tbody>
+            {changes.map((c) => (
+              <tr>
+                <th scope="row">{c.year}</th>
+                <td class="num">{c.general}点</td>
+                <td class="num">{c.diff !== null ? `${signed(c.diff)}点` : '—'}</td>
+                <td class="num">{c.ratio.toFixed(1)}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <SourceLink href={h.source_url} label="合格基準点(公式)" accessedAt={h.retrieved_at} />
+    </section>
+
+    <section aria-labelledby="h-dist">
+      <h2 id="h-dist">点数ごとの回数</h2>
+      <p>
+        {rows.length}回のうち、同じ点数が何回あったかを数えたものです。
+        過去の結果を数えただけで、次回の合格基準点を示すものではありません。
+      </p>
+      <div class="table-wrap">
+        <table>
+          <caption>{entity.short_name} 合格基準点ごとの回数(一般受験者)</caption>
+          <thead>
+            <tr>
+              <th scope="col">合格基準点</th>
+              <th scope="col" class="num">回数</th>
+              <th scope="col">実施年度</th>
+            </tr>
+          </thead>
+          <tbody>
+            {distribution.map(([score, years]) => (
+              <tr>
+                <th scope="row">{score}点</th>
+                <td class="num">{years.length}回</td>
+                <td>{years.join('、')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-more">
+      <h2 id="h-more">あわせて見る</h2>
+      <ul>
+        <li>
+          <a href={`/shikaku/${entity.slug}/`}>{entity.short_name}の合格率・受験者数データ</a>
+        </li>
+        {entity.regional_stats && (
+          <li>
+            <a href={`/shikaku/${entity.slug}/todofuken/`}>{entity.short_name}の都道府県別の合格率</a>
+          </li>
+        )}
+        {entity.saiten && (
+          <li>
+            <a href={`/shikaku/${entity.slug}/saiten/`}>{entity.short_name}の自己採点</a>
+          </li>
+        )}
+      </ul>
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: var(--space-4);
+  }
+  .crumbs {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-4);
+  }
+  .hd h1 {
+    font-size: var(--fs-2xl);
+    line-height: var(--lh-heading);
+    margin: 0 0 var(--space-3);
+  }
+  .lede {
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+  }
+  section {
+    margin-top: var(--space-7);
+  }
+  h2 {
+    font-size: var(--fs-xl);
+    line-height: var(--lh-heading);
+    margin: 0 0 var(--space-3);
+  }
+  p,
+  li {
+    line-height: var(--lh-normal);
+  }
+  ul {
+    padding-left: 1.2em;
+  }
+</style>

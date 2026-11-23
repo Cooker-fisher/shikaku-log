@@ -6,7 +6,7 @@
  * noindex ページを除外する判断も自前の方が確実。
  */
 import type { APIRoute } from 'astro';
-import { entities } from '../lib/entities';
+import { entities, nationalPassRate } from '../lib/entities';
 import { guides } from '../lib/guides';
 
 /** 更新頻度の目安。公式統計は年1回更新なので資格ページは monthly で十分 */
@@ -47,6 +47,21 @@ export const GET: APIRoute = ({ site }) => {
       .map((e) => ({
         loc: `${origin}/shikaku/${e.slug}/saiten/`,
         changefreq: 'weekly',
+        priority: '0.7',
+      })),
+    // 合格点の推移・都道府県別。データを持つ資格にだけページがある(各ページの getStaticPaths と同じ条件)
+    ...entities
+      .filter((e) => e.passing_score_history)
+      .map((e) => ({
+        loc: `${origin}/shikaku/${e.slug}/gokakuten/`,
+        changefreq: 'monthly',
+        priority: '0.7',
+      })),
+    ...entities
+      .filter((e) => e.regional_stats && nationalPassRate(e) !== null)
+      .map((e) => ({
+        loc: `${origin}/shikaku/${e.slug}/todofuken/`,
+        changefreq: 'monthly',
         priority: '0.7',
       })),
     // 資格をまたぐ比較ページ。src/lib/guides.ts に登録したものが自動で載る

@@ -53,7 +53,7 @@ const hasLinks = links.length > 0;
     <ul class="list">
       {links.map((link) => (
         <li>
-          <a href={link.url} rel="sponsored nofollow noopener" target="_blank">
+          <a href={link.url} rel="sponsored nofollow noopener" target="_blank" data-ad-slot="course-cta">
             {link.name}
           </a>
           {link.note && <span class="note">{link.note}</span>}

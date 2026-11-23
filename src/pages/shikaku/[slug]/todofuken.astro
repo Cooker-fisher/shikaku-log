@@ -1,0 +1,173 @@
+---
+/**
+ * 都道府県別の合格率ページ。/shikaku/[slug]/todofuken/
+ *
+ * 資格詳細ページとは分ける。検索意図が違うため
+ * (詳細ページ=「合格率は?」/ このページ=「自分の県ではどうか」)。
+ *
+ * `regional_stats` を持つ entity にだけ生成される。
+ * データを足せば、ページ・サイトマップ・詳細ページからのリンクが自動で増える。
+ *
+ * **詳細ページに無いものを載せる。**詳細ページの表は合格率の順位だけなので、
+ * ここでは申込者数・受験率・全国に占める割合を、受験者数の多い順に並べた表を足している。
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import RegionalStatsTable from '../../../components/RegionalStatsTable.astro';
+import SourceLink from '../../../components/SourceLink.astro';
+import { entities, nationalPassRate, type Entity } from '../../../lib/entities';
+
+/** 全国の合格率が取れない資格には生成しない(詳細ページの hasRegional と同じ条件) */
+export function getStaticPaths() {
+  return entities
+    .filter((e) => e.regional_stats && nationalPassRate(e) !== null)
+    .map((entity) => ({ params: { slug: entity.slug }, props: { entity } }));
+}
+
+interface Props {
+  entity: Entity;
+}
+const { entity } = Astro.props;
+const r = entity.regional_stats!;
+const national = nationalPassRate(entity)!;
+
+const num = new Intl.NumberFormat('ja-JP');
+const pct = (v: number) => `${v.toFixed(1)}%`;
+
+const totalExaminees = r.rows.reduce((a, x) => a + x.examinees, 0);
+const bySize = [...r.rows].sort((a, b) => b.examinees - a.examinees);
+const top5 = bySize.slice(0, 5);
+const top5Share = (top5.reduce((a, x) => a + x.examinees, 0) / totalExaminees) * 100;
+
+const byExamRate = [...r.rows].sort((a, b) => b.exam_rate - a.exam_rate);
+const examRateTop = byExamRate[0];
+const examRateBottom = byExamRate[byExamRate.length - 1];
+
+const byPass = [...r.rows].sort((a, b) => b.pass_rate - a.pass_rate);
+const passTop = byPass[0];
+const passBottom = byPass[byPass.length - 1];
+
+const title = `${entity.name}の都道府県別合格率(${r.year})`;
+const description =
+  `${entity.name}の${r.year}の結果を${r.rows.length}都道府県別に並べています。` +
+  `合格率は${passTop.pref}の${pct(passTop.pass_rate)}から${passBottom.pref}の${pct(passBottom.pass_rate)}まで。` +
+  '受験者数・申込者数・受験率も実施団体の公表資料から載せています。';
+---
+
+<BaseLayout title={title} description={description} ogType="article">
+  <article class="page">
+    <nav class="crumbs" aria-label="パンくず">
+      <a href="/">ホーム</a> <span aria-hidden="true">/</span>
+      <a href={`/shikaku/${entity.slug}/`}>{entity.short_name}</a> <span aria-hidden="true">/</span>
+      <span aria-current="page">都道府県別</span>
+    </nav>
+
+    <header class="hd">
+      <h1>{entity.name}の都道府県別合格率</h1>
+      <p class="lede">
+        {r.year}の{entity.name}について、実施団体が公表している都道府県別の集計を並べています。
+        全国の合格率は{pct(national)}でした。
+      </p>
+    </header>
+
+    <RegionalStatsTable regional={r} entityShortName={entity.short_name} nationalRate={national} />
+
+    <section aria-labelledby="h-size">
+      <h2 id="h-size">受験者数・申込者数・受験率</h2>
+      <p>
+        受験者が多いのは{top5.map((x) => x.pref).join('・')}の順で、
+        この5都道府県で<strong>全受験者の{top5Share.toFixed(1)}%</strong>を占めます。
+        受験率(申込者のうち実際に受験した人の割合)は、
+        {examRateTop.pref}の{pct(examRateTop.exam_rate)}が最も高く、
+        {examRateBottom.pref}の{pct(examRateBottom.exam_rate)}が最も低い値でした。
+      </p>
+      <div class="table-wrap">
+        <table>
+          <caption>{entity.short_name} {r.year} 都道府県別(受験者数の多い順)</caption>
+          <thead>
+            <tr>
+              <th scope="col">都道府県</th>
+              <th scope="col" class="num">申込者数</th>
+              <th scope="col" class="num">受験者数</th>
+              <th scope="col" class="num">受験率</th>
+              <th scope="col" class="num">全国に占める割合</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bySize.map((row) => (
+              <tr>
+                <th scope="row">{row.pref}</th>
+                <td class="num">{num.format(row.applicants)}</td>
+                <td class="num">{num.format(row.examinees)}</td>
+                <td class="num">{pct(row.exam_rate)}</td>
+                <td class="num">{pct((row.examinees / totalExaminees) * 100)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        「全国に占める割合」は、各都道府県の受験者数を{r.rows.length}都道府県の合計
+        ({num.format(totalExaminees)}人)で割った値です。
+      </p>
+      <SourceLink href={r.source_url} label={`${r.year} 都道府県別集計(公式)`} accessedAt={r.retrieved_at} />
+    </section>
+
+    <section aria-labelledby="h-more">
+      <h2 id="h-more">あわせて見る</h2>
+      <ul>
+        <li>
+          <a href={`/shikaku/${entity.slug}/`}>{entity.short_name}の合格率・受験者数データ</a>
+        </li>
+        {entity.passing_score_history && (
+          <li>
+            <a href={`/shikaku/${entity.slug}/gokakuten/`}>{entity.short_name}の合格点の推移</a>
+          </li>
+        )}
+      </ul>
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: var(--space-4);
+  }
+  .crumbs {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-4);
+  }
+  .hd h1 {
+    font-size: var(--fs-2xl);
+    line-height: var(--lh-heading);
+    margin: 0 0 var(--space-3);
+  }
+  .lede {
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+  }
+  section {
+    margin-top: var(--space-7);
+  }
+  h2 {
+    font-size: var(--fs-xl);
+    line-height: var(--lh-heading);
+    margin: 0 0 var(--space-3);
+  }
+  p,
+  li {
+    line-height: var(--lh-normal);
+  }
+  .note {
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+  }
+  ul {
+    padding-left: 1.2em;
+  }
+</style>

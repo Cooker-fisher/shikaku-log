@@ -289,3 +289,15 @@ export function passRateTrend(stats: OfficialStats): { latest: number; average: 
 export function sourceFor(entity: Entity, field: string): string | undefined {
   return entity.exam.source_urls?.[field] ?? entity.exam.source_url;
 }
+
+/**
+ * 全国の合格率(主となる統計の最新回)。取れなければ null。
+ *
+ * 都道府県別ページを生成するかどうかの判定に使う。
+ * ページ側とサイトマップ側で条件を別々に書くと、片方だけ直して食い違う。
+ */
+export function nationalPassRate(entity: Entity): number | null {
+  const primary = statBlocks(entity)[0];
+  const latest = primary ? latestSeries(primary.stats) : undefined;
+  return latest?.pass_rate ?? null;
+}

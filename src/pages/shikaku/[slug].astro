@@ -380,6 +380,9 @@ const panels = [
     {entity.passing_score_history && (
       <div class="sec" data-source="official" id="scores">
         <PassingScoreTable history={entity.passing_score_history} entityShortName={entity.short_name} />
+        <p class="more-link">
+          <a href={`/shikaku/${entity.slug}/gokakuten/`}>前回との差と正答率を見る({entity.short_name}の合格点の推移)</a>
+        </p>
       </div>
     )}
 
@@ -390,6 +393,9 @@ const panels = [
           entityShortName={entity.short_name}
           nationalRate={latest.pass_rate}
         />
+        <p class="more-link">
+          <a href={`/shikaku/${entity.slug}/todofuken/`}>申込者数・受験率も都道府県別に見る</a>
+        </p>
       </div>
     )}
     </div>
