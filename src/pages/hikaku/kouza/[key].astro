@@ -1,0 +1,234 @@
+---
+/**
+ * 通信講座の比較ページ。/hikaku/kouza/[key]/
+ *
+ * 資格ページは「合格率は?」に答えるページで、講座を探している人の問いには答えていない。
+ * ここは「講座はいくらで、どういう形か」に、各社の公式ページの記載だけで答える。
+ *
+ * **優劣を書かない。**このサイトは受講した人のデータを持っていない。
+ * 書けるのは料金・学び方・対応区分と、そこから計算できる金額の比較まで。
+ * データは src/lib/courseCompare.ts。足せばページ・サイトマップ・資格ページのリンクが増える
+ * (資格ページからのリンクは src/lib/guides.ts への登録が要る)。
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import SourceLink from '../../../components/SourceLink.astro';
+import { entities } from '../../../lib/entities';
+import { courseCompares, monthsToExceed, ONSUKU_MONTHLY, type CourseCompare } from '../../../lib/courseCompare';
+
+export function getStaticPaths() {
+  return courseCompares.map((c) => ({ params: { key: c.key }, props: { compare: c } }));
+}
+
+interface Props {
+  compare: CourseCompare;
+}
+const { compare: c } = Astro.props;
+
+const num = new Intl.NumberFormat('ja-JP');
+const yen = (v: number) => `${num.format(v)}円`;
+
+const linked = entities.filter((e) => c.entitySlugs.includes(e.slug));
+const companies = c.courses.map((x) => x.company);
+
+const mStd = monthsToExceed(ONSUKU_MONTHLY.standard, c.baseline.yen);
+const mLight = monthsToExceed(ONSUKU_MONTHLY.light, c.baseline.yen);
+
+const title = `${c.subject}の通信講座 ${c.courses.length}社の料金と学び方`;
+const description =
+  `${c.subject}の通信講座を、運営者が提携している${companies.join('と')}の${c.courses.length}社について並べています。` +
+  `料金(税込)・学び方・対応区分を各社の公式ページで確認しました。順位や優劣は付けていません。`;
+---
+
+<BaseLayout title={title} description={description} ogType="article" hasAffiliate={true}>
+  <article class="page">
+    <nav class="crumbs" aria-label="パンくず">
+      <a href="/">ホーム</a> <span aria-hidden="true">/</span>
+      <span aria-current="page">{c.subject}の通信講座</span>
+    </nav>
+
+    <header class="hd">
+      <h1>{c.subject}の通信講座 {c.courses.length}社の料金と学び方</h1>
+      <p class="lede">
+        ここに並べているのは<strong>運営者が提携している{c.courses.length}社だけ</strong>で、
+        {c.subject}の講座をすべて集めたものではありません。
+        料金と内容は各社の公式ページで確認した事実だけを書いており、順位や優劣は付けていません。
+      </p>
+    </header>
+
+    <section aria-labelledby="h-diff">
+      <h2 id="h-diff">2社の違いは料金の形</h2>
+      <p>
+        {c.courses[0].company}は<strong>買い切り</strong>、
+        {c.courses[1].company}は<strong>月額の定額制</strong>です。
+        {c.baseline.label}は{yen(c.baseline.yen)}(税込)。
+        オンスク.JPのスタンダードプラン(月額{yen(ONSUKU_MONTHLY.standard)})は<strong>{mStd}か月目</strong>に、
+        ライトプラン(月額{yen(ONSUKU_MONTHLY.light)})は<strong>{mLight}か月目</strong>に、支払いの合計がこの金額を超えます。
+      </p>
+      <p class="note">
+        月額に月数を掛けただけの計算です。講座の内容や使える機能は同じではないので、金額だけで比べられるものではありません。
+      </p>
+    </section>
+
+    <section aria-labelledby="h-table">
+      <h2 id="h-table">料金と学び方</h2>
+      <div class="table-wrap">
+        <table>
+          <caption>{c.subject}の通信講座({c.retrievedAt}に各社の公式ページで確認)</caption>
+          <thead>
+            <tr>
+              <th scope="col">項目</th>
+              {c.courses.map((x) => <th scope="col">{x.company}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">講座</th>
+              {c.courses.map((x) => <td>{x.courseName}</td>)}
+            </tr>
+            <tr>
+              <th scope="row">料金の形</th>
+              {c.courses.map((x) => <td>{x.pricingModel}</td>)}
+            </tr>
+            <tr>
+              <th scope="row">料金(税込)</th>
+              {c.courses.map((x) => (
+                <td>
+                  <ul class="prices">
+                    {x.prices.map((p) => (
+                      <li>
+                        {p.label} <strong>{yen(p.yen)}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                  {x.priceNote && <p class="cell-note">{x.priceNote}</p>}
+                </td>
+              ))}
+            </tr>
+            <tr>
+              <th scope="row">学び方</th>
+              {c.courses.map((x) => <td>{x.format}</td>)}
+            </tr>
+            <tr>
+              <th scope="row">対応する区分</th>
+              {c.courses.map((x) => <td>{x.covers}</td>)}
+            </tr>
+            <tr>
+              <th scope="row">保証・体験</th>
+              {c.courses.map((x) => <td>{x.terms}</td>)}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        料金や講座内容は変更されることがあります。申し込み前に各社の最新の案内を確認してください。
+      </p>
+      {c.courses.flatMap((x) => x.sources).map((s) => (
+        <SourceLink href={s.url} label={s.label} accessedAt={c.retrievedAt} />
+      ))}
+    </section>
+
+    <section aria-labelledby="h-links">
+      <h2 id="h-links">各社の講座ページ</h2>
+      <p class="pr">
+        <span class="pr-badge">PR</span>
+        以下は広告(アフィリエイトリンク)です。リンク経由で申し込みがあった場合、運営者に報酬が支払われます。
+        並び順は会社名の順で、成績や合格実績を比べたランキングではありません。
+      </p>
+      <ul class="links">
+        {c.courses.map((x) => (
+          <li>
+            <a href={x.url} rel="sponsored nofollow noopener" target="_blank" data-ad-slot="compare">
+              {x.company}の{x.courseName}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section aria-labelledby="h-check">
+      <h2 id="h-check">申し込む前に確かめること</h2>
+      <ul>
+        <li>受ける区分に対応しているか。上の表の「対応する区分」を見てください</li>
+        <li>DVDが必要か。DVDを選べるのは{c.courses[0].company}だけです</li>
+        <li>何か月かけて勉強するか。月額制は期間が延びるほど支払いの合計が増えます</li>
+        <li>独学でも受験できます。講座は必須ではありません</li>
+      </ul>
+      {linked.length > 0 && (
+        <p>
+          受験者数や合格率は
+          {linked.map((e, i) => (
+            <>
+              {i > 0 && '、'}
+              <a href={`/shikaku/${e.slug}/`}>{e.short_name}のデータページ</a>
+            </>
+          ))}
+          にまとめています。
+        </p>
+      )}
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 52rem;
+    margin: 0 auto;
+    padding: var(--space-4);
+  }
+  .crumbs {
+    font-size: var(--fs-xs);
+    color: var(--color-text-muted);
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-4);
+  }
+  .hd h1 {
+    font-size: var(--fs-2xl);
+    line-height: var(--lh-heading);
+    margin: 0 0 var(--space-3);
+  }
+  .lede {
+    color: var(--color-text-muted);
+    line-height: var(--lh-normal);
+  }
+  section {
+    margin-top: var(--space-7);
+  }
+  h2 {
+    font-size: var(--fs-xl);
+    line-height: var(--lh-heading);
+    margin: 0 0 var(--space-3);
+  }
+  p,
+  li {
+    line-height: var(--lh-normal);
+  }
+  td {
+    vertical-align: top;
+  }
+  .prices {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .cell-note,
+  .note {
+    font-size: var(--fs-sm);
+    color: var(--color-text-muted);
+  }
+  .pr {
+    font-size: var(--fs-sm);
+    background: var(--color-notice-bg);
+    border: var(--border-thin) solid var(--color-notice-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+  }
+  .pr-badge {
+    font-weight: var(--fw-bold);
+    margin-right: var(--space-2);
+  }
+  .links {
+    padding-left: 1.2em;
+  }
+</style>

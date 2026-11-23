@@ -117,7 +117,7 @@ const ogImage = new URL('/og.png', Astro.site ?? Astro.url.origin).href;
             <span class="pr-top__badge">PR</span>
             このページには広告(アフィリエイトリンク)が含まれます。
             リンク経由の申し込みで運営者に報酬が支払われますが、
-            掲載している公式統計と投稿データの内容は広告の有無で変えていません。
+            掲載している{hasUserData ? '公式統計と投稿データ' : '情報'}の内容は広告の有無で変えていません。
           </p>
         )}
         <slot />

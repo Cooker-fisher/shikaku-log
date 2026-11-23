@@ -92,7 +92,7 @@ export interface CourseLink {
  * 扱っていない資格のページに講座リンクを置くと、読者は関係ない講座に飛ばされる。
  */
 const SAT_A8MAT = '4B8ACS+6BFLV6+5TRO+BW0YB';
-const satLink = (path: string) =>
+export const satLink = (path: string) =>
   `https://px.a8.net/svt/ejp?a8mat=${SAT_A8MAT}&a8ejpredirect=${encodeURIComponent(`https://www.sat-co.info${path}`)}`;
 
 /**
@@ -133,7 +133,7 @@ const SAT_KIKENBUTSU: CourseLink = {
  * だからといって無料体験の存在を伏せない。読者にとっては入口がある方が事実として有用である。
  */
 const ONSUKU_A8MAT = '4B88SZ+DOYXO2+408S+BW0YB';
-const onsukuLink = (path: string) =>
+export const onsukuLink = (path: string) =>
   `https://px.a8.net/svt/ejp?a8mat=${ONSUKU_A8MAT}&a8ejpredirect=${encodeURIComponent(`https://onsuku.jp${path}`)}`;
 
 /**

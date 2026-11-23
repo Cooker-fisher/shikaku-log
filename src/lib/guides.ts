@@ -30,6 +30,18 @@ export const guides: Guide[] = [
     ],
     blurb: '甲種・乙種1〜6類・丙種の合格率を並べています。乙種第4類だけが31.9%と低い理由も扱っています。',
   },
+  {
+    path: '/hikaku/kouza/kikenbutsu-otsu4/',
+    title: '危険物取扱者 乙種第4類の通信講座 2社の料金と学び方',
+    covers: ['kikenbutsu-otsu4'],
+    blurb: '買い切りの講座と月額制の講座を、各社の公式ページの料金で並べています。広告を含みます。',
+  },
+  {
+    path: '/hikaku/kouza/eisei-kanri/',
+    title: '衛生管理者の通信講座 2社の料金と学び方',
+    covers: ['eisei-kanri-1', 'eisei-kanri-2'],
+    blurb: '第一種・第二種それぞれの料金を、各社の公式ページで確認して並べています。広告を含みます。',
+  },
 ];
 
 /** ある資格ページから参照すべき比較ページを返す */
